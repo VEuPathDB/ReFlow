@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+
+use strict;
+use GUS::Workflow::WorkflowHandle;
+use GUS::Workflow::WorkflowStepPilot;
+
+# these should be imported from someplace, not duplicated here
+my $READY = 'READY';      # my parents are not done yet  -- default state
+my $ON_DECK = 'ON_DECK';  # my parents are done, but there is no slot for me
+my $FAILED = 'FAILED';
+my $DONE = 'DONE';
+my $RUNNING = 'RUNNING';
+
+&usage unless (scalar(@ARGV) >= 5 && $ARGV[0] eq '-h');
+
+my $homeDir = $ARGV[1];
+my $inputType = $ARGV[2];
+my $stepNamePattern = $ARGV[3];
+my $stepNameFile = $ARGV[3];
+my $offline;
+my $stopafter;
+my $state;
+my $list;
+my $undo;
+if ($ARGV[4] eq '-l') {
+    $list = 1;
+} elsif ($ARGV[4] eq 'offline' || $ARGV[4] eq 'online') {
+  $offline = $ARGV[4];
+} elsif ($ARGV[4] eq 'stopafter' || $ARGV[4] eq 'resume') {
+  $stopafter = $ARGV[4];
+} else {
+  $state = $ARGV[4]
+}
+$undo = $ARGV[5];
+
+&usage unless ($inputType eq '-p' || $inputType eq '-f')
+    && ($list || $offline || $stopafter || ($state eq 'kill' || $state eq 'ready'))
+    && (!$undo || $undo eq '-u');
+
+my $workflow = GUS::Workflow::WorkflowHandle->new($homeDir);
+
+$workflow->getDbState();
+$workflow->error("Workflow is running an Undo.  -u required")
+    if $workflow->{undo_step_id} && !$undo;
+$workflow->error("Workflow is not running an Undo.  -u is not allowed")
+    if !$workflow->{undo_step_id} && $undo;
+$workflow->error("Workflow is currently initializing step table.  Try again when it is done.")
+    if $workflow->{initializing_step_table};
+
+
+my $stepList;
+if ($inputType eq '-p') {
+  $stepList = $workflow->getStepNamesFromPattern($stepNamePattern);
+} else {
+  $stepList = $workflow->getStepNamesFromFile($stepNameFile);
+}
+
+if (scalar(@$stepList) == 0) { print STDERR "No steps found."; }
+
+my @errors;
+
+foreach my $stepInfo (@$stepList) {
+  my ($dbStepName, $dbState,$dbUndoState) = @$stepInfo;
+
+    if ($list) {
+      my $undo = "";
+      if ($dbUndoState) {
+	$dbState = $dbUndoState;
+	$undo = "U";
+      }
+      print sprintf('%-7s %1s %s', $dbState,$undo, $dbStepName) . "\n";
+      next;
+    }
+
+    my $step = GUS::Workflow::WorkflowStepPilot->new($dbStepName, $workflow);
+
+    if ($state eq 'ready') {
+	my $errmsg = $step->pilotSetReady();
+	push(@errors,$errmsg) if $errmsg;
+    } elsif ($state eq 'kill') {
+	my $errmsg = $step->pilotKill();
+	push(@errors,$errmsg) if $errmsg;
+    }
+
+    if ($offline) {
+        my $errmsg = $step->pilotSetOffline($offline);
+	push(@errors,$errmsg) if $errmsg;
+    }
+    if ($stopafter) {
+        my $errmsg = $step->pilotSetStopAfter($stopafter);
+	push(@errors,$errmsg) if $errmsg;
+    }
+}
+
+if (scalar(@errors)) {
+  print STDOUT "\n" . join("\n", @errors) . "\n";
+}
+
+sub usage {
+    print "
+
+Change the state and/or offline status of the workflow steps whose name match the provided pattern.
+
+Usage: workflowstep -h workflow_home_dir [ -p stepname_pattern | -f file_of_steps ] [-l | [[offline|online|stopafter|resume] [ready|kill]] [-u]
+
+Where:
+  -h                   - workflow home dir
+  -p stepname_pattern  - name or pattern (using '%' as a wildcard) that
+                         specifies  one or more steps to change.
+                         EG, %.runBlast
+  -f file_of_steps     - a file containing a list of step names.
+  -l                   - list mode: don't change any steps, just list the
+                         names that match the pattern (and their state)
+  -u                   - if and only if workflow is running in undo mode
+
+Allowed state changes are:
+  $FAILED  --> ready
+  $RUNNING --> kill
+
+An offline step may be changed to online, and vice versa.
+
+A stopafter step may be changed to resume, and vice versa.
+
+Offline status may not be changed when the step is $RUNNING
+Stopafter status may not be changed when the step is $DONE
+
+Examples
+  % workflowstep -h workflow_dir -p stepname_pattern -l
+
+  % workflowstep -h workflow_dir -p stepname_pattern ready
+
+  % workflowstep -h workflow_dir -p stepname_pattern ready -u
+
+  % workflowstep -h workflow_dir -p stepname_pattern kill
+
+  % workflowstep -h workflow_dir -f file_of_steps online
+
+  % workflowstep -h workflow_dir -p stepname_pattern offline ready
+";
+    exit(1);
+}
+
+
+
+

@@ -1,0 +1,23 @@
+<workflowGraph name="root">
+
+  <param name="shape"/>
+
+  <constant name="blue">very blue</constant>
+
+  <subgraph name="firstStep" xmlFile="testSubgraph.xml">
+      <paramValue name="prefix">$$blue$$</paramValue>
+  </subgraph>
+
+  <step name="secondStep"
+        stepClass="GUS::Workflow::TestStep">
+      <paramValue name="msg">green</paramValue>
+  </step>
+
+  <step name="thirdStep"
+        stepClass="GUS::Workflow::TestStep">
+      <paramValue name="msg">$$shape$$</paramValue>
+    <depends name="firstStep"/>
+    <depends name="secondStep"/>
+  </step>
+
+</workflowGraph>
