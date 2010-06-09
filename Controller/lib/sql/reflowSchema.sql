@@ -17,6 +17,8 @@ ALTER TABLE Workflow
 ADD CONSTRAINT workflow_uniq
 UNIQUE (name, version);
 
+-- This is oracle and postgresql syntax.  The name of this
+-- MUST be _sq concatenated onto the name of the Workflow table.
 CREATE SEQUENCE Workflow_sq;
 
 
@@ -67,6 +69,8 @@ REFERENCES WorkflowStep (workflow_step_id);
 CREATE INDEX workflow_revix0
 ON Workflow (undo_step_id, workflow_id);
 
+-- This is oracle and postgresql syntax.  The name of this
+-- MUST be _sq concatenated onto the name of the WorkflowStep table.
 CREATE SEQUENCE WorkflowStep_sq;
 
 exit;

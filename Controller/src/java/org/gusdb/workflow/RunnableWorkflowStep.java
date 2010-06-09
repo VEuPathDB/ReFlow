@@ -43,8 +43,10 @@ public class RunnableWorkflowStep extends WorkflowStep {
         int offlineInt = off_line? 1 : 0;
         int stopafterInt = stop_after? 1 : 0;
         String sql;
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+
         if (!getUndoing()) {
-            sql = "UPDATE apidb.WorkflowStep"  
+            sql = "UPDATE " + WorkflowStepTable
             + " SET state_handled = 1, last_handled_time = SYSDATE"
             + " WHERE workflow_step_id = " + workflow_step_id
             + " AND state = '" + state + "'"
@@ -52,7 +54,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
             + " AND stop_after = " + stopafterInt;      
             state_handled = true;  // till next snapshot
         } else {
-            sql = "UPDATE apidb.WorkflowStep"  
+            sql = "UPDATE " + WorkflowStepTable  
                 + " SET undo_state_handled = 1, undo_last_handled_time = SYSDATE"
                 + " WHERE workflow_step_id = " + workflow_step_id;
             undo_state_handled = true;  // till next snapshot
@@ -61,9 +63,10 @@ public class RunnableWorkflowStep extends WorkflowStep {
     }
 
     private void handleMissingProcess() throws SQLException, IOException {
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
         String sql = "SELECT " 
             + (getUndoing()? "undo_state" : "state") 
-            + " FROM apidb.workflowstep"
+            + " FROM " + workflowStepTable
             + " WHERE workflow_step_id = " + workflow_step_id;
         
         Statement stmt = null;
@@ -74,7 +77,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
             rs.next();
             String stateNow = rs.getString(1);
             if (stateNow.equals(Workflow.RUNNING)) {
-                sql = "UPDATE apidb.WorkflowStep"  
+                sql = "UPDATE " + workflowStepTable 
                     + " SET "  
                     + (getUndoing()? "undo_state" : "state") + " = '" + Workflow.FAILED
                     + "', "
@@ -104,13 +107,14 @@ public class RunnableWorkflowStep extends WorkflowStep {
 
         steplog(Workflow.ON_DECK, "");
 
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
         String set = getUndoing()?
                 " SET undo_state = '" + Workflow.ON_DECK + "', undo_state_handled = 1" :
                     " SET state = '" + Workflow.ON_DECK + "', state_handled = 1" ;
         
         String and = getUndoing()? "undo_state" : "state";
        
-        String sql = "UPDATE apidb.WorkflowStep"  
+        String sql = "UPDATE " + workflowStepTable
             + set
             + " WHERE workflow_step_id = " + workflow_step_id  
             + " AND " + and + " = '" + Workflow.READY + "'";
@@ -124,7 +128,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
                  " SET undo_state = '" + Workflow.DONE + "', undo_state_handled = 1, state = '" + Workflow.READY + "', state_handled = 1"  :
                      " SET state = '" + Workflow.DONE + "', state_handled = 1" ;
         
-        String sql = "UPDATE apidb.WorkflowStep"  
+        String sql = "UPDATE " + WorkflowStepTable
             + set
             + " WHERE workflow_step_id = " + workflow_step_id;  
         executeSqlUpdate(sql);

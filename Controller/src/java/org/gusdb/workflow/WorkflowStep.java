@@ -360,14 +360,16 @@ public class WorkflowStep implements Comparable {
     }
     
     static PreparedStatement getPreparedInsertStmt(Connection dbConnection, int workflowId) throws SQLException {
-	String sql = "INSERT INTO apidb.workflowstep (workflow_step_id, workflow_id, name, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, depends_string, step_class, params_digest, depth_first_order)"
-	    + " VALUES (apidb.workflowstep_sq.nextval, " + workflowId
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+	String sql = "INSERT INTO " + workflowStepTable + " (workflow_step_id, workflow_id, name, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, depends_string, step_class, params_digest, depth_first_order)"
+	    + " VALUES (" + workflowStepTable + "_sq.nextval, " + workflowId
 	    + ", ?, ?, 1, null, 1, 0, 0, ?, ?, ?, ?)";
 	return dbConnection.prepareStatement(sql);
     }
 
     static PreparedStatement getPreparedUpdateStmt(Connection dbConnection, int workflowId) throws SQLException {
-        String sql = "UPDATE apidb.workflowstep"
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+        String sql = "UPDATE " + workflowStepTable
             + " SET depends_string = ?, depth_first_order = ?"
             + " WHERE name = ?"
             + " AND workflow_id = " + workflowId;
@@ -375,7 +377,8 @@ public class WorkflowStep implements Comparable {
     }
 
     static PreparedStatement getPreparedUndoUpdateStmt(Connection dbConnection, int workflowId) throws SQLException {
-        String sql = "UPDATE apidb.workflowstep"
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+        String sql = "UPDATE " + workflowStepTable
             + " SET undo_state = '" + Workflow.READY + "'"
             + " WHERE name = ?"
             + " AND undo_state is NULL"
@@ -402,24 +405,11 @@ public class WorkflowStep implements Comparable {
 	} 
     }
 
-    static PreparedStatement getPreparedDependsStmt(Connection dbConnection) throws SQLException {
-	String sql= "INSERT INTO apidb.workflowstepdependency (workflow_step_dependency_id, parent_id, child_id)"
-	+ " VALUES (apidb.workflowstepdependency_sq.nextval, ?, ?)";
-	return dbConnection.prepareStatement(sql);
-    }
-
-    void initializeDependsTable(PreparedStatement stmt) throws SQLException {
-	for (WorkflowStep parentStep : getParents()) {
-	    stmt.setInt(1, parentStep.getId());
-	    stmt.setInt(2, getId());
-	    stmt.execute();
-	}
-    }
-
     // static method
     static String getBulkSnapshotSql(int workflow_id) {
+	String workflowStepTable = getWorkflow.getWorkflowStepTable();
 	return "SELECT name, workflow_step_id, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, process_id, start_time, end_time, host_machine" 
-	    + " FROM apidb.workflowstep"
+	    + " FROM " + workflowStepTable +
 	    + " WHERE workflow_id = " + workflow_id;
     }
 

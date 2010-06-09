@@ -110,31 +110,38 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
                 error(nl + "Error: The data/ and steps/ directories are not empty, but your workflow does not exist in the database.  This suggests you have mistakenly changed databases.  Check your gus.config file." + nl);
             }
                 
+	    String sql = getNewWorkflowIdSql();
+	    Statement stmt = null;
+	    ResultSet rs = null;
+	    try {
+		stmt = getDbConnection().createStatement();
+		rs = stmt.executeQuery(sql);
+		rs.next();
+		workflow_id = rs.getInt(1);
+	    } finally {
+		if (rs != null) rs.close();
+		if (stmt != null) stmt.close();
+	    }
+
             // write row to Workflow table
-            String sql = "select apidb.Workflow_sq.nextval from dual";
-            Statement stmt = null;
-            ResultSet rs = null;
-            try {
-                stmt = getDbConnection().createStatement();
-                rs = stmt.executeQuery(sql);
-                rs.next();
-                workflow_id = rs.getInt(1);
-            } finally {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-            }
             int testint = test_mode? 1 : 0;
-            sql = "INSERT INTO apidb.workflow (workflow_id, name, version, test_mode)"  
+            sql = "INSERT INTO " + workflowTable + " (workflow_id, name, version, test_mode)"  
                 + " VALUES (" + workflow_id + ", '" + name + "', '" + version + "', " + testint + ")";
             executeSqlUpdate(sql);
         }
         
         return uninitialized;
     }
+
+    // This is Oracle specific.  Need to break out into vendor specific
+    // class
+    private getNewWorkflowIdSql () {
+	return "select " + workflowTable + "_sq.nextval from dual";
+    }
     
     private void setInitializingStepTableFlag(boolean initializing) throws FileNotFoundException, SQLException, IOException {
         int i = initializing? 1 : 0;
-        String sql = "UPDATE apidb.workflow" +
+        String sql = "UPDATE " + workflowTable +
         " SET initializing_step_table = " + i +
         " WHERE workflow_id = " + workflow_id;
         executeSqlUpdate(sql);
@@ -231,7 +238,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
             if (undo_step_id == null) error("Step name '" + undoStepName + "' is not found");
             
             // set undo_step_id in workflow table         
-            String sql = "UPDATE apidb.Workflow" + nl
+            String sql = "UPDATE " + workflowTable + nl
             + "SET undo_step_id = '" + undo_step_id + "'" + nl
             + "WHERE workflow_id = " + workflow_id;
             executeSqlUpdate(sql);
@@ -351,7 +358,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	log(msg);
 	System.err.println(msg);
 	
-	String sql = "UPDATE apidb.Workflow" + nl
+	String sql = "UPDATE " + workflowTable + nl
 	    + "SET state = '" + RUNNING + "', process_id = " + processId
 	    + ", host_machine = '" + hostname + "'" +  nl
 	    + "WHERE workflow_id = " + workflow_id;
@@ -363,13 +370,13 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
         String doneFlag = "state = '" + DONE + "'";
         if (undo_step_id != null) doneFlag = "undo_step_id = NULL";
 
-        String sql = "UPDATE apidb.Workflow "  
-            + "SET " + doneFlag + ", process_id = NULL"  
+        String sql = "UPDATE " + workflowTable  
+            + " SET " + doneFlag + ", process_id = NULL"  
             + " WHERE workflow_id = " + getId();
 	executeSqlUpdate(sql);
 	
-	sql = "UPDATE apidb.WorkflowStep "
-	    + "SET undo_state = NULL, undo_state_handled = 1 " 
+	sql = "UPDATE " + WorkflowStepTable +
+	    + " SET undo_state = NULL, undo_state_handled = 1 " 
 	    + "WHERE workflow_id = " + workflow_id;
 	executeSqlUpdate(sql); 
 	
@@ -394,7 +401,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
     private boolean checkForRunningOrFailedSteps() throws SQLException, IOException {
         Statement stmt = null;
         ResultSet rs = null;
-        String sql = "select count(*) from apidb.WorkflowStep where workflow_id = "
+        String sql = "select count(*) from " + WorkflowStepTable + " where workflow_id = "
             + workflow_id
             + " and state in ('RUNNING', 'FAILED')";
             

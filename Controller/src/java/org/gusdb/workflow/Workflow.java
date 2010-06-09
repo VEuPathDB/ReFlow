@@ -52,10 +52,12 @@ public class Workflow <T extends WorkflowStep> {
     private Properties gusProps;        // from gus.config (db stuff)
     private Properties loadBalancingConfig;    
     private String[] homeDirSubDirs = {"logs", "steps", "data"};    
-
-    // persistent state
     protected String name;
     protected String version;
+    protected String workflowTable;
+    protected String workflowStepTable;
+
+    // persistent state
     protected Integer workflow_id;
     protected String state;
     protected Integer undo_step_id;
@@ -74,6 +76,10 @@ public class Workflow <T extends WorkflowStep> {
    
     public Workflow(String homeDir) throws FileNotFoundException, IOException {
 	this.homeDir = homeDir + "/";
+	name = getWorkflowConfig("name");
+	version = getWorkflowConfig("version");
+	workflowTable = getWorkflowConfig("workflowTable");
+	workflowStepTable = getWorkflowConfig("workflowStepTable");
     }
     
     /////////////////////////////////////////////////////////////////////////
@@ -95,6 +101,14 @@ public class Workflow <T extends WorkflowStep> {
         return undoStepName;
     }
     
+    String getWorkflowTable() {
+	return workflowTable;
+    }
+
+    String getWorkflowStepTable() {
+	return workflowStepTable;
+    }
+
     //////////////////////////////////////////////////////////////////////////
     //   Initialization
     //////////////////////////////////////////////////////////////////////////
@@ -127,10 +141,8 @@ public class Workflow <T extends WorkflowStep> {
 
     protected void getDbState() throws SQLException, FileNotFoundException, IOException {
         if (workflow_id == null) {
-            name = getWorkflowConfig("name");
-            version = getWorkflowConfig("version");
             String sql = "select workflow_id, state, undo_step_id, process_id, host_machine, test_mode"  
-                + " from apidb.workflow"  
+                + " from " + workflowTable
                 + " where name = '" + name + "'"  
                 + " and version = '" + version + "'" ;
 
@@ -196,12 +208,9 @@ public class Workflow <T extends WorkflowStep> {
         
     protected boolean workflowTableInitialized() throws FileNotFoundException, IOException, SQLException {
         
-        name = getWorkflowConfig("name");
-        version = getWorkflowConfig("version");
-       
         // don't bother if already in db
         String sql = "select workflow_id"  
-            + " from apidb.workflow"  
+            + " from " + workflowTable
             + " where name = " + "'" + name + "'"   
             + " and version = '" + version + "'";
 
@@ -330,12 +339,13 @@ public class Workflow <T extends WorkflowStep> {
     // light reporting of state of workflow with steps
     void quickReportSteps(String[] desiredStates) throws SQLException, FileNotFoundException, IOException {
         getDbState();
+	workflowStepTable = getWorkflowConfig("workflowStepTable");
 
         StringBuffer buf = new StringBuffer();
         for (String ds : desiredStates) buf.append("'" + ds + "',");
         String state_str = undo_step_id == null? "state" : "undo_state";
         String sql = "select name, workflow_step_id," + state_str  
-            + " from apidb.workflowstep"  
+            + " from " + workflowStepTable  
             + " where workflow_id = '" + workflow_id + "'"  
             + " and " + state_str + " in(" + buf.substring(0,buf.length()-1) + ")"
 	    + " order by depth_first_order";
@@ -411,12 +421,12 @@ public class Workflow <T extends WorkflowStep> {
              System.out.println("rm -rf " + dir);
          }
 
-         String sql = "update apidb.workflow set undo_step_id = null where workflow_id = " + workflow_id;
+         String sql = "update " + workflowTable + " set undo_step_id = null where workflow_id = " + workflow_id;
          executeSqlUpdate(sql);
-         sql = "delete from apidb.workflowstep where workflow_id = " + workflow_id;
+         sql = "delete from " + workflowStepTable + " where workflow_id = " + workflow_id;
          executeSqlUpdate(sql);
          System.out.println(sql);
-         sql = "delete from apidb.workflow where workflow_id = " + workflow_id;
+         sql = "delete from " + workflowTable + " where workflow_id = " + workflow_id;
          executeSqlUpdate(sql);
          System.out.println(sql);
      }
@@ -434,7 +444,7 @@ public class Workflow <T extends WorkflowStep> {
           }
 	  log("Reseting host_machine in database");
 
-          String sql = "update apidb.workflow set host_machine = null where workflow_id = " + workflow_id;
+          String sql = "update " + workflowTable + " set host_machine = null where workflow_id = " + workflow_id;
           executeSqlUpdate(sql);
           log(sql);
 	  log("Please double check that NO workflow processes are running on " + host_machine + " before running on " + hostname + ".");
