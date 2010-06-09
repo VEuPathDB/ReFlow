@@ -1,0 +1,80 @@
+<project name="GGTools" default="Installation" basedir=".">
+
+  <!-- ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ReFlow-ChildCheckout" />
+  
+  
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ReFlow-ChildUpdate" />
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ReFlow-Installation" depends="ReFlow/Controller-Installation,
+                                            ReFlow/TestFlow-Installation" >
+
+    <ant target="defaultProjectInstall"/>
+
+  </target>  
+   
+
+  <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
+
+  <target name="ReFlow-Installation-postprocess">
+    <echo message="Postprocessing the ReFlow installation"/>
+
+    <replace dir="${targetDir}/bin" 
+             propertyFile="${targetDir}/config/replacements.prop" > 
+      <include name="**/*" />
+      <replacefilter token="@perl@" property="perl"/>
+    </replace> 
+
+  </target>
+
+
+  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
+
+  <target name="ReFlow/Controller-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="Controller"/>
+    </ant>
+  </target>  
+
+  <target name="ReFlow/TestFlow-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="TestFlow"/>
+    </ant>
+  </target>  
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ReFlow-Release">
+    
+    <ant target="defaultProjectRelease">
+      <property name="tag" value="v1-4-0"/>
+      <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
+    </ant>
+  </target>  
+
+
+</project>
+
+
