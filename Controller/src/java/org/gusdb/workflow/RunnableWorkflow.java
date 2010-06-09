@@ -354,7 +354,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	if (testOnly) log("TESTING workflow....");
 
 	String msg = "Setting workflow state to " + RUNNING
-	    + " (host machine = " + hostname + " process id = " + processId + ")";
+	    + " (hostMachine=" + hostname + " processId=" + processId + ")";
 	log(msg);
 	System.err.println(msg);
 	

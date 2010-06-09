@@ -472,7 +472,7 @@ public class Workflow <T extends WorkflowStep> {
 	 
 	 // runnable workflow, either test or run mode
          if (cmdLine.hasOption("r") || cmdLine.hasOption("t")) {
-	     System.err.println("initializing...");
+	     System.err.println("Initializing...");
              RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
              Class<RunnableWorkflowStep> stepClass = RunnableWorkflowStep.class;
              WorkflowGraph<RunnableWorkflowStep> rootGraph = 
