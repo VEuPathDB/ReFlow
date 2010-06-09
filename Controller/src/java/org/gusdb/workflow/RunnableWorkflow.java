@@ -135,7 +135,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 
     // This is Oracle specific.  Need to break out into vendor specific
     // class
-    private getNewWorkflowIdSql () {
+    private String getNewWorkflowIdSql () {
 	return "select " + workflowTable + "_sq.nextval from dual";
     }
     
