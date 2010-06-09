@@ -400,7 +400,7 @@ public class WorkflowGraph<T extends WorkflowStep> {
 	setRootsAndLeafs();
 
         // make sure all undoable steps in db have state set
-        PreparedStatement undoStepPstmt = WorkflowStep.getPreparedUndoUpdateStmt(workflow.getDbConnection(), workflow.getId()); 
+        PreparedStatement undoStepPstmt = WorkflowStep.getPreparedUndoUpdateStmt(workflow.getDbConnection(), workflow.getId(), workflow.getWorkflowStepTable()); 
         try {
             for (WorkflowStep step : getSteps()) {
                 undoStepPstmt.setString(1, step.getFullName());
@@ -420,7 +420,7 @@ public class WorkflowGraph<T extends WorkflowStep> {
 
         if (stepTableEmpty) return false;
         
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+	String workflowStepTable = getWorkflow().getWorkflowStepTable();
         String sql = "select name, params_digest, depends_string, step_class, state"
 	    + " from " + workflowStepTable
 	    + " where workflow_id = " + workflow.getId()
@@ -522,7 +522,7 @@ public class WorkflowGraph<T extends WorkflowStep> {
 	
     // remove from the db all READY or ON_DECK steps
     void removeReadyStepsFromDb() throws SQLException, FileNotFoundException, IOException {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+	String workflowStepTable = getWorkflow().getWorkflowStepTable();
 	String sql = "delete from " + workflowStepTable + " where workflow_id = "
 	    + workflow.getId() + 
 	    " and (state = 'READY' or state = 'ON_DECK')";
@@ -530,7 +530,7 @@ public class WorkflowGraph<T extends WorkflowStep> {
     }
 
     Set<String> getStepNamesInDb() throws SQLException, FileNotFoundException, IOException {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+	String workflowStepTable = getWorkflow().getWorkflowStepTable();
 	Set<String> stepsInDb = new HashSet<String>();
 
 	String sql = "select name"

@@ -168,7 +168,7 @@ public class Workflow <T extends WorkflowStep> {
 
     // read all WorkflowStep rows into memory (and remember the prev snapshot)
     protected void getStepsDbState() throws SQLException, FileNotFoundException, IOException {
-        String sql = WorkflowStep.getBulkSnapshotSql(workflow_id);
+        String sql = WorkflowStep.getBulkSnapshotSql(workflow_id, workflowStepTable);
 
         // run query to get all rows from WorkflowStep for this workflow
         // stuff each row into the snapshot, keyed on step name

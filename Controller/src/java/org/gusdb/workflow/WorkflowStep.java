@@ -359,16 +359,14 @@ public class WorkflowStep implements Comparable {
 	depthFirstOrder = o;
     }
     
-    static PreparedStatement getPreparedInsertStmt(Connection dbConnection, int workflowId) throws SQLException {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+    static PreparedStatement getPreparedInsertStmt(Connection dbConnection, int workflowId, String workflowStepTable) throws SQLException {
 	String sql = "INSERT INTO " + workflowStepTable + " (workflow_step_id, workflow_id, name, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, depends_string, step_class, params_digest, depth_first_order)"
 	    + " VALUES (" + workflowStepTable + "_sq.nextval, " + workflowId
 	    + ", ?, ?, 1, null, 1, 0, 0, ?, ?, ?, ?)";
 	return dbConnection.prepareStatement(sql);
     }
 
-    static PreparedStatement getPreparedUpdateStmt(Connection dbConnection, int workflowId) throws SQLException {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+    static PreparedStatement getPreparedUpdateStmt(Connection dbConnection, int workflowId, String workflowStepTable) throws SQLException {
         String sql = "UPDATE " + workflowStepTable
             + " SET depends_string = ?, depth_first_order = ?"
             + " WHERE name = ?"
@@ -376,8 +374,7 @@ public class WorkflowStep implements Comparable {
         return dbConnection.prepareStatement(sql);
     }
 
-    static PreparedStatement getPreparedUndoUpdateStmt(Connection dbConnection, int workflowId) throws SQLException {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+    static PreparedStatement getPreparedUndoUpdateStmt(Connection dbConnection, int workflowId, String workflowStepTable) throws SQLException {
         String sql = "UPDATE " + workflowStepTable
             + " SET undo_state = '" + Workflow.READY + "'"
             + " WHERE name = ?"
@@ -406,10 +403,9 @@ public class WorkflowStep implements Comparable {
     }
 
     // static method
-    static String getBulkSnapshotSql(int workflow_id) {
-	String workflowStepTable = getWorkflow.getWorkflowStepTable();
+    static String getBulkSnapshotSql(int workflow_id, String workflowStepTable) {
 	return "SELECT name, workflow_step_id, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, process_id, start_time, end_time, host_machine" 
-	    + " FROM " + workflowStepTable +
+	    + " FROM " + workflowStepTable
 	    + " WHERE workflow_id = " + workflow_id;
     }
 

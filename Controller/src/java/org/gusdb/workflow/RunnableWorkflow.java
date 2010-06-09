@@ -182,8 +182,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
             // write all steps to WorkflowStep table
             // for steps that are already there, update the depthFirstOrder
             Set<String> stepNamesInDb = workflowGraph.getStepNamesInDb();
-            PreparedStatement insertStepPstmt = WorkflowStep.getPreparedInsertStmt(getDbConnection(), workflow_id);
-            PreparedStatement updateStepPstmt = WorkflowStep.getPreparedUpdateStmt(getDbConnection(), workflow_id);
+            PreparedStatement insertStepPstmt = WorkflowStep.getPreparedInsertStmt(getDbConnection(), workflow_id, workflowStepTable);
+            PreparedStatement updateStepPstmt = WorkflowStep.getPreparedUpdateStmt(getDbConnection(), workflow_id, workflowStepTable);
             try {
                 for (WorkflowStep step : workflowGraph.getSortedSteps()) {
                     step.initializeStepTable(stepNamesInDb, insertStepPstmt, updateStepPstmt);
@@ -375,7 +375,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
             + " WHERE workflow_id = " + getId();
 	executeSqlUpdate(sql);
 	
-	sql = "UPDATE " + WorkflowStepTable +
+	sql = "UPDATE " + workflowStepTable 
 	    + " SET undo_state = NULL, undo_state_handled = 1 " 
 	    + "WHERE workflow_id = " + workflow_id;
 	executeSqlUpdate(sql); 
@@ -401,7 +401,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
     private boolean checkForRunningOrFailedSteps() throws SQLException, IOException {
         Statement stmt = null;
         ResultSet rs = null;
-        String sql = "select count(*) from " + WorkflowStepTable + " where workflow_id = "
+        String sql = "select count(*) from " + workflowStepTable + " where workflow_id = "
             + workflow_id
             + " and state in ('RUNNING', 'FAILED')";
             
