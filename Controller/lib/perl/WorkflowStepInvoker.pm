@@ -104,6 +104,11 @@ sub getId {
   return $self->{id};
 }
 
+sub getWorkflowDataDir {
+    my ($self) = @_;
+    my $workflowHome = $self->getWorkflowHomeDir();
+    return "$workflowHome/data";
+}
 
 sub getConfig {
   my ($self, $prop) = @_;
@@ -176,144 +181,51 @@ sub getName {
   return $self->{name};
 }
 
-sub getCluster {
-    my ($self) = @_;
+sub testInputFile {
+  my ($self, $paramName, $fileName, $directory) = @_;
 
-    if (!$self->{cluster}) {
-	my $clusterServer = $self->getWorkflowConfig('clusterServer');
-	my $clusterUser = $ENV{USER};
-	if ($clusterServer ne "none") {
-	    $self->{cluster} = CBIL::Util::SshCluster->new($clusterServer,
-							      $clusterUser,
-							      $self);
-	} else {
-	    $self->{cluster} = CBIL::Util::NfsCluster->new($self);
-	}
-    }
-    return $self->{cluster};
-}
-
-sub runCmdOnCluster {
-  my ($self, $test, $cmd) = @_;
-
-  $self->getCluster()->runCmdOnCluster($test, $cmd);
-}
-
-sub copyToCluster {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getCluster()->copyTo($fromDir, $fromFile, $toDir);
-
-    # SshCluster object is not testing that file successfully copied
-    my $server = $self->getWorkflowConfig('clusterServer');
-    my $user = $ENV{USER};
-    my $cmd = qq{ssh -2 $user\@$server '/bin/bash -login -c "ls $toDir"'};
-    my $ls = $self->runCmd(0, $cmd);
-    my @ls2 = split(/\s/, $ls);
-    $self->error("$ls\nFailed copying '$fromDir/$fromFile' to '$toDir' oncluster") unless grep(/$fromFile/, @ls2);
-}
-
-sub copyFromCluster {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir);
-}
-
-sub runAndMonitorClusterTask {
-    my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn) = @_;
-
-    # if not already started, start it up (otherwise the local process was restarted)
-    if (!$self->clusterTaskRunning($processIdFile, $user, $server)) {
-	my $cmd = "workflowclustertask $propFile $logFile $processIdFile $numNodes $time $queue $ppn";
-	$self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'&");
-    }
-
-    return 1 if ($test);
-
-    while (1) {
-	sleep(5);
-	last if !$self->clusterTaskRunning($processIdFile,$user, $server);
-    }
-
-    my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
-    return $done && $done =~ /Done/;
-}
-
-sub clusterTaskRunning {
-    my ($self, $processIdFile, $user, $server) = @_;
-
-    my $processId = `ssh -2 $user\@$server 'if [ -a $processIdFile ];then cat $processIdFile; fi'`;
-
-    chomp $processId;
-
-    my $status = 0;
-    if ($processId) {
-      system("ssh -2 $user\@$server 'ps -p $processId > /dev/null'");
-      $status = $? >> 8;
-      $status = !$status;
-    }
-    return $status;
-}
-
-sub runPlugin {
-    my ($self, $test, $undo, $plugin, $args) = @_;
-
-    my $className = ref($self);
-
-    if ($test != 1 && $test != 0) {
-	$self->error("illegal 'test' arg passed to runPlugin() in step class '$className'");
-    }
-
-    if ($plugin !~ /\w+\:\:\w+/) {
-	$self->error("illegal 'plugin' arg passed to runPlugin() in step class '$className'");
-    }
-
-    my $comment = $args;
-    $comment =~ s/"/\\"/g;
-
-    if ($self->{gusConfigFile}) {
-      $args .= " --gusconfigfile $self->{gusConfigFile}";
-    }
-
-    my $commit = $args." --commit";
-
-    my $cmd;
-    if ($undo) {
-      my $undoPlugin = $self->getUndoPlugin($plugin);
-      my $algInvIds = $self->getAlgInvIds();
-      if($commit =~ /undoTables/){
-	  $cmd = "ga $undoPlugin --algInvocationId '$algInvIds' --workflowContext $commit";
-      }else {
-	  $cmd = "ga $undoPlugin --algInvocationId '$algInvIds' --workflowContext --commit";
-      }
-
-    } else {
-      $cmd = "ga $plugin --workflowstepid $self->{id} $commit --comment \"$comment\"";
-    }
-    $self->runCmd($test, $cmd);
-}
-
-# individual steps can override this method if needed
-# must return name of undo plugin and all args besides algInvocationId
-sub getUndoPlugin{
-  my ($self, $pluginClassName) = @_;
-
-  return "GUS::Community::Plugin::Undo --plugin $pluginClassName";
-}
-
-sub getAlgInvIds {
-  my ($self) = @_;
-  my $sql = "
-  select algorithm_invocation_id
-  from apidb.WorkflowStepAlgInvocation
-  where workflow_step_id = $self->{id}
-";
-
-  my $stmt = $self->runSql($sql);
-  my @algInvIds;
-  while (my @row = $stmt->fetchrow_array()) {
-    push(@algInvIds, $row[0]);
+  if($directory){
+      $fileName =~ s/\*//g;
+      my @inputFiles = $self->getInputFiles(1,$directory,$fileName);
+      $self->error("Input file '$directory and $fileName' for param '$paramName' in step '$self->{name}' does not exist") unless -e $inputFiles[0];
+  }else {
+      $self->error("Input file '$fileName' for param '$paramName' in step '$self->{name}' does not exist") unless -e $fileName;
   }
-  return join(",", @algInvIds);
+
 }
+
+sub getInputFiles{
+  my ($self, $test, $fileOrDir,$inputFileNameRegex ,$inputFileNameExtension) = @_;
+  my @inputFiles;
+
+  if (-d $fileOrDir) {
+    opendir(DIR, $fileOrDir) || die "Can't open directory '$fileOrDir'";
+    my @noDotFiles = grep { $_ ne '.' && $_ ne '..' } readdir(DIR);
+    @inputFiles = map { "$fileOrDir/$_" } @noDotFiles;
+    @inputFiles = grep(/.*\.$inputFileNameExtension/, @inputFiles) if $inputFileNameExtension;
+    @inputFiles = grep(/$inputFileNameRegex/,@inputFiles) if $inputFileNameRegex;
+  } else {
+    $inputFiles[0] = $fileOrDir;
+  }
+  return @inputFiles;
+}
+
+sub getDataSource {
+  my ($self, $dataSourceName, $dataSourcesXmlFile, $dataDirPath) = @_;
+
+  if (!$self->{dataSources}) {
+    my $workflowDataDir = $self->getWorkflowDataDir();
+    my $dataDir = "$workflowDataDir/$dataDirPath";
+
+    my $globalProperties = $self->getSharedConfigProperties();
+    $globalProperties->addProperty("dataDir", $dataDir);
+    print STDERR "Parsing resource file: $dataSourcesXmlFile\n";
+    $self->{dataSources} =
+      ApiCommonWorkflow::Main::DataSources->new($dataSourcesXmlFile, $globalProperties);  }
+    print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
+  return $self->{dataSources}->getDataSource($dataSourceName);
+}
+
 
 sub runCmd {
     my ($self, $test, $cmd) = @_;
@@ -334,6 +246,8 @@ sub runCmd {
     }
     return $output;
 }
+
+
 
 sub log {
   my ($self, $msg) = @_;
