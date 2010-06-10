@@ -16,9 +16,10 @@ sub getDbState {
   if (!$self->{workflow_id}) {
     $self->{name} = $self->getWorkflowConfig('name');
     $self->{version} = $self->getWorkflowConfig('version');
+    my $workflowTable = $self->getWorkflowConfig('workflowTable');
     my $sql = "
 select workflow_id, state, process_id, initializing_step_table, undo_step_id
-from apidb.workflow
+from $workflowTable
 where name = '$self->{name}'
 and version = '$self->{version}'
 ";
@@ -34,9 +35,10 @@ sub getStepNamesFromPattern {
 
     $self->getId();
     my $result;
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = 
 "SELECT name, state, undo_state
-FROM apidb.WorkflowStep
+FROM workflowStepTable
 WHERE name like '$stepNamePattern'
 AND workflow_id = $self->{workflow_id}
 order by depth_first_order";

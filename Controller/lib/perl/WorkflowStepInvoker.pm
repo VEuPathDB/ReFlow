@@ -34,9 +34,9 @@ sub setRunningState {
     my $hostname = hostname();
 
     my $undoStr = $undo? "undo_" : "";
-
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE apidb.WorkflowStep
+UPDATE $orkflowStepTable
 SET
   ${undoStr}state = '$RUNNING',
   ${undoStr}state_handled = 0,
@@ -84,9 +84,9 @@ sub runInWrapper {
     $undoStr = $undo? "undo_" : "";
 
     my $undoStr2 = ($undo && $state eq $DONE)? "\nstate = '$READY'," : "";
-
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE apidb.WorkflowStep
+UPDATE $workflowStepTable
 SET
   ${undoStr}state = '$state',
   process_id = NULL,

@@ -48,8 +48,9 @@ sub pilotSetReady {
       return "Warning: Can't change $self->{name} from '$state' to '$READY'";
     }
 
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE apidb.WorkflowStep
+UPDATE $workflowStepTable
 SET 
   $self->{undo}state = '$READY',
   $self->{undo}state_handled = 0
@@ -76,8 +77,9 @@ sub pilotSetOffline {
     }
     my $offline_bool = $offline eq 'offline'? 1 : 0;
 
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE apidb.WorkflowStep
+UPDATE $workflowStepTable
 SET
   $self->{undo}off_line = $offline_bool,
   $self->{undo}state_handled = 0
@@ -112,8 +114,9 @@ sub pilotSetStopAfter {
       $stopafter_bool = 0;
     }
 
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE apidb.WorkflowStep
+UPDATE $workflowStepTable
 SET
   $self->{undo}stop_after = $stopafter_bool,
   $self->{undo}state_handled = 0
@@ -128,6 +131,9 @@ $and_clause
 sub getDbState {
     my ($self) = @_;
 
+    my $workflowTable = $self->getWorkflowConfig('workflowTable');
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+
     if (!$self->{state}) {
       my $workflow_id = $self->{workflow}->getId();
       my $sql = "
@@ -136,7 +142,7 @@ SELECT s.workflow_step_id, s.host_machine, s.process_id,
        s.undo_state, s.undo_state_handled, s.undo_off_line, s.undo_stop_after,
        s.start_time, s.end_time,
        w.undo_step_id
-FROM apidb.workflowstep s, apidb.workflow w
+FROM $workflowStepTable s, $workflowTable w
 WHERE s.name = '$self->{name}'
 AND w.workflow_id = $workflow_id
 AND s.workflow_id = w.workflow_id";
