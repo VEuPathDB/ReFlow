@@ -1,8 +1,8 @@
 package ReFlow::Controller::WorkflowStepInvoker;
 
-@ISA = qw(GUS::Workflow::Base);
+@ISA = qw(ReFlow::Controller::Base);
 use strict;
-use GUS::Workflow::Base;
+use ReFlow::Controller::Base;
 use CBIL::Util::SshCluster;
 use CBIL::Util::NfsCluster;
 use Sys::Hostname;

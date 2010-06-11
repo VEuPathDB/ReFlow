@@ -1,8 +1,8 @@
-package GUS::Workflow::WorkflowHandle;
+package ReFlow::Controller::WorkflowHandle;
 
-@ISA = qw(GUS::Workflow::Base);
+@ISA = qw(ReFlow::Controller::Base);
 use strict;
-use GUS::Workflow::Base;
+use ReFlow::Controller::Base;
 
 ##
 ## lite workflow object (a handle on workflow row in db) used in

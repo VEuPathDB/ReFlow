@@ -1,4 +1,4 @@
-package GUS::Workflow::WorkflowStepPilot;
+package ReFlow::Controller::WorkflowStepPilot;
 
 use strict;
 

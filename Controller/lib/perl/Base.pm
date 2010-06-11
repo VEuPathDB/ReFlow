@@ -1,4 +1,4 @@
-package GUS::Workflow::Base;
+package ReFlow::Controller::Base;
 
 use Exporter;
 @ISA = qw(Exporter);
