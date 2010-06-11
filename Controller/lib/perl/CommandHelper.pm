@@ -8,7 +8,7 @@
 # $Revision: $ $Date: $ $Author: $
 #------------------------------------------------------------------------
 
-package GUS::Workflow::CommandHelper;
+package ReFlow::Controller::CommandHelper;
 
 use strict;
 use Carp;

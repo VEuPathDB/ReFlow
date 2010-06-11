@@ -1,4 +1,4 @@
-package GUS::Workflow::WorkflowStepInvoker;
+package ReFlow::Controller::WorkflowStepInvoker;
 
 @ISA = qw(GUS::Workflow::Base);
 use strict;
@@ -11,92 +11,14 @@ use Sys::Hostname;
 # Super class of workflow steps written in perl, and called by the wrapper
 #
 
-sub setParamValues {
-  my ($self, $paramValuesArray) = @_;
-
-  $self->{paramValues} = {};
-  for (my $i=0; $i<scalar(@$paramValuesArray); $i+=2) {
-    my $noHyphen = substr($paramValuesArray->[$i],1);
-    $self->{paramValues}->{$noHyphen} = $paramValuesArray->[$i+1];
-  }
-}
+##########################################################################
+## Methods available to the subclasses (step classes)
+##########################################################################
 
 sub getParamValue {
   my ($self, $name) = @_;
   $self->log("accessing parameter '$name=$self->{paramValues}->{$name}'");
   return $self->{paramValues}->{$name};
-}
-
-sub setRunningState {
-    my ($self, $workflowId, $stepName, $undo) = @_;
-
-    my $process_id = $$;
-    my $hostname = hostname();
-
-    my $undoStr = $undo? "undo_" : "";
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
-    my $sql = "
-UPDATE $orkflowStepTable
-SET
-  ${undoStr}state = '$RUNNING',
-  ${undoStr}state_handled = 0,
-  process_id = $process_id,
-  host_machine = '$hostname',
-  start_time = SYSDATE
-WHERE name = '$stepName'
-AND workflow_id = $workflowId
-";
-
-    $self->runSql($sql);
-}
-
-sub getStepInvoker {
-  my ($self, $invokerClass, $homeDir) = @_;
-  my $stepInvoker =  eval "{require $invokerClass; $invokerClass->new('$homeDir')}";
-  $self->error($@) if $@;
-  return $stepInvoker;
-}
-
-sub runInWrapper {
-    my ($self, $workflowId, $stepName, $stepId, $mode, $undo, $invokerClass) = @_;
-
-    $self->{name} = $stepName;
-    $self->{id} = $stepId;
-
-    chdir $self->getStepDir();
-
-    my $undoStr = $undo? " (Undoing)" : "";
-
-    $self->log("Running$undoStr Step Class $invokerClass");
-    exec {
-        my $testOnly = $mode eq 'test';
-	$self->log("only testing...") if $testOnly;
-	$self->run($testOnly, $undo);
-	sleep(int(rand(5))+1) if $testOnly;
-    }
-
-    my $state = $DONE;
-    if ($@) {
-	$state = $FAILED;
-    }
-
-
-    $undoStr = $undo? "undo_" : "";
-
-    my $undoStr2 = ($undo && $state eq $DONE)? "\nstate = '$READY'," : "";
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
-    my $sql = "
-UPDATE $workflowStepTable
-SET
-  ${undoStr}state = '$state',
-  process_id = NULL,
-  end_time = SYSDATE, $undoStr2
-  ${undoStr}state_handled = 0
-WHERE name = '$stepName'
-AND workflow_id = $workflowId
-AND ${undoStr}state = '$RUNNING'
-";
-    $self->runSql($sql);
 }
 
 sub getId {
@@ -247,8 +169,6 @@ sub runCmd {
     return $output;
 }
 
-
-
 sub log {
   my ($self, $msg) = @_;
 
@@ -257,3 +177,89 @@ sub log {
   print F localtime() . "\t$msg\n\n";
   close(F);
 }
+
+#######################################################################
+## Methods called by workflowstepwrap
+#######################################################################
+sub setParamValues {
+  my ($self, $paramValuesArray) = @_;
+
+  $self->{paramValues} = {};
+  for (my $i=0; $i<scalar(@$paramValuesArray); $i+=2) {
+    my $noHyphen = substr($paramValuesArray->[$i],1);
+    $self->{paramValues}->{$noHyphen} = $paramValuesArray->[$i+1];
+  }
+}
+
+sub setRunningState {
+    my ($self, $workflowId, $stepName, $undo) = @_;
+
+    my $process_id = $$;
+    my $hostname = hostname();
+
+    my $undoStr = $undo? "undo_" : "";
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $sql = "
+UPDATE $orkflowStepTable
+SET
+  ${undoStr}state = '$RUNNING',
+  ${undoStr}state_handled = 0,
+  process_id = $process_id,
+  host_machine = '$hostname',
+  start_time = SYSDATE
+WHERE name = '$stepName'
+AND workflow_id = $workflowId
+";
+
+    $self->runSql($sql);
+}
+
+sub getStepInvoker {
+  my ($self, $invokerClass, $homeDir) = @_;
+  my $stepInvoker =  eval "{require $invokerClass; $invokerClass->new('$homeDir')}";
+  $self->error($@) if $@;
+  return $stepInvoker;
+}
+
+sub runInWrapper {
+    my ($self, $workflowId, $stepName, $stepId, $mode, $undo, $invokerClass) = @_;
+
+    $self->{name} = $stepName;
+    $self->{id} = $stepId;
+
+    chdir $self->getStepDir();
+
+    my $undoStr = $undo? " (Undoing)" : "";
+
+    $self->log("Running$undoStr Step Class $invokerClass");
+    exec {
+        my $testOnly = $mode eq 'test';
+	$self->log("only testing...") if $testOnly;
+	$self->run($testOnly, $undo);
+	sleep(int(rand(5))+1) if $testOnly;
+    }
+
+    my $state = $DONE;
+    if ($@) {
+	$state = $FAILED;
+    }
+
+
+    $undoStr = $undo? "undo_" : "";
+
+    my $undoStr2 = ($undo && $state eq $DONE)? "\nstate = '$READY'," : "";
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $sql = "
+UPDATE $workflowStepTable
+SET
+  ${undoStr}state = '$state',
+  process_id = NULL,
+  end_time = SYSDATE, $undoStr2
+  ${undoStr}state_handled = 0
+WHERE name = '$stepName'
+AND workflow_id = $workflowId
+AND ${undoStr}state = '$RUNNING'
+";
+    $self->runSql($sql);
+}
+
