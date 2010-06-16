@@ -3,8 +3,7 @@ package ReFlow::Controller::WorkflowStepInvoker;
 @ISA = qw(ReFlow::Controller::Base);
 use strict;
 use ReFlow::Controller::Base;
-use CBIL::Util::SshCluster;
-use CBIL::Util::NfsCluster;
+use ReFlow::DataSource::DataSources;
 use Sys::Hostname;
 
 #
@@ -143,7 +142,7 @@ sub getDataSource {
     $globalProperties->addProperty("dataDir", $dataDir);
     print STDERR "Parsing resource file: $dataSourcesXmlFile\n";
     $self->{dataSources} =
-      ApiCommonWorkflow::Main::DataSources->new($dataSourcesXmlFile, $globalProperties);  }
+      ReFlow::DataSource::DataSources->new($dataSourcesXmlFile, $globalProperties);  }
     print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
   return $self->{dataSources}->getDataSource($dataSourceName);
 }

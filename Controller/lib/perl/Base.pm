@@ -6,8 +6,7 @@ our @EXPORT = qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
 use strict;
 use DBI;
-use CBIL::Util::MultiPropertySet;
-use CBIL::Util::PropertySet;
+use ReFlow::Controller::PropertySet;
 use Carp;
 
 BEGIN {

@@ -1,4 +1,4 @@
-package CBIL::Util::PropertySet;
+package ReFlow::Controller::PropertySet;
 
 use strict;
 use Carp;
