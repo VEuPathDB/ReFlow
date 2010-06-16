@@ -38,7 +38,7 @@ sub getStepNamesFromPattern {
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = 
 "SELECT name, state, undo_state
-FROM workflowStepTable
+FROM $workflowStepTable
 WHERE name like '$stepNamePattern'
 AND workflow_id = $self->{workflow_id}
 order by depth_first_order";

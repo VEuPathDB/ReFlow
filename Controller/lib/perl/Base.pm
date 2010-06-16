@@ -82,7 +82,7 @@ sub getGusConfig {
     if (!$self->{gusConfig}) {
       my $gusConfigFile = "$self->{gusHome}/config/gus.config";
       $self->{gusConfig} =
-	CBIL::Util::PropertySet->new($gusConfigFile, \@properties, 1);
+	ReFlow::Controller::PropertySet->new($gusConfigFile, \@properties, 1);
     }
     return $self->{gusConfig}->getProp($key);
 }
@@ -96,13 +96,14 @@ sub getWorkflowConfig {
 	 ['name', "", ""],
 	 ['version', "", ""],
 	 ['workflowXmlFile', "", ""],
-	 ['clusterServer', "", ""],
+	 ['workflowTable', "", ""],
+	 ['workflowStepTable', "", ""],
 	);
 
     if (!$self->{workflowConfig}) {
       my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
       $self->{workflowConfig} =
-	CBIL::Util::PropertySet->new($workflowConfigFile, \@properties);
+	ReFlow::Controller::PropertySet->new($workflowConfigFile, \@properties);
 
     }
     return $self->{workflowConfig}->getProp($key);

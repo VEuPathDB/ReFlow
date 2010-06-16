@@ -2,7 +2,7 @@ package ReFlow::DataSource::DataSources;
 
 use strict;
 
-use ApiCommonWorkflow::Main::DataSource;
+use ReFlow::DataSource::DataSource;
 
 use XML::Simple;
 use Data::Dumper;
@@ -34,7 +34,7 @@ sub getDataSource {
     die "can't find resource '$dataSourceName' in xml file $self->{resourcesXmlFile}"
       unless $self->{data}->{resource}->{$dataSourceName};
 
-    return ApiCommonWorkflow::Main::DataSource->new($dataSourceName, $self->{data}->{resource}->{$dataSourceName}, $self);
+    return ReFlow::DataSource::DataSource->new($dataSourceName, $self->{data}->{resource}->{$dataSourceName}, $self);
 }
 
 sub _parseXmlFile {

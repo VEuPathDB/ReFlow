@@ -47,7 +47,7 @@ sub getConfig {
       push(@$fullDeclaration,$fd);
     }
     $self->{stepConfig} = 
-      CBIL::Util::PropertySet->new($propFile, $fullDeclaration, 1);
+      ReFlow::Controller::PropertySet->new($propFile, $fullDeclaration, 1);
   }
 
   # first try explicit step property
@@ -76,7 +76,7 @@ sub getSharedConfigProperties {
     if (!$self->{globalStepsConfig}) {
       my $homeDir = $self->getWorkflowHomeDir();
       $self->{globalStepsConfig} =
-	CBIL::Util::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
+	ReFlow::Controller::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
     }
     return $self->{globalStepsConfig};
 }
@@ -199,7 +199,7 @@ sub setRunningState {
     my $undoStr = $undo? "undo_" : "";
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-UPDATE $orkflowStepTable
+UPDATE $workflowStepTable
 SET
   ${undoStr}state = '$RUNNING',
   ${undoStr}state_handled = 0,

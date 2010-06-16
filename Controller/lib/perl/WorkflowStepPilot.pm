@@ -48,7 +48,7 @@ sub pilotSetReady {
       return "Warning: Can't change $self->{name} from '$state' to '$READY'";
     }
 
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $workflowStepTable = $self->{workflow}->getWorkflowConfig('workflowStepTable');
     my $sql = "
 UPDATE $workflowStepTable
 SET 
@@ -77,7 +77,7 @@ sub pilotSetOffline {
     }
     my $offline_bool = $offline eq 'offline'? 1 : 0;
 
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $workflowStepTable = $self->{workflow}->getWorkflowConfig('workflowStepTable');
     my $sql = "
 UPDATE $workflowStepTable
 SET
@@ -114,7 +114,7 @@ sub pilotSetStopAfter {
       $stopafter_bool = 0;
     }
 
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $workflowStepTable = $self->{workflow}->getWorkflowConfig('workflowStepTable');
     my $sql = "
 UPDATE $workflowStepTable
 SET
@@ -131,8 +131,8 @@ $and_clause
 sub getDbState {
     my ($self) = @_;
 
-    my $workflowTable = $self->getWorkflowConfig('workflowTable');
-    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $workflowTable = $self->{workflow}->getWorkflowConfig('workflowTable');
+    my $workflowStepTable = $self->{workflow}->getWorkflowConfig('workflowStepTable');
 
     if (!$self->{state}) {
       my $workflow_id = $self->{workflow}->getId();
