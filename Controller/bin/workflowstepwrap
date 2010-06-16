@@ -3,7 +3,7 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 
-use GUS::Workflow::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepInvoker;
 
 usage() unless scalar(@ARGV) >= 7;
 
@@ -22,7 +22,7 @@ open (STDERR, ">>$errFile");
 print STDERR "\n\n================== " . localtime() . " ====================\n";
 print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
 
-my $invoker = GUS::Workflow::WorkflowStepInvoker->new($homeDir);
+my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
 
 $invoker->setRunningState($workflowId, $stepName, $undo);
 
