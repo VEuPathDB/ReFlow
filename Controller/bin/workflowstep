@@ -3,8 +3,8 @@
 use lib "$ENV{GUS_HOME}/lib/perl";
 
 use strict;
-use GUS::Workflow::WorkflowHandle;
-use GUS::Workflow::WorkflowStepPilot;
+use ReFlow::Controller::WorkflowHandle;
+use ReFlow::Controller::WorkflowStepPilot;
 
 # these should be imported from someplace, not duplicated here
 my $READY = 'READY';      # my parents are not done yet  -- default state
@@ -39,7 +39,7 @@ $undo = $ARGV[5];
     && ($list || $offline || $stopafter || ($state eq 'kill' || $state eq 'ready'))
     && (!$undo || $undo eq '-u');
 
-my $workflow = GUS::Workflow::WorkflowHandle->new($homeDir);
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 
 $workflow->getDbState();
 $workflow->error("Workflow is running an Undo.  -u required")
@@ -74,7 +74,7 @@ foreach my $stepInfo (@$stepList) {
       next;
     }
 
-    my $step = GUS::Workflow::WorkflowStepPilot->new($dbStepName, $workflow);
+    my $step = ReFlow::Controller::WorkflowStepPilot->new($dbStepName, $workflow);
 
     if ($state eq 'ready') {
 	my $errmsg = $step->pilotSetReady();
