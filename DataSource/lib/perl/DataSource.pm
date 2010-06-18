@@ -43,7 +43,9 @@ sub getOrganisms {
 sub getParentResource {
     my ($self) = @_;
 
-    return $self->{dataSources}->getDataSource($self->{parsedXml}->{parentResource});
+    my $parentResource= $self->{parsedXml}->{parentResource};
+
+    return $self->{dataSources}->getDataSource($parentResource) if $parentResource;
 }
 
 sub getProject {
