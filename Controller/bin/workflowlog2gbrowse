@@ -7,7 +7,6 @@ my $filter = $ARGV[2];
 my $startStr = $ARGV[3] if length(@ARGV) > 3;
 my $endStr = $ARGV[4] if length(@ARGV) > 4;
 
-#Wed, 23 Jun 2010 17:26:31  DONE                PreichenowiPostLoadGenome.genomeAnalysis.loadOrfFile 1750434854
 use strict;
 use Data::Dumper;
 my $controllerStarts;
@@ -17,7 +16,14 @@ my $logStartTime;
 my $logEndTime;
 my $timeStamp;
 my $endSec;
+my $foundStart;
+
 while(<STDIN>) {
+  next if ($startStr && !foundStart && !/$startStr/);
+
+  next if ($endStr && /$endStr/);
+    
+#Wed, 23 Jun 2010 17:26:31  DONE                PreichenowiPostLoadGenome.genomeAnalysis.loadOrfFile 1750434854
   next unless /(\w\w\w), (\d\d) (\w\w\w) (\d\d\d\d) (\d\d\:\d\d\:\d\d)/;
 
   $timeStamp = {day=>$1,dayofmonth=>$2,month=>$3,year=>$4,time=>$5};
@@ -97,10 +103,10 @@ foreach my $stepnm (keys(%$steps)) {
   print F "STEP\t$stepnm\t$startSec..$endSec \"$steps->{$stepnm}->{start}->{day} $steps->{$stepnm}->{start}->{time}-$steps->{$stepnm}->{end}->{time} $steps->{$stepnm}->{state}\"\n";
 }
 
-$logEndSec *= $scaleFactor;
+my $scaledLogEndSec = $logEndSec * $scaleFactor;
 
 # inform user of ending seconds
-print "Use this region in gbrowse: $sequenceId:1..$logEndSec\n";
+print "Use this region in gbrowse: $sequenceId:1..$scaledLogEndSec\n";
 
 sub handleRunning {
   my ($stepname, $timeStamp) = @_;
@@ -143,14 +149,22 @@ where:
   seqId:        a genomic sequence ID.  Its length must be >= seconds in your
                 selected section of log * the scale factor.
 
-  scalefactor:  number of basepairs per second.  higher values might help
+  scalefactor:  number of basepairs per second.  Higher values might help
                 compress the display vertically.  But 1 is ok too.
 
   secfilter:    ignore steps that took less than this number of seconds
 
-  startstr:     optional.  ignore lines of the log until this string is found.
+  startstr:     optional.  Ignore lines of the log until this string is found.
 
-  endstr:       optional.  ignore lines of the log after this string is found.
+  endstr:       optional.  Ignore lines of the log after this string is found.
+                Only allowed if startstr is provided.
+
+To help choose how long your sequence must be:
+  - 1 day    = ~90k sec
+  - 1 week   = ~600k sec
+  - 1 month  = ~2.5m sec
+
+For example, a week's worth of log at scale factor 5 would require a 3 megabase sequence.
 
 ";
   exit(1);
