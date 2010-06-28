@@ -1,14 +1,15 @@
 #!/usr/bin/perl
 
-usage() unless length(@ARGV) >=2;
+use strict;
+use Data::Dumper;
+
+usage() unless scalar(@ARGV) > 2;
 my $sequenceId = $ARGV[0];
 my $scaleFactor = $ARGV[1];
 my $filter = $ARGV[2];
-my $startStr = $ARGV[3] if length(@ARGV) > 3;
-my $endStr = $ARGV[4] if length(@ARGV) > 4;
+my $startStr = $ARGV[3] if scalar(@ARGV) > 3;
+my $endStr = $ARGV[4] if scalar(@ARGV) > 4;
 
-use strict;
-use Data::Dumper;
 my $controllerStarts;
 my $steps;
 my $stepNameCounts;
@@ -18,10 +19,12 @@ my $timeStamp;
 my $endSec;
 my $foundStart;
 
+print STDERR "startstr: $startStr\n";
 while(<STDIN>) {
-  next if ($startStr && !foundStart && !/$startStr/);
+  next if ($startStr && !$foundStart && !/$startStr/);
+  $foundStart = 1;
 
-  next if ($endStr && /$endStr/);
+  last if ($endStr && /$endStr/);
     
 #Wed, 23 Jun 2010 17:26:31  DONE                PreichenowiPostLoadGenome.genomeAnalysis.loadOrfFile 1750434854
   next unless /(\w\w\w), (\d\d) (\w\w\w) (\d\d\d\d) (\d\d\:\d\d\:\d\d)/;
@@ -76,8 +79,7 @@ my $logStartSec = convertTimeStampToSeconds($logStartTime);
 my $logEndSec = convertTimeStampToSeconds($logEndTime) - $logStartSec;
 
 # write steps track
-open(F, ">steps");
-print F "
+print "
 [STEP]
 glyph   = segments
 bgcolor = blue
@@ -89,8 +91,10 @@ reference=$sequenceId
 
 my $scaleFactor = 5;
 
-foreach my $stepnm (keys(%$steps)) {
-  my $startSec = convertTimeStampToSeconds($steps->{$stepnm}->{start}) - $logStartSec ;
+my @sortedSteps = sort {$steps->{$a}->{startsec} <=> $steps->{$b}->{startsec}} keys(%$steps);
+
+foreach my $stepnm (@sortedSteps) {
+  my $startSec = $steps->{$stepnm}->{startsec} - $logStartSec ;
   my $endTime = $steps->{$stepnm}->{end}? $steps->{$stepnm}->{end} : $logEndTime;
   $endSec = convertTimeStampToSeconds($endTime) - $logStartSec;
 
@@ -99,14 +103,13 @@ foreach my $stepnm (keys(%$steps)) {
   $startSec *= $scaleFactor;
   $endSec *= $scaleFactor;
 
-#  print F "STEP\t$stepnm\t$startSec..$endSec\n";
-  print F "STEP\t$stepnm\t$startSec..$endSec \"$steps->{$stepnm}->{start}->{day} $steps->{$stepnm}->{start}->{time}-$steps->{$stepnm}->{end}->{time} $steps->{$stepnm}->{state}\"\n";
+  print "STEP\t$stepnm\t$startSec..$endSec \"$steps->{$stepnm}->{start}->{day} $steps->{$stepnm}->{start}->{time}-$steps->{$stepnm}->{end}->{time} $steps->{$stepnm}->{state}\"\n";
 }
 
 my $scaledLogEndSec = $logEndSec * $scaleFactor;
 
 # inform user of ending seconds
-print "Use this region in gbrowse: $sequenceId:1..$scaledLogEndSec\n";
+print STDERR "Use this region in gbrowse: $sequenceId:1..$scaledLogEndSec\n";
 
 sub handleRunning {
   my ($stepname, $timeStamp) = @_;
@@ -116,6 +119,7 @@ sub handleRunning {
   if ($seenBeforeCount) {
     $stepname = "$stepname($stepNameCounts->{$stepname})";
   }
+  $steps->{$stepname}->{startsec} = convertTimeStampToSeconds($timeStamp);
   $steps->{$stepname}->{start} = $timeStamp;
 }
 
@@ -139,9 +143,11 @@ sub convertTimeStampToSeconds {
 
 
 sub usage {
-  print "
+  print STDERR "
 
 Display a section of controller.log as intervals in gbrowse.
+
+Write output to stdout.
 
 usage: workflowlog2gbrowse seqId scalefactor secfilter [startstr] [endstr]
 
