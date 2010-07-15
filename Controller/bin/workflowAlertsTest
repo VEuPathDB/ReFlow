@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use Data::Dumper;
+use ReFlow::Controller::Base;
+
+usage() unless scalar(@ARGV) == 1;
+my $alertsFile = $ARGV[0];
+
+my $base = ReFlow::Controller::Base->new("dontcare");
+
+my $alerts = $base->parseAlertsFile($alertsFile);
+
+while (<STDIN>) {
+  if (/^name:\s+(\S+)$/) {
+    my $stepName = $1;
+    my @list = $base->findAlertEmailList($stepName, $alerts);
+    my $liststr = join(', ', @list);
+    print "$stepName\t$liststr\n" if $liststr;
+  }
+}
+
+sub usage {
+  print "Test the validity of the alerts config file.  Provide the output of workflowXml as input on stdin.  Prints out the steps that will trigger alerts and the recipient list
+
+usage: workflowXml -h workflow_home_dir | workflowTestAlerts -h workflow_home_dir
+
+";
+
+  exit(1);
+}

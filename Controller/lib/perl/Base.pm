@@ -115,4 +115,40 @@ sub error {
     confess "$msg\n\n";
 }
 
+sub parseAlertsFile {
+    my ($self, $alertFile) = @_;
+
+    return unless -e $alertFile;
+    open(F, $alertFile) || die "Can't open alert file '$alertFile'\n";
+    my $alerts;
+    while (<F>) {
+        chomp;
+	my @a = split(/\t/);
+	die "Alert file '$alertFile' error on line $.\n" unless scalar(@a) == 2;
+	my $regex = $a[0];
+	my $maillist = $a[1];
+	my @mailaddrs = split(/,\s+/, $maillist);
+	map {die "Illegal email address '$_' in $alertFile" unless /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i} @mailaddrs;
+	$regex =~ s/\s+$//g;  # remove trailing white space
+	push(@$alerts, [$regex, \@mailaddrs]);
+      }
+    return $alerts;
+}
+
+sub findAlertEmailList {
+    my ($self, $stepName, $alerts) = @_;
+
+    my $whoToMail; # hash of address -> 1
+    foreach my $alert (@$alerts) {
+	my $regex = $alert->[0];
+	my $mailaddrs = $alert->[1];
+	if ($stepName =~ /$regex/) {
+	    map {$whoToMail->{$_} = 1} @$mailaddrs;
+	}
+    }
+    close(F);
+    return keys(%$whoToMail);
+}
+
+
 1;
