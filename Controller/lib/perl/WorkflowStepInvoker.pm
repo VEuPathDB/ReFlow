@@ -260,5 +260,45 @@ AND workflow_id = $workflowId
 AND ${undoStr}state = '$RUNNING'
 ";
     $self->runSql($sql);
+
+    $self->maybeSendAlert() if $state eq $DONE;
 }
 
+sub maybeSendAlert {
+    my ($self) = @_;
+
+    my $homeDir = $self->getWorkflowHomeDir();
+    my $alertFile = "$homeDir/config/alerts";
+    return unless -e $alertFile;
+    open(F, $alertFile) || die "Can't open alert file '$alertFile'\n";
+    my $whoToMail; # hash of address -> 1
+    while (<F>) {
+        chomp;
+	my @a = split(/\t/);
+	die "Alert file '$alertFile' error on line $.\n" unless scalar(@a) == 2;
+	my $regex = $a[0];
+	my $maillist = $a[1];
+	print STDERR "$regex $maillist\n";
+	$regex =~ s/\s+$//g;  # remove trailing white space
+	my @mailaddrs = split(/,\s+/, $maillist);
+	map {die "Illegal email address '$_' in $alertFile" unless /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i} @mailaddrs;
+	if ($self->getName() =~ /$regex/) {
+	    map {$whoToMail->{$_} = 1} @mailaddrs;
+	}
+    }
+    close(F);
+    $self->sendAlert($whoToMail) if $whoToMail;
+}
+
+sub sendAlert {
+    my ($self, $whoToMail) = @_;
+    my $maillist = join(",", keys(%$whoToMail));
+    print STDERR "Sending email alert to ($maillist)\n";
+  open(SENDMAIL, "|/usr/sbin/sendmail -t") or die "Cannot open sendmail: $!\n";
+  print SENDMAIL "Subject: step $self->{name} is done\n";
+  print SENDMAIL "To: $maillist\n";
+  print SENDMAIL "From: reflow\@eupathdb.org\n";
+  print SENDMAIL "Content-type: text/plain\n\n";
+  print SENDMAIL "woohoo!";
+  close(SENDMAIL);
+}
