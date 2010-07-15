@@ -261,7 +261,7 @@ AND ${undoStr}state = '$RUNNING'
 ";
     $self->runSql($sql);
 
-    $self->maybeSendAlert() if $state eq $DONE;
+    $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
 }
 
 sub maybeSendAlert {
