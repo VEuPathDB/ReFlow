@@ -337,7 +337,7 @@ public class Workflow <T extends WorkflowStep> {
     }
 
     // light reporting of state of workflow with steps
-    void quickReportSteps(String[] desiredStates) throws SQLException, FileNotFoundException, IOException {
+    void quickReportSteps(String[] desiredStates, boolean oneColumnOutput) throws SQLException, FileNotFoundException, IOException {
         getDbState();
 	workflowStepTable = getWorkflowConfig("workflowStepTable");
 
@@ -355,21 +355,25 @@ public class Workflow <T extends WorkflowStep> {
         try {
             stmt = getDbConnection().createStatement();
             rs = stmt.executeQuery(sql);
-            StringBuilder sb = new StringBuilder();
-            Formatter formatter = new Formatter(sb);
-            formatter.format("%1$-8s %2$-12s  %3$s ", "STATUS", "STEP ID", "NAME");               
-            System.out.println(sb.toString());
-
+	    StringBuilder sb = new StringBuilder();
+	    Formatter formatter = new Formatter(sb);
+	    if (!oneColumnOutput) {
+		formatter.format("%1$-8s %2$-12s  %3$s ", "STATUS", "STEP ID", "NAME");               
+		System.out.println(sb.toString());
+	    }
             while (rs.next()) {
                 String nm = rs.getString(1);
                 Integer ws_id = rs.getInt(2);
                 String stat = rs.getString(3);
                 
-                sb = new StringBuilder();
-                formatter = new Formatter(sb);
-                formatter.format("%1$-8s %2$-12s  %3$s", stat, ws_id, nm);               
-                System.out.println(sb.toString());
-             }
+		if (oneColumnOutput) System.out.println(nm);
+		else {
+		    sb = new StringBuilder();
+		    formatter = new Formatter(sb);
+		    formatter.format("%1$-8s %2$-12s  %3$s", stat, ws_id, nm);               
+		    System.out.println(sb.toString());
+		}
+	    }
         } finally {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close(); 
@@ -496,12 +500,20 @@ public class Workflow <T extends WorkflowStep> {
              workflow.resetMachine();
          } 
 
-         // quick step report
+         // quick step report (three column output)
          else if (cmdLine.hasOption("s")) {
              Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName); 
              String[] desiredStates = getDesiredStates(cmdLine, "s");
              oops = desiredStates.length < 1;
-             if (!oops) workflow.quickReportSteps(desiredStates);            
+             if (!oops) workflow.quickReportSteps(desiredStates,false);            
+         } 
+         
+         // quick step report (one column output)
+         else if (cmdLine.hasOption("s1")) {
+             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName); 
+             String[] desiredStates = getDesiredStates(cmdLine, "s1");
+             oops = desiredStates.length < 1;
+             if (!oops) workflow.quickReportSteps(desiredStates,true);            
          } 
          
          // compile check or detailed step report
@@ -584,8 +596,11 @@ public class Workflow <T extends WorkflowStep> {
          + "  quick report of workflow state (no steps)" + nl
          + "    % workflow -h workflow_dir -q" + nl
          + nl     
-         + "  print steps report." + nl
+         + "  print steps report (three column output)." + nl
          + "    % workflow -h workflow_dir -s FAILED ON_DECK" + nl
+         + nl     
+         + "  print steps report (one column output)." + nl
+         + "    % workflow -h workflow_dir -s1 FAILED ON_DECK" + nl
          + nl     
          + "  print detailed steps report." + nl
          + "    % workflow -h workflow_dir -d" + nl
@@ -617,8 +632,11 @@ public class Workflow <T extends WorkflowStep> {
          Option detailedRep = new Option("d", true, "Print detailed steps report");
          actions.addOption(detailedRep);
          
-         Option quickRep = new Option("s", true, "Print quick steps report");
+         Option quickRep = new Option("s", true, "Print quick steps report (three column output)");
          actions.addOption(quickRep);
+
+         Option quickRep1 = new Option("s1", true, "Print quick steps report (one column output)");
+         actions.addOption(quickRep1);
 
          Option quickWorkflowRep = new Option("q", "Print quick workflow report (no steps)");
          actions.addOption(quickWorkflowRep);
