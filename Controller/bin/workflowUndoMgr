@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use Data::Dumper;
+use ReFlow::Controller::Base;
+
+usage() unless scalar(@ARGV) == 3 && $ARGV[0] eq '-h'
+	 && ($ARGV[2] eq '-r' || $ARGV[2] eq '-t');
+
+my $home_dir = $ARGV[1];
+my $runOrTest = $ARGV[2];
+
+my @steps;
+while(<STDIN>) {
+  chomp;
+  s/\s+$//g; # lose trailing spaces
+  /^\S+$/ || die "invalid step name: '$_'\n";
+  push(@steps, $_);
+}
+
+die "\nNo steps provided on stdin... nothing to undo!\n\n" unless scalar(@steps);
+
+print STDERR "The following steps will be undone:\n\n";
+map {print STDERR "$_\n";} @steps;
+
+print STDERR "\nYou have 10 seconds to hit ctrl-C if that is not ok!\n\n";
+sleep(10);
+
+print STDERR "OK, here we go...\n\n";
+foreach my $step (@steps) {
+  my $cmd = "workflow -h $home_dir $runOrTest -u $step";
+  print STDERR "$cmd\n";
+  system ($cmd);
+  my $status = $? >>8;
+  if ($status) {
+    print STDERR "Error.  Failed with status '$status': $!\n\n";
+  }
+  else {
+    print STDERR "Done\n\n";
+  }
+}
+
+sub usage {
+  print "
+Run a series of undos.  Provide names of steps to undo on stdin.
+
+Typically use the workflow -s1 option piped to egrep to specify a list of
+DONE steps to undo.  Or just manually make a file and cat it.
+
+usage: workflow -h workflow_home_dir -s1 DONE | egrep some_regex_here | workflowUndoMgr -h workflow_home_dir <-r|-t>
+
+";
+
+  exit(1);
+}

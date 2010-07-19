@@ -11,3 +11,5 @@ my $args = &WDK::Model::CommandHelper::getJavaArgs(@ARGV);
 my $cmd = "java $sysProps -classpath $CLASSPATH org.gusdb.workflow.Workflow $args";
 
 system($cmd);
+
+exit($? >> 8);
