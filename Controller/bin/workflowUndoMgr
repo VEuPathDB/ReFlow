@@ -43,12 +43,16 @@ foreach my $step (@steps) {
 
 sub usage {
   print "
-Run a series of undos.  Provide names of steps to undo on stdin.
+Run a series of undos.  Takes names of steps on STDIN.  Each provided
+step name will be undone.
 
-Typically use the workflow -s1 option piped to egrep to specify a list of
-DONE steps to undo.  Or just manually make a file and cat it.
+Use the workflow command's -s1 option to find all DONE steps, and pipe
+those to egrep to find the ones you want to undo.  Pipe those to
+workflowUndoMgr.  (see Usage below).
 
-usage: workflow -h workflow_home_dir -s1 DONE | egrep some_regex_here | workflowUndoMgr -h workflow_home_dir <-r|-t>
+Or, manually create a file of step names and cat it to workflowUndoMgr
+
+Usage: workflow -h workflow_home_dir -s1 DONE | egrep some_regex_here | workflowUndoMgr -h workflow_home_dir <-r|-t>
 
 ";
 
