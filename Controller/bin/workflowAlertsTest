@@ -24,7 +24,7 @@ while (<STDIN>) {
 sub usage {
   print "Test the validity of the alerts config file.  Provide the output of workflowXml as input on stdin.  Prints out the steps that will trigger alerts and the recipient list
 
-usage: workflowXml -h workflow_home_dir | workflowTestAlerts -h workflow_home_dir
+usage: workflowXml -h workflow_home_dir | workflowAlertsTest -h workflow_home_dir
 
 ";
 
