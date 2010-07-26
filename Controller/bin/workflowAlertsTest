@@ -22,9 +22,16 @@ while (<STDIN>) {
 }
 
 sub usage {
-  print "Test the validity of the alerts config file.  Provide the output of workflowXml as input on stdin.  Prints out the steps that will trigger alerts and the recipient list
+  print "
+Test the validity of the alerts config file.  Provide the output of workflowXml
+as input on stdin.  Prints out the steps that will trigger alerts and the
+recipient list.
 
-usage: workflowXml -h workflow_home_dir | workflowAlertsTest -h workflow_home_dir
+Pipe stdout from workflowXml into stdin of workflowAlertsTest.  (Redirect
+stderr to /dev/null so you don't see all the warnings about excluded workflow
+steps.)
+
+usage: workflowXml -h workflow_home_dir 2> /dev/null | workflowAlertsTest alerts_file
 
 ";
 
