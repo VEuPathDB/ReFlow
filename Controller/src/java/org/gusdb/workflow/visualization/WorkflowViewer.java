@@ -59,8 +59,10 @@ import org.gusdb.workflow.visualization.mouse.PopupVertexEdgeMenuMousePlugin;
 import org.gusdb.workflow.visualization.mouse.WorkflowViewerMousePlugin;
 
 public class WorkflowViewer extends JFrame implements ActionListener {
-    final static String nl = System.getProperty("line.separator");
+    private static final String nl = System.getProperty("line.separator");
     private static final String TITLE = "Workflow Viewer";
+
+    private boolean showExpandedView;
     private Workflow workflow;
     private GraphZoomScrollPane currentView;
     private Map<String, DirectedGraph<WorkflowStep, Integer>> viewGraphs;
@@ -77,8 +79,9 @@ public class WorkflowViewer extends JFrame implements ActionListener {
     private Transformer<WorkflowStep,Paint> painter;
     private Transformer<WorkflowStep,Stroke> outliner;
 
-    public WorkflowViewer(String workflowDir) throws IOException {
+    public WorkflowViewer(String workflowDir, boolean showExpandedView) throws IOException {
 	super(TITLE);
+	this.showExpandedView = showExpandedView;
 	history = new Stack<String>();
 	viewGraphs = new HashMap<String, DirectedGraph<WorkflowStep,Integer>>();
 	viewInstances = new HashMap<String, GraphZoomScrollPane>();
@@ -86,6 +89,10 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 	initApplicationPane();
 	initTransformers();
 	createViewFromWorkflow();
+    }
+
+    public boolean getShowExpandedView() {
+	return showExpandedView;
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -129,8 +136,9 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 	createViewInstance(key, graph);
     }
 
-    private int addEdgeToGraph(DirectedGraph<WorkflowStep, Integer> graph, int edgeId, WorkflowStep parent, WorkflowStep child) {
-	if (!child.getIsSubgraphReturn()) {
+    private int addEdgeToGraph(DirectedGraph<WorkflowStep, Integer> graph, int edgeId,
+			       WorkflowStep parent, WorkflowStep child) {
+	if (showExpandedView || !child.getIsSubgraphReturn()) {
 	    if (parent == null) {
 		// Add this step
 		graph.addVertex(child);
@@ -142,7 +150,7 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 	    
 	    WorkflowStep nextParent = child;
 
-	    if (nextParent.getIsSubgraphCall()) {
+	    if (!showExpandedView && nextParent.getIsSubgraphCall()) {
 		int graphDepth = 1;
 		// Create the subgraph
 		createViewGraph(WorkflowViewer.getSubgraphKey(nextParent), nextParent.getChildren());
@@ -248,7 +256,7 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 	
 	outliner = new Transformer<WorkflowStep,Stroke>() {
 	    public Stroke transform(WorkflowStep vertex) {
-		if (vertex.getIsSubgraphCall()) {
+		if (!showExpandedView && vertex.getIsSubgraphCall()) {
 		    return new BasicStroke(3f);
 		}
 		return new BasicStroke(1f);
@@ -299,14 +307,15 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 
 	// parse command line
 	Options options = declareOptions();
-	String cmdlineSyntax = cmdName + " -h workflow_home_dir";
+	String cmdlineSyntax = cmdName + " -h workflow_home_dir [-expand]";
 	String cmdDescrip = "View a workflow graph.";
 	CommandLine cmdLine =
 	    Utilities.parseOptions(cmdlineSyntax, cmdDescrip, getUsageNotes(), options, args);
 	 
 	String homeDirName = cmdLine.getOptionValue("h");
+	boolean showExpandedView = cmdLine.hasOption("expand");
 	try {
-	    new WorkflowViewer(homeDirName);
+	    new WorkflowViewer(homeDirName, showExpandedView);
 	}
 	catch (Exception ex) {
 	    Utilities.usage(cmdlineSyntax, cmdDescrip, getUsageNotes(), options);
@@ -321,7 +330,8 @@ public class WorkflowViewer extends JFrame implements ActionListener {
     private static Options declareOptions() {
 	Options options = new Options();
 
-	Utilities.addOption(options, "h", "Workflow homedir (see below)", true);      
+	Utilities.addOption(options, "h", "Workflow homedir (see below)", true);  
+	Utilities.addOption(options, "expand", "Show the expanded view of the workflow", false, false);     
 
 	return options;
     }
@@ -343,6 +353,9 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 	    + "Examples:" + nl
 	    + nl     
 	    + "  view a workflow:" + nl
-	    + "    % workflowViewer -h workflow_dir" + nl;
+	    + "    % workflowViewer -h workflow_dir" + nl
+	    + nl     
+	    + "  view an expanded workflow:" + nl
+	    + "    % workflowViewer -h workflow_dir -expand" + nl;
     }
 } 

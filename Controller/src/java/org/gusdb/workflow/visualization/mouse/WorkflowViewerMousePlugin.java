@@ -51,7 +51,7 @@ public class WorkflowViewerMousePlugin extends AbstractGraphMousePlugin
 
 		vertex = pickSupport.getVertex(layout, e.getPoint().getX(), e.getPoint().getY());
 		if(vertex != null) {
-		    if (vertex.getIsSubgraphCall()) {
+		    if (!viewer.getShowExpandedView() && vertex.getIsSubgraphCall()) {
 			System.err.println("It was a subgraph step, so I'm going to load that graph.");
 			viewer.displayGraph(WorkflowViewer.getSubgraphKey(vertex));
 		    }
