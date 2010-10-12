@@ -42,7 +42,7 @@ sub _parseXmlFile {
 
   my $xmlString = $self->_substituteMacros($resourcesXmlFile, $properties);
   my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput']) };
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource']) };
 #  print STDERR Dumper $self->{data};
   die "$@\n$xmlString\n" if($@);
 }
