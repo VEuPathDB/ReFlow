@@ -464,7 +464,7 @@ public class Workflow <T extends WorkflowStep> {
          // parse command line
          Options options = declareOptions();
          String cmdlineSyntax = cmdName + " -h workflow_home_dir <-r | -t | -m | -q | -s <states>| -d <states>> <-u step_name>";
-         String cmdDescrip = "Run or test a workflow (regular or undo), or, print a report about a workflow.";
+         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
          CommandLine cmdLine =
              Utilities.parseOptions(cmdlineSyntax, cmdDescrip, getUsageNotes(), options, args);
                  
@@ -620,7 +620,7 @@ public class Workflow <T extends WorkflowStep> {
          Utilities.addOption(options, "h", "Workflow homedir (see below)", true);
          
          OptionGroup actions = new OptionGroup();
-         Option run = new Option("r", "Run a workflow");
+         Option run = new Option("r", "Run a workflow for real");
          actions.addOption(run);
          
          Option test = new Option("t", "Test a workflow");
