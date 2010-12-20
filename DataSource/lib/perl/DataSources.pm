@@ -28,6 +28,14 @@ sub getXmlFile {
   return $self->{resourcesXmlFile};
 }
 
+sub getDataSourceNames {
+  my ($self) = @_;
+
+  my $resources = $self->{data}->{resource};
+
+  return keys(%$resources);
+}
+
 sub getDataSource {
     my ($self, $dataSourceName) = @_;
 
