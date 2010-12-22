@@ -152,18 +152,30 @@ sub getDescription {
     return $self->{parsedXml}->{info}->{description};
 }
 
+# returns reference to an array of hash references with keys:
+#   pmid, doi, citation
 sub getPublications {
     my ($self) = @_;
 
     if (!$self->{publications}) {
 	foreach my $publication (@{$self->{parsedXml}->{info}->{publication}}) {
 	    my $pubmedId = $publication->{pmid};
-	    $publication->{citation} = `pubmedIdToCitation $pubmedId`;
-	    die "failed calling 'pubmedIdToCitation $pubmedId'" if $? >> 8;
+	    if ($pubmedId) {
+		$publication->{citation} = `pubmedIdToCitation $pubmedId`;
+		die "failed calling 'pubmedIdToCitation $pubmedId'" if $? >> 8;
+	    }
 	}
 	$self->{publications} = $self->{parsedXml}->{info}->{publication};
     }
     return $self->{publications};
+}
+
+# returns reference to an array of hash references with keys:
+# record_class, type, name
+sub getWdkReferences {
+    my ($self) = @_;
+
+    return $self->{parsedXml}->{info}->{wdkReference};
 }
 
 
