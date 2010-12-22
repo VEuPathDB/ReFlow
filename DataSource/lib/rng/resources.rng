@@ -53,7 +53,19 @@
             </element>
             <zeroOrMore>
               <element name="publication">
-                 <attribute name="pmid"/>
+                <optional>
+                  <attribute name="pmid"/>
+                </optional>
+                <optional>
+                  <attribute name="doi"/>
+                </optional>
+              </element>
+            </zeroOrMore>
+            <zeroOrMore>
+              <element name="wdkReference">
+                <attribute name="record_class"/>
+                <attribute name="type"/>
+                <attribute name="name"/>
               </element>
             </zeroOrMore>
           </element>
