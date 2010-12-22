@@ -156,12 +156,12 @@ sub getPublications {
     my ($self) = @_;
 
     if (!$self->{publications}) {
-	$self->{publications} = [];
-	foreach my $pubmedId ($self->{parsedXml}->{info}->{publication}->{pmid}) {
-	    my $publication = {pubmedId => $pubmedId};
+	foreach my $publication (@{$self->{parsedXml}->{info}->{publication}}) {
+	    my $pubmedId = $publication->{pmid};
 	    $publication->{citation} = `pubmedIdToCitation $pubmedId`;
 	    die "failed calling 'pubmedIdToCitation $pubmedId'" if $? >> 8;
 	}
+	$self->{publications} = $self->{parsedXml}->{info}->{publication};
     }
     return $self->{publications};
 }
