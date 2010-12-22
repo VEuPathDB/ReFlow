@@ -63,7 +63,7 @@
             </zeroOrMore>
             <zeroOrMore>
               <element name="wdkReference">
-                <attribute name="record_class"/>
+                <attribute name="recordClass"/>
                 <attribute name="type"/>
                 <attribute name="name"/>
               </element>

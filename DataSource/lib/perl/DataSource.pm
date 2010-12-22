@@ -171,7 +171,7 @@ sub getPublications {
 }
 
 # returns reference to an array of hash references with keys:
-# record_class, type, name
+# recordClass, type, name
 sub getWdkReferences {
     my ($self) = @_;
 
