@@ -52,7 +52,7 @@ sub _parseXmlFile {
   my $xml = new XML::Simple();
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference']) };
 #  print STDERR Dumper $self->{data};
-  die "$@\n$xmlString\n" if($@);
+  die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
 }
 
 sub _substituteMacros {
