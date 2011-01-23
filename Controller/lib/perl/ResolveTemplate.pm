@@ -4,6 +4,9 @@ use strict;
 
 my $MACROSYM = '&&';
 
+# scan template file
+# find all template macros and substitute in value
+# also grab all step and subgraph names
 sub resolve {
   my ($xmlFile, $rtcFile, $name) = @_;
 
@@ -11,6 +14,7 @@ sub resolve {
 
   open(XML, $xmlFile) || die "Can't open xml_file '$xmlFile'\n";
   my $newXml;
+  my @stepNames;
   while (<XML>) {
     next if /\<workflowGraph/;
     next if /\<\/workflowGraph/;
@@ -18,11 +22,18 @@ sub resolve {
       if /\<templateInstance/;
     die "Error: template XML file may not contain a <templateDepends>\n"
       if /\<templateDepends/;
-    $newXml .= substituteTemplateMacros($_, $templateConfig);
+    my $fixedLine =  substituteTemplateMacros($_, $templateConfig);
+    $newXml .= $fixedLine;
+    if ($fixedLine =~ /\<step|\<subgraph/) {
+      if ($fixedLine =~ /name\s*\=\s*\"(.*?)\"/) {
+	push(@stepNames, $1);
+      } else {
+	die "Error: line $. of template XML file '$xmlFile' has a step or subgraph call without a name= attribute.  These must be on the same line in a template file\n";
+      }
+    }
   }
-  return $newXml;
+  return ($newXml, \@stepNames);
 }
-
 
 sub parseRtcFile {
   my ($name, $rtcFile) = @_;
@@ -31,6 +42,7 @@ sub parseRtcFile {
   my $found;
   my $done;
   open(RTC, $rtcFile) || die "Can't open rtc_file '$rtcFile'\n";
+  $config->{name} = $name;
   while(<RTC>) {
     chomp;
     next if /^\s*$/;

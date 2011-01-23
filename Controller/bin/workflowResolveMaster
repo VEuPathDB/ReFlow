@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+
+use strict;
+use XML::Simple;
+use ReFlow::Controller::ResolveTemplate;
+
+usage() unless scalar(@ARGV) == 1;
+
+my ($masterXmlFile) = @ARGV;
+
+
+# parse master xml file.  use the result to grab attributes of each
+# <templateInstance> element.  (ignore the rest).
+my $xml = new XML::Simple();
+$xml = eval{ $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance']) };
+#  print STDERR Dumper $self->{data};
+die "$@\nerror processing XML file $masterXmlFile\n" if($@);
+
+my $templateInstances = $xml->{templateInstance};
+
+
+# scan file to find each <templateInstance> element.  use its order in the file
+# to index into the array of rigorously parsed elements.  use the values from
+# the parsed version to call workflowResolveTemplate.  textually replace the
+# element with the resolved template.
+open(M, $masterXmlFile) || die "Error: can't open master xml file '$masterXmlFile'\n";
+
+my $count;
+my $foundStart;
+my $fountEnd;
+my $fileString;
+my @allStepNames;
+while(<M>) {
+  if (/\<templateInstance/) {
+    $foundStart = 1;
+    $foundEnd = /\/\>/;
+  } elsif {$foundStart &&  /\/\>/) {
+    $foundEnd = 1;
+  } else {
+    $fileString .= $_;
+  }
+  if ($foundEnd) {
+    $foundStart = $foundEnd = 0;
+    my $instance = $templateInstances->[$count++];
+    my ($resolvedTemplateString, $stepNames) =
+      ReFlow::Controller::ResolveTemplate::resolve($instance->{xmlFile},
+						   $instance->{rtcFile},
+						   $instance->{name});
+    @allStepNames = (@allStepNames,@$stepNames);
+  }
+}
