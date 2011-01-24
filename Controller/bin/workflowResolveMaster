@@ -17,14 +17,14 @@ open(MASTER, $masterXmlFile) || die "Error: can't open master xml file '$masterX
 
 my $instanceIndex;
 my $foundInstanceStart;
-my $fountInstanceEnd;
+my $foundInstanceEnd;
 my @output;
 my $templatesUsed;
 while(<MASTER>) {
   if (/\<templateInstance/) {
     $foundInstanceStart = 1;
     $foundInstanceEnd = /\/\>/;
-  } elsif {$foundInstanceStart &&  /\/\>/) {
+  } elsif ($foundInstanceStart &&  /\/\>/) {
     $foundInstanceEnd = 1;
   } elsif (/\<templateDepends/) {
     my @resolvedDepends = processTemplateDepends($_, $templatesUsed);
