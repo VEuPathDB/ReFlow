@@ -8,44 +8,106 @@ usage() unless scalar(@ARGV) == 1;
 
 my ($masterXmlFile) = @ARGV;
 
+# use xml parser to find each <templateInstance> in master, and its attributes
+my $templateInstances = parseMasterFile($masterXmlFile);
+
+# now scan the master file and substitute resolved template text
+# for each <templateInstance> and also resolve each <templateDepends>
+open(MASTER, $masterXmlFile) || die "Error: can't open master xml file '$masterXmlFile'\n";
+
+my $instanceIndex;
+my $foundInstanceStart;
+my $fountInstanceEnd;
+my @output;
+my $templatesUsed;
+while(<MASTER>) {
+  if (/\<templateInstance/) {
+    $foundInstanceStart = 1;
+    $foundInstanceEnd = /\/\>/;
+  } elsif {$foundInstanceStart &&  /\/\>/) {
+    $foundInstanceEnd = 1;
+  } elsif (/\<templateDepends/) {
+    my @resolvedDepends = processTemplateDepends($_, $templatesUsed);
+    push(@output, @resolvedDepends);
+  } else {
+    push(@output, $_);  # just a regular line
+  }
+
+  # have found the end of a <templateInstance>
+  if ($foundInstanceEnd) {
+    $foundInstanceStart = $foundInstanceEnd = 0;
+    my $resolvedTemplate =
+      processTemplateInstance($templateInstances, $templatesUsed, $instanceIndex++);
+    push(@output, $resolvedTemplate);
+  }
+}
+print join("", @output);
+
+
+##################################################################
 
 # parse master xml file.  use the result to grab attributes of each
 # <templateInstance> element.  (ignore the rest).
-my $xml = new XML::Simple();
-$xml = eval{ $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance']) };
-#  print STDERR Dumper $self->{data};
-die "$@\nerror processing XML file $masterXmlFile\n" if($@);
+sub parseMasterFile {
+  my ($masterXmlFile) = @_;
+  my $xml = new XML::Simple();
+  $xml = eval{ $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance']) };
+  #  print STDERR Dumper $self->{data};
+  die "$@\nerror processing XML file $masterXmlFile\n" if($@);
 
-my $templateInstances = $xml->{templateInstance};
-
-
-# scan file to find each <templateInstance> element.  use its order in the file
-# to index into the array of rigorously parsed elements.  use the values from
-# the parsed version to call workflowResolveTemplate.  textually replace the
-# element with the resolved template.
-open(M, $masterXmlFile) || die "Error: can't open master xml file '$masterXmlFile'\n";
-
-my $count;
-my $foundStart;
-my $fountEnd;
-my $fileString;
-my @allStepNames;
-while(<M>) {
-  if (/\<templateInstance/) {
-    $foundStart = 1;
-    $foundEnd = /\/\>/;
-  } elsif {$foundStart &&  /\/\>/) {
-    $foundEnd = 1;
-  } else {
-    $fileString .= $_;
-  }
-  if ($foundEnd) {
-    $foundStart = $foundEnd = 0;
-    my $instance = $templateInstances->[$count++];
-    my ($resolvedTemplateString, $stepNames) =
-      ReFlow::Controller::ResolveTemplate::resolve($instance->{xmlFile},
-						   $instance->{rtcFile},
-						   $instance->{name});
-    @allStepNames = (@allStepNames,@$stepNames);
-  }
+  return $xml->{templateInstance};
 }
+
+
+sub processTemplateInstance {
+  my ($templateInstances, $templatesUsed, $instanceIndex, $output) = @_;
+
+  my $instance = $templateInstances->[$instanceIndex-1];
+
+  my $xmlFile = $instance->{xmlFile};
+  my $name = $instance->{name};
+  my $rtcFile = $instance->{rtcFile};
+
+  # resolve the template (substitute in macro values, etc)
+  my ($resolvedTemplateString, $stepNames) =
+    ReFlow::Controller::ResolveTemplate::resolve($xmlFile,$rtcFile,$name);
+
+  # remember that we have seen this template (and the steps it contains)
+  # and remember the name we called it with.
+  if (!$templatesUsed->{$xmlFile}) {
+    $templatesUsed->{$xmlFile}->{instanceNames} = [$name];
+    $templatesUsed->{$xmlFile}->{stepNames} = $stepNames;
+  } else {
+    push(@{$templatesUsed->{$xmlFile}->{names}}, $name);
+  }
+
+  return $resolvedTemplateString;
+}
+
+
+sub processTemplateDepends {
+  my ($line, $templatesUsed) = @_;
+
+  my @resolvedDepends;
+
+  if ($line =~ /\<templateDepends name\s*\=\s*\"(.+?)\" xmlFile\s*\=\s*\"(.+?)\"/) {
+    my $dependsName = $1;
+    my $templateFile = $2;
+    if ($templatesUsed->{$templateFile}) {
+      my $templateStepNames = $templatesUsed->{$templateFile}->{stepNames};
+      if (!grep(/^$dependsName$/, @$templateStepNames)) {
+	die "Error: can't find step with name '$dependsName' in template file '$templateFile'\n";
+      }
+      foreach my $name (@{$templatesUsed->{$templateFile}->{instanceNames}}) {
+	push(@resolvedDepends, "      <depends name=\"$name$dependsName\"/>\n");
+      }
+    } else {
+      die "Error: <templateDepends> on line $. refers to a template xml file that has not been instanced.\n";
+    }
+
+  } else {
+    die "Error: templateDepends has invalid format.   Must be all on one line with name= first and xmlFile= second.  Line $. file '$masterXmlFile'";
+  }
+  return @resolvedDepends;
+}
+
