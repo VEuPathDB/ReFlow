@@ -65,7 +65,6 @@ sub parseRtcFile {
     }
   }
   close(RTC);
-  print Dumper $config;
   return $config;
 }
 
@@ -76,7 +75,7 @@ sub substituteTemplateMacros {
     $line =~ s/name\s*=\s*\"(.+?)\"/name=\"$name$1\"/;
   }
 
-  return $line unless $line =~ m/\Q$MACROSYM\E/;
+  return $line unless $line =~ m/\Q$MACROSYM\E/; # use \Q and \E to escape *
 
   foreach my $key (keys(%$config)) {
     $line =~ s/\Q$MACROSYM$key$MACROSYM\E/$config->{$key}/g;

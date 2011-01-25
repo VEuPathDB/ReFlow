@@ -82,7 +82,7 @@ sub processTemplateInstance {
     $templatesUsed2->{$xmlFile}->{instanceNames} = [$name];
     $templatesUsed2->{$xmlFile}->{stepNames} = $stepNames;
   } else {
-    push(@{$templatesUsed2->{$xmlFile}->{names}}, $name);
+    push(@{$templatesUsed2->{$xmlFile}->{instanceNames}}, $name);
   }
 
   return
@@ -107,7 +107,7 @@ sub processTemplateDepends {
 	die "Error: can't find step with name '$dependsName' in template file '$templateFile' (used in <templateDepends> on line $.)\n";
       }
       foreach my $name (@{$templatesUsed->{$templateFile}->{instanceNames}}) {
-	push(@resolvedDepends, "      <depends name=\"$name$dependsName\"/>\n");
+	push(@resolvedDepends, "    <depends name=\"$name$dependsName\"/>\n");
       }
     } else {
       die "Error: <templateDepends> on line $. refers to a template xml file '$templateFile' that has not been instanced.\n";
