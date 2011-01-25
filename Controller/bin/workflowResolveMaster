@@ -2,11 +2,13 @@
 
 use strict;
 use XML::Simple;
+use lib "$ENV{GUS_HOME}/lib/perl";
 use ReFlow::Controller::ResolveTemplate;
+use Data::Dumper;
 
-usage() unless scalar(@ARGV) == 1;
+usage() unless scalar(@ARGV) == 2;
 
-my ($masterXmlFile) = @ARGV;
+my ($masterXmlFile, $libDir) = @ARGV;
 
 # use xml parser to find each <templateInstance> in master, and its attributes
 my $templateInstances = parseMasterFile($masterXmlFile);
@@ -19,7 +21,7 @@ my $instanceIndex;
 my $foundInstanceStart;
 my $foundInstanceEnd;
 my @output;
-my $templatesUsed;
+my $templatesUsed = {};
 while(<MASTER>) {
   if (/\<templateInstance/) {
     $foundInstanceStart = 1;
@@ -37,7 +39,7 @@ while(<MASTER>) {
   if ($foundInstanceEnd) {
     $foundInstanceStart = $foundInstanceEnd = 0;
     my $resolvedTemplate =
-      processTemplateInstance($templateInstances, $templatesUsed, $instanceIndex++);
+      processTemplateInstance($templateInstances, $templatesUsed, $instanceIndex++, $libDir);
     push(@output, $resolvedTemplate);
   }
 }
@@ -51,16 +53,17 @@ print join("", @output);
 sub parseMasterFile {
   my ($masterXmlFile) = @_;
   my $xml = new XML::Simple();
-  $xml = eval{ $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance']) };
-  #  print STDERR Dumper $self->{data};
+#  my $xmlData = $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance']);
+  my $xmlData = eval{ $xml->XMLin($masterXmlFile, SuppressEmpty => undef, ForceArray=>['templateInstance'], KeyAttr=>[]) };
   die "$@\nerror processing XML file $masterXmlFile\n" if($@);
+#    print STDERR Dumper $xmlData;
 
-  return $xml->{templateInstance};
+  return $xmlData->{templateInstance};
 }
 
 
 sub processTemplateInstance {
-  my ($templateInstances, $templatesUsed, $instanceIndex, $output) = @_;
+  my ($templateInstances, $templatesUsed2, $instanceIndex, $libDir) = @_;
 
   my $instance = $templateInstances->[$instanceIndex-1];
 
@@ -70,18 +73,23 @@ sub processTemplateInstance {
 
   # resolve the template (substitute in macro values, etc)
   my ($resolvedTemplateString, $stepNames) =
-    ReFlow::Controller::ResolveTemplate::resolve($xmlFile,$rtcFile,$name);
+    ReFlow::Controller::ResolveTemplate::resolve("$libDir/xml/workflowTemplates/$xmlFile",
+						 "$libDir/rtc/$rtcFile", $name);
 
   # remember that we have seen this template (and the steps it contains)
   # and remember the name we called it with.
-  if (!$templatesUsed->{$xmlFile}) {
-    $templatesUsed->{$xmlFile}->{instanceNames} = [$name];
-    $templatesUsed->{$xmlFile}->{stepNames} = $stepNames;
+  if (!$templatesUsed2->{$xmlFile}) {
+    $templatesUsed2->{$xmlFile}->{instanceNames} = [$name];
+    $templatesUsed2->{$xmlFile}->{stepNames} = $stepNames;
   } else {
-    push(@{$templatesUsed->{$xmlFile}->{names}}, $name);
+    push(@{$templatesUsed2->{$xmlFile}->{names}}, $name);
   }
 
-  return $resolvedTemplateString;
+  return
+"  <!-- START templateInstance name=\"$name\" xmlFile=\"$xmlFile\" rtcFile=\"$rtcFile\" -->
+$resolvedTemplateString
+  <!-- END -->
+";
 }
 
 
@@ -96,13 +104,13 @@ sub processTemplateDepends {
     if ($templatesUsed->{$templateFile}) {
       my $templateStepNames = $templatesUsed->{$templateFile}->{stepNames};
       if (!grep(/^$dependsName$/, @$templateStepNames)) {
-	die "Error: can't find step with name '$dependsName' in template file '$templateFile'\n";
+	die "Error: can't find step with name '$dependsName' in template file '$templateFile' (used in <templateDepends> on line $.)\n";
       }
       foreach my $name (@{$templatesUsed->{$templateFile}->{instanceNames}}) {
 	push(@resolvedDepends, "      <depends name=\"$name$dependsName\"/>\n");
       }
     } else {
-      die "Error: <templateDepends> on line $. refers to a template xml file that has not been instanced.\n";
+      die "Error: <templateDepends> on line $. refers to a template xml file '$templateFile' that has not been instanced.\n";
     }
 
   } else {
@@ -111,3 +119,21 @@ sub processTemplateDepends {
   return @resolvedDepends;
 }
 
+sub usage {
+
+  print "
+Resolve a workflow master file.
+
+Usage:  workflowResolveMaster master_xml_file lib_dir
+
+Where:
+  master_xml_file:  file with <templateInstance> elements
+  lib_dir:          lib/ directory under which will be found the xml and rtc
+                    files mentioned in the <templateInstance> elements
+
+Output: the generated workflow xml file to STDOUT
+
+";
+
+  exit(1);
+}

@@ -1,8 +1,9 @@
 package ReFlow::Controller::ResolveTemplate;
 
 use strict;
+use Data::Dumper;
 
-my $MACROSYM = '&&';
+my $MACROSYM = '**';
 
 # scan template file
 # find all template macros and substitute in value
@@ -13,26 +14,28 @@ sub resolve {
   my $templateConfig = parseRtcFile($name, $rtcFile);
 
   open(XML, $xmlFile) || die "Can't open xml_file '$xmlFile'\n";
-  my $newXml;
+  my @newXml;
   my @stepNames;
   while (<XML>) {
     next if /\<workflowGraph/;
     next if /\<\/workflowGraph/;
-    die "Error: template XML file may not contain a <templateInstance>\n"
+    die "Error: template XML file '$xmlFile' not allowed to contain a <templateInstance>\n"
       if /\<templateInstance/;
-    die "Error: template XML file may not contain a <templateDepends>\n"
+    die "Error: template XML file  '$xmlFile' not allowed to contain a <templateDepends>\n"
       if /\<templateDepends/;
-    my $fixedLine =  substituteTemplateMacros($_, $templateConfig);
-    $newXml .= $fixedLine;
-    if ($fixedLine =~ /\<step|\<subgraph/) {
-      if ($fixedLine =~ /name\s*\=\s*\"(.*?)\"/) {
+    if (/\<step|\<subgraph/) {
+      if (/name\s*\=\s*\"(.*?)\"/) {
 	push(@stepNames, $1);
       } else {
 	die "Error: line $. of template XML file '$xmlFile' has a step or subgraph call without a name= attribute.  These must be on the same line in a template file\n";
       }
     }
+    my $fixedLine =
+      substituteTemplateMacros($_, $templateConfig, $name, $rtcFile, $xmlFile);
+    push(@newXml, $fixedLine);
   }
-  return ($newXml, \@stepNames);
+  close(XML);
+  return (join("", @newXml), \@stepNames);
 }
 
 sub parseRtcFile {
@@ -42,36 +45,47 @@ sub parseRtcFile {
   my $found;
   my $done;
   open(RTC, $rtcFile) || die "Can't open rtc_file '$rtcFile'\n";
-  $config->{name} = $name;
+  $config->{NAME} = $name;
   while(<RTC>) {
     chomp;
     next if /^\s*$/;
     if (/^\>$name/) {
-      die "Error: duplicate stanza for '$name' found\n" if $done;
+      die "Error: duplicate stanza for '$name' found in rtc file '$rtcFile'\n" if $done;
       $found = 1;
     } elsif ($found && /\/\//) {
       $done = 1;
     } elsif ($found && !$done && /^\>/) {
-      die "Error: stanza for '$name' must end in a line with '//'\n";
+      die "Error: stanza for '$name' must end in a line with '//' in rtc file '$rtcFile'\n";
     } elsif ($found && !$done) {
-      /(.*?)\=(.*)/ || die "Error: invalid format on line $. of rtc_file '$rtcFile'\n";
+      /(\S+?)\s*\=\s*(.*)/ || die "Error: invalid format on line $. of rtc_file '$rtcFile'\n";
       my $key = $1;
-      die "Error: duplicate key '$key' found in stanza for '$name'\n"
+      die "Error: duplicate key '$key' found in stanza for '$name' in rtc file '$rtcFile'\n"
 	if $config->{$key};
       $config->{$key} = $2;
     }
   }
+  close(RTC);
+  print Dumper $config;
   return $config;
 }
 
 sub substituteTemplateMacros {
-  my ($line, $config) = @_;
+  my ($line, $config, $name, $rtcFile, $xmlFile) = @_;
 
-  return $line unless $line =~ /$MACROSYM/;
-  foreach my $key (keys(%$config)) {
-    $line =~ s/$MACROSYM$key$MACROSYM/$config->{$key}/g;
+  if ($line =~ /\<subgraph/ || $line =~ /<step/) {
+    $line =~ s/name\s*=\s*\"(.+?)\"/name=\"$name$1\"/;
   }
-  die "Error: can't resolve a template macro in line $. of template xml_file: $line\n" if $line =~ /$MACROSYM/;
+
+  return $line unless $line =~ m/\Q$MACROSYM\E/;
+
+  foreach my $key (keys(%$config)) {
+    $line =~ s/\Q$MACROSYM$key$MACROSYM\E/$config->{$key}/g;
+  }
+  die 
+"Error trying to resolve <templateInstance> with name '$name'.
+    template file: $xmlFile
+    rtc file:      $rtcFile
+Can't find a config property for a template macro on line $. of template file:\n $line\n" if $line =~ /\Q$MACROSYM\E/;
   return $line;
 }
 
