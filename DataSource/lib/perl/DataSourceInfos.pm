@@ -31,7 +31,7 @@ sub getDataSourceNames {
 
   my $resourceInfos = $self->{data}->{resourceInfo};
 
-  return keys(%$resources);
+  return keys(%$resourceInfos);
 }
 
 sub getDataSourceInfo {
@@ -44,13 +44,13 @@ sub getDataSourceInfo {
 }
 
 sub _parseXmlFile {
-  my ($self, $resourceInfoXmlFile) = @_;
+  my ($self, $resourceInfoXmlFile, $properties) = @_;
 
   my $xml = new XML::Simple();
-  my $xmlString = $self->_substituteMacros($resourcesInfoXmlFile, $properties);
+  my $xmlString = $self->_substituteMacros($resourceInfoXmlFile, $properties);
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
 #  print STDERR Dumper $self->{data};
-  die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
+  die "$@\n$xmlString\nerror processing XML file $resourceInfoXmlFile\n" if($@);
 }
 
 sub validateWdkReference {
@@ -147,7 +147,7 @@ sub _substituteConstants {
   while (<FILE>) {
     my $line = $_;
     if (/\<constant/) {
-	if (/\<constant\s+name\s*=\s*\"\()"\s+value\s*=\s*\"()\"/) {
+	if (/\<constant\s+name\s*=\s*\"\(.*\)"\s+value\s*=\s*\"\(.*\)\"/) {
 	    $constants->{$1} = $2;
 	} else {
 	    die "Can't parse <constant> element on line $. of $xmlFile.  Must be in form of:
