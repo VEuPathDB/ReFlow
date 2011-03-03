@@ -8,7 +8,7 @@ use XML::Simple;
 use Data::Dumper;
 
 sub new {
-  my ($class, $resourceInfoXmlFile, $properties) = @_;
+  my ($class, $resourceInfoXmlFile) = @_;
 
   my $self = {};
 
@@ -16,7 +16,7 @@ sub new {
 
   $self->{resourceInfoXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasources/$resourceInfoXmlFile";
 
-  $self->_parseXmlFile($self->{resourceInfoXmlFile}, $properties);
+  $self->_parseXmlFile($self->{resourceInfoXmlFile});
 
   return $self;
 }
@@ -44,11 +44,10 @@ sub getDataSourceInfo {
 }
 
 sub _parseXmlFile {
-  my ($self, $resourceInfoXmlFile, $properties) = @_;
+  my ($self, $resourceInfoXmlFile) = @_;
 
   my $xml = new XML::Simple();
-  my $xmlString = $self->_substituteMacros($resourceInfoXmlFile, $properties);
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
+  $self->{data} = eval{ $xml->XMLin($resourceInfoXmlFile, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
 #  print STDERR Dumper $self->{data};
   die "$@\n$xmlString\nerror processing XML file $resourceInfoXmlFile\n" if($@);
 }
