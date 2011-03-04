@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Copy;
+
+my $origFile = $ARGV[0];
+
+usage() unless $origFile;
+
+copy($origFile, "$origFile.sv") || die "can't copy $origFile to $origFile.sv\n";
+
+open(ORIG, "$origFile.sv") || die "can't open $origFile.sv for reading\n";
+open(RESOURCE, ">$origFile") || die "can't open $origFile for writing\n";
+
+my $infoFile = $origFile;
+$infoFile =~ s/\.xml/Info\.xml/;
+
+open(INFO, ">$infoFile") || die "can't open $infoFile for writing\n";
+
+my $resource;
+my $foundInfo;
+print INFO "<resourceInfos>\n";
+while(<ORIG>) {
+  chomp;
+  if (/\<resource\s+resource\s*=\s*\"(.+?)\"/) {
+    $resource = $1;
+    print RESOURCE "$_\n" ;
+  } elsif (/\<resource/) {
+    print RESOURCE "$_\n" ;
+  } elsif (/resource\s*=\s*\"(.+?)\"/) {
+    $resource = $1;
+    print RESOURCE "$_\n" ;
+  } elsif (/\<info/) {
+    $foundInfo = 1;
+    s/\<info/\<resourceInfo/;
+    print INFO "$_ resource=\"$resource\"\n";
+  } elsif (/\<\/info/) {
+    s/\<\/info/\<\/resourceInfo/;
+    print INFO "$_\n\n" ;
+    $foundInfo = 0;
+  } elsif ($foundInfo) {
+    s/organisms=/organism=/;
+    print INFO  "$_\n" ;
+  } else {
+    print RESOURCE "$_\n" ;
+  }
+}
+
+print INFO "</resourceInfos>\n";
+
+sub usage {
+print STDERR "
+
+separate a resource xml file into two files, one with <resource>s and the other
+with <resourceInfo>s.
+
+usage:  createInfoXmlFile orig_xml_file
+
+writes new resource xml file to original location (and makes a .sv of orgiginal)
+
+";
+
+  exit(1);
+}
