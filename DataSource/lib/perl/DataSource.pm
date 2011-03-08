@@ -143,6 +143,7 @@ sub getPluginArgs {
     }
     $pluginArgs =~ s/\%${parent}RESOURCE_NAME\%/$name/g;
     $pluginArgs =~ s/\%${parent}RESOURCE_VERSION\%/$version/g;
+    $pluginArgs =~ s/\n+/ /g;
     return $pluginArgs;
 }
 
