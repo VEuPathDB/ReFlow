@@ -43,9 +43,15 @@ sub getOrganisms {
 sub getParentResource {
     my ($self) = @_;
 
-    my $parentResource= $self->{parsedXml}->{parentResource};
+    my $parentDatasource;
+    my $parentResourceName = $self->{parsedXml}->{parentResource};
 
-    return $self->{dataSources}->getDataSource($parentResource) if $parentResource;
+    if ($parentResourceName) {
+	$parentDatasource =
+	    $self->{dataSources}->getDataSource($parentResourceName);
+	die "Error: can't find parent resource '$parentResourceName' mentioned in $self->{dataSourceName}\n" unless $parentDatasource;
+    } 
+    return $parentDatasource;
 }
 
 sub getProject {
