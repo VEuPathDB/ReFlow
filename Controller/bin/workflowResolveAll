@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+
+use strict;
+use XML::Simple;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use ReFlow::Controller::ResolveTemplate;
+use Data::Dumper;
+use File::stat;
+
+usage() unless scalar(@ARGV) == 0;
+
+my $libDir = "$ENV{PROJECT_HOME}/ApiCommonWorkflow/Main/lib";
+my $masterDir = "$libDir/xml/workflowMasters/";
+my $templateDir = "$libDir/xml/workflowTemplates/";
+my $workflowDir = "$ENV{GUS_HOME}/lib/xml/workflow/";
+
+print "Looking for outdated master files...\n";
+
+# get all master files
+opendir(MASTER_DIR, $masterDir) ||
+    &confess ("Error:  Could not open $masterDir.  Please check it exists and try again.");
+while (my $fileName = readdir(MASTER_DIR)) {
+    if ($fileName =~ /.*\.xml$/) {
+        # print "Processing file: $fileName...\n"; 
+
+        # get the timestamp for master; the timestamp will be the newest among
+        # master and all its templates.
+        my $masterFile = $masterDir . $fileName;
+        my $masterTime = -M $masterFile;
+
+        # parse master file
+        my $xml = new XML::Simple();
+        my $xmlData = eval{ $xml->XMLin($masterFile, SuppressEmpty => undef, ForceArray=>['templateInstance'], KeyAttr=>[]) };
+        die "$@\nerror processing XML file $masterFile\n" if($@);
+
+        foreach(@{$xmlData->{templateInstances}}) {
+            my $templateFile = $templateDir . $_->{xmlFile};
+            (-e $templateFile) || die "master file $fileName refers to a missing template file: " . $_->{xmlFile};
+            my $templateTime = -M $templateFile;
+            if ($templateTime > $masterTime) {
+                $masterTime = $templateTime;
+            }
+        }
+        
+        # get the timestamp for workflow
+        my $masterName = substr $fileName, 0, -10;
+
+        my $workflowFile = $workflowDir . $masterName . ".xml";
+        my $needUpdate = 0;
+        if (-e $workflowFile) {
+            my $workflowTime = stat($workflowFile)->mtime;
+            if ($workflowTime < $masterTime) {
+                $needUpdate = 1;
+            }
+        } else {
+            $needUpdate = 1;
+        }
+
+        # update the workflow
+        if ($needUpdate == 1) {
+            print "Generating workflow: $masterName.xml...\n";
+            my $cmd = "workflowResolveMaster $masterFile $libDir > $workflowFile";
+            system($cmd);
+        } else {
+            print "No need to update workflow:  $masterName.xml...\n";
+        }
+    }
+}
+
+
+sub usage {
+
+  print "
+Resolve all outdated workflow master files.
+
+Usage:  workflowResolveAll
+
+Where:
+        no argument needed.
+
+Output:
+        the workflow files will be saved into \$GUS_HOME/lib/xml/workflow/.
+
+";
+
+  exit(1);
+}
