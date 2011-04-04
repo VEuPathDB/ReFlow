@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+
+use ReFlow::Controller::WorkflowStepInvoker;
+
+usage() unless scalar(@ARGV) >= 7;
+
+my $i = 0;
+my $homeDir = $ARGV[$i++];
+my $workflowId = $ARGV[$i++];
+my $stepName = $ARGV[$i++];
+my $stepId = $ARGV[$i++];
+my $invokerClass = $ARGV[$i++];
+my $errFile =  $ARGV[$i++];
+my $mode = $ARGV[$i++];
+my $undo = $ARGV[$i++];
+my @paramStrings = @ARGV[$i..$#ARGV];
+
+open (STDERR, ">>$errFile");
+print STDERR "\n\n================== " . localtime() . " ====================\n";
+print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
+
+my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
+
+$invoker->setRunningState($workflowId, $stepName, $undo);
+
+my $stepInvoker =  $invoker->getStepInvoker($invokerClass, $homeDir);
+
+$stepInvoker->setParamValues(\@paramStrings);
+
+my $status = $stepInvoker->runInWrapper($workflowId, $stepName, $stepId, $mode, $undo, $invokerClass);
+
+exit($status);
+
+sub usage {
+    print "
+Caution!! this program is only called by the workflow controller
+
+usage: workflowstepwrap workflow_dir workflow_id stepname stepid stepclass errfile [run|test] undo param1name=param1value ...
+";
+    exit(1);
+}
+
+
+
+

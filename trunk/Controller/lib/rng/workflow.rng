@@ -1,0 +1,104 @@
+<?xml version="1.0" ?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="workflowGraph">
+      <attribute name="name" />
+      <zeroOrMore>
+        <element name="param">
+          <attribute name="name" />
+          <optional>
+            <attribute name="doNotValidate"/>
+          </optional>
+          <text/>
+        </element>
+      </zeroOrMore>
+      <zeroOrMore>
+        <element name="globalConstant">
+          <attribute name="name" />
+          <text/>
+        </element>
+      </zeroOrMore>    
+      <zeroOrMore>
+        <element name="constant">
+          <attribute name="name" />
+          <text/>
+        </element>
+      </zeroOrMore>    
+      <optional>    
+        <element name="globalSubgraph">
+          <attribute name="name" />
+          <attribute name="xmlFile"/>
+          <zeroOrMore>
+            <element name="paramValue">
+              <attribute name="name" />
+              <text/>
+            </element>
+          </zeroOrMore>       
+        </element>
+      </optional>    
+      <oneOrMore>
+        <choice>
+          <element name="step">
+            <attribute name="name" />
+            <attribute name="stepClass"/>
+            <optional>
+              <choice>
+                <attribute name="includeIf"/>
+                <attribute name="excludeIf"/>
+              </choice>
+            </optional>
+            <optional>
+              <attribute name="stepLoadTypes"/>
+            </optional>
+            <optional>
+              <attribute name="undoRoot"/>
+            </optional>
+            <zeroOrMore>
+              <element name="paramValue">
+                <attribute name="name" />
+                <text/>
+              </element>
+            </zeroOrMore>       
+            <zeroOrMore>
+              <element name="depends">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
+            <zeroOrMore>
+              <element name="dependsGlobal">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
+          </element>
+          <element name="subgraph">
+            <attribute name="name" />
+            <attribute name="xmlFile"/>
+            <optional>
+              <choice>
+                <attribute name="includeIf"/>
+                <attribute name="excludeIf"/>
+              </choice>
+            </optional>
+            <zeroOrMore>
+              <element name="paramValue">
+                <attribute name="name" />
+                <text/>
+              </element>
+            </zeroOrMore>       
+            <zeroOrMore>
+              <element name="depends">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
+            <zeroOrMore>
+              <element name="dependsGlobal">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
+          </element>
+        </choice>
+      </oneOrMore>    
+    </element>
+  </start>
+</grammar>

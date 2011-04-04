@@ -1,0 +1,177 @@
+#!/usr/bin/perl
+
+use strict;
+use Data::Dumper;
+
+usage() unless scalar(@ARGV) > 2;
+my $sequenceId = $ARGV[0];
+my $scaleFactor = $ARGV[1];
+my $filter = $ARGV[2];
+my $startStr = $ARGV[3] if scalar(@ARGV) > 3;
+my $endStr = $ARGV[4] if scalar(@ARGV) > 4;
+
+my $controllerStarts;
+my $steps;
+my $stepNameCounts;
+my $logStartTime;
+my $logEndTime;
+my $timeStamp;
+my $endSec;
+my $foundStart;
+
+print STDERR "startstr: $startStr\n";
+while(<STDIN>) {
+  next if ($startStr && !$foundStart && !/$startStr/);
+  $foundStart = 1;
+
+  last if ($endStr && /$endStr/);
+    
+#Wed, 23 Jun 2010 17:26:31  DONE                PreichenowiPostLoadGenome.genomeAnalysis.loadOrfFile 1750434854
+  next unless /(\w\w\w), (\d\d) (\w\w\w) (\d\d\d\d) (\d\d\:\d\d\:\d\d)/;
+
+  $timeStamp = {day=>$1,dayofmonth=>$2,month=>$3,year=>$4,time=>$5};
+
+  $logStartTime = $timeStamp unless $logStartTime;
+
+  my ($dontcare, $msg) = split(/\:\d\d  /);
+
+  # controller restarts have an empty message
+  if  ($msg =~ /^\s+$/) {
+    push(@$controllerStarts, $timeStamp);
+  }
+
+  elsif ($msg =~ /RUNNING \s+(\S+)/) {
+    my $stepname = $1;
+    handleRunning($stepname, $timeStamp);
+  }
+
+  elsif ($msg =~ /(DONE|FAILED) \s+(\S+)/) {
+    my $state = $1;
+    my $stepname = $2;
+    if ($stepname eq '***') {
+      $msg =~ /\*\*\* \s+(\S+)/;
+      $stepname = $1;
+    }
+    next if $stepname eq '(call)';
+
+    my $seenBeforeCount = $stepNameCounts->{$stepname};
+    my $fullStepName = $stepname;
+    if ($seenBeforeCount > 1) {
+      $fullStepName = "$stepname($seenBeforeCount)";
+    }
+
+    # handle case when step happened so fast there was no RUNNING
+    if (!$steps->{$stepname} || $steps->{$fullStepName}->{end}) {
+      handleRunning($stepname, $timeStamp);
+      $seenBeforeCount++;
+      if ($seenBeforeCount > 1) {
+	$fullStepName = "$stepname($seenBeforeCount)";
+      }
+    }
+
+    $steps->{$fullStepName}->{end} = $timeStamp;
+    $steps->{$fullStepName}->{state} = $state;
+  }
+}
+
+$logEndTime = $timeStamp;
+my $logStartSec = convertTimeStampToSeconds($logStartTime);
+my $logEndSec = convertTimeStampToSeconds($logEndTime) - $logStartSec;
+
+# write steps track
+print "
+[STEP]
+glyph   = segments
+bgcolor = blue
+key     = Steps
+bump = 1
+
+reference=$sequenceId
+";
+
+my $scaleFactor = 5;
+
+my @sortedSteps = sort {$steps->{$a}->{startsec} <=> $steps->{$b}->{startsec}} keys(%$steps);
+
+foreach my $stepnm (@sortedSteps) {
+  my $startSec = $steps->{$stepnm}->{startsec} - $logStartSec ;
+  my $endTime = $steps->{$stepnm}->{end}? $steps->{$stepnm}->{end} : $logEndTime;
+  $endSec = convertTimeStampToSeconds($endTime) - $logStartSec;
+
+  next if ($endSec - $startSec) < 300;
+
+  $startSec *= $scaleFactor;
+  $endSec *= $scaleFactor;
+
+  print "STEP\t$stepnm\t$startSec..$endSec \"$steps->{$stepnm}->{start}->{day} $steps->{$stepnm}->{start}->{time}-$steps->{$stepnm}->{end}->{time} $steps->{$stepnm}->{state}\"\n";
+}
+
+my $scaledLogEndSec = $logEndSec * $scaleFactor;
+
+# inform user of ending seconds
+print STDERR "Use this region in gbrowse: $sequenceId:1..$scaledLogEndSec\n";
+
+sub handleRunning {
+  my ($stepname, $timeStamp) = @_;
+  my $seenBeforeCount = $stepNameCounts->{$stepname};
+  $stepNameCounts->{$stepname}++;
+
+  if ($seenBeforeCount) {
+    $stepname = "$stepname($stepNameCounts->{$stepname})";
+  }
+  $steps->{$stepname}->{startsec} = convertTimeStampToSeconds($timeStamp);
+  $steps->{$stepname}->{start} = $timeStamp;
+}
+
+# use first second of first day of log as epoch start.
+sub convertTimeStampToSeconds {
+  my ($t) = @_;
+
+  my $monthLen = {Jan=>31,Feb=>28,Mar=>31,Apr=>30,May=>31,Jun=>30,Jul=>31,Aug=>31,Sep=>30,Oct=>31,Nov=>30,Dec=>31};
+  $monthLen->{Feb} = 29 if $logEndTime->{year} = "2012";
+
+  # for now, assume at most 2 month run time
+  my $days;
+  if ($t->{month} != $logStartTime->{month}) {
+    $days = $t->{dayofmonth} = $monthLen->{$logStartTime->{month}} - $logStartTime->{month} + $t->{dayofmonth};
+  } else {
+    $days = $t->{dayofmonth} - $logStartTime->{dayofmonth};
+  }
+  my ($hours,$minutes,$seconds) = split(/\:/,$t->{time});
+  return $days * (24*3600) + $hours * 3600 + $minutes * 60 + $seconds;
+}
+
+
+sub usage {
+  print STDERR "
+
+Display a section of controller.log as intervals in gbrowse.
+
+Write output to stdout.
+
+usage: workflowlog2gbrowse seqId scalefactor secfilter [startstr] [endstr]
+
+where:
+  seqId:        a genomic sequence ID.  Its length must be >= seconds in your
+                selected section of log * the scale factor.
+
+  scalefactor:  number of basepairs per second.  Higher values might help
+                compress the display vertically.  But 1 is ok too.
+
+  secfilter:    ignore steps that took less than this number of seconds
+
+  startstr:     optional.  Ignore lines of the log until this string is found.
+
+  endstr:       optional.  Ignore lines of the log after this string is found.
+                Only allowed if startstr is provided.
+
+To help choose how long your sequence must be:
+  - 1 day    = ~90k sec
+  - 1 week   = ~600k sec
+  - 1 month  = ~2.5m sec
+
+For example, a week's worth of log at scale factor 5 would require a 3 megabase sequence.
+
+";
+  exit(1);
+}

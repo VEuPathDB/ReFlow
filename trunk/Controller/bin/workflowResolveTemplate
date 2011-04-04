@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use ReFlow::Controller::ResolveTemplate;
+
+usage() unless scalar(@ARGV) == 3;
+
+my ($xmlFile, $rtcFile, $name) = @ARGV;
+
+print  ReFlow::Controller::ResolveTemplate::resolve($xmlFile, $rtcFile, $name);
+
+sub usage {
+  print STDERR "
+
+Read a workflow template file, strip off the <workflowGraph> elements, and
+substitute values into template macros.  Return the result on stdout.
+
+usage: workflowResolveTemplate xml_file rtc_file name
+
+where:
+  xml_file: template xml file
+  rtc_file: .rtc file (reflow template config)
+  name:     name of stanza to use in .rtc file
+
+";
+  exit(1);
+}
