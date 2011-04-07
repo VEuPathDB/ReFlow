@@ -14,7 +14,7 @@ sub new {
 
   bless($self,$class);
 
-  $self->{resourceInfoXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasources/$resourceInfoXmlFile";
+  $self->{resourceInfoXmlFile} = $resourceInfoXmlFile;
 
   $self->_parseXmlFile($self->{resourceInfoXmlFile});
 
@@ -26,7 +26,7 @@ sub getXmlFile {
   return $self->{resourceInfoXmlFile};
 }
 
-sub getDataSourceNames {
+sub getDataSourceInfoNames {
   my ($self) = @_;
 
   my $resourceInfos = $self->{data}->{resourceInfo};
@@ -46,9 +46,9 @@ sub getDataSourceInfo {
 sub _parseXmlFile {
   my ($self, $resourceInfoXmlFile) = @_;
 
+  my $xmlString = `cat $resourceInfoXmlFile`;
   my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($resourceInfoXmlFile, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
-#  print STDERR Dumper $self->{data};
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
   die "$@\n$xmlString\nerror processing XML file $resourceInfoXmlFile\n" if($@);
 }
 
