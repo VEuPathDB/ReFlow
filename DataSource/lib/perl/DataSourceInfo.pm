@@ -58,6 +58,12 @@ sub getInstitution {
     return $self->{parsedXml}->{institution};
 }
 
+sub getPublicUrl {
+    my ($self) = @_;
+
+    return $self->{parsedXml}->{publicUrl};
+}
+
 sub getDescription {
     my ($self) = @_;
 
