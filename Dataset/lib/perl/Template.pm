@@ -9,11 +9,11 @@ use Data::Dumper;
 sub getTemplates {
     my ($planFileName) = @_;
 
-    
+
 }
 
 sub new {
-  my ($twig) = @_;
+  my ($class, $twig) = @_;
 
   my $self = {};
 
@@ -29,6 +29,8 @@ sub getTemplateClass {
 }
 
 sub getTemplateAsText {
+  my ($self) = @_;
+
     if (!$self->{templateAsText}) {
     }
     return $self->{templateAsText};
@@ -36,7 +38,7 @@ sub getTemplateAsText {
 
 # add a text instance
 sub addInstance {
-    my ($dataset) = @_;
+    my ($self, $dataset) = @_;
 
     my $t = $self->getTemplateAsText();
     
@@ -48,17 +50,9 @@ sub addInstance {
 }
 
 sub substituteInstancesIntoPlanText {
-    my ($planText) = @_;
+    my ($self, $planText) = @_;
 
 }
 
-sub _parseXmlFile {
-  my ($self, $classesFile) = @_;
-
-  my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($classesFile, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference']) };
-#  print STDERR Dumper $self->{data};
-  die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
-}
 
 1;

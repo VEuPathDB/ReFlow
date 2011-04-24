@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
 use strict;
-use XML::Twig;
 use lib "$ENV{GUS_HOME}/lib/perl";
+use XML::Twig;
 use ReFlow::Dataset::Datasets;
 use ReFlow::Dataset::Classes;
 use ReFlow::Dataset::Template;
@@ -10,14 +10,13 @@ use ReFlow::Dataset::Template;
 usage() unless scalar(@ARGV) == 1;
 
 my ($datasetFile) = @ARGV;
-my $datasetFileBasename = basename($datasetFile);
 
 # parse datasets file
-my $datasets = ReFlow::Datasets::Datasets::new($datasetFile);
+my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
 # parse class file
-my $classes = ReFlow::Datasets::Classes::new();
+my $classes = ReFlow::Dataset::Classes->new();
 
 my $graphPlans2classes = $classes->getPlans2Classes();
 
@@ -28,7 +27,7 @@ my $planFilesUsed = $classes->getPlanFiles($classNamesUsed);
 # process each plan
 foreach my $planFileName (@$planFilesUsed) {
   my $planText = parseAndWritePlanFile($planFileName);
-  my $templates = ReFlow::Datasets::Template::getTemplates($planFileName);
+  my $templates = ReFlow::Dataset::Template->getTemplates($planFileName);
   foreach my $template (@$templates) {
     my $templateDatasets = $datasets->getDatasetsByClass($template->getClassName());
     foreach my $dataset (@$templateDatasets) {
@@ -37,22 +36,26 @@ foreach my $planFileName (@$planFilesUsed) {
     $planText = $template->substituteInstancesIntoPlanText($planText);
   }
   my $planFileBasename = basename($planFileName);
-  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/graphs/${datasetFileBasename}_$planFileBasename";
+  my $datasetsName = $datasets->getName();
+  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/graphs/${datasetsName}_$planFileBasename";
   open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
   print GRAPH $planText;
+}
+
+sub parseAndWritePlanFile {
+  my ($planFileName) = @_;
+
 }
 
 sub usage {
 
   print "
-Resolve a workflow master file.
+Create graph files for a dataset, from graph plan files
 
-Usage:  workflowResolveMaster master_xml_file lib_dir
+Usage:  workflowDataset2Graphs datasets_file
 
 Where:
-  master_xml_file:  file with <templateInstance> elements
-  lib_dir:          lib/ directory under which will be found the xml and rtc
-                    files mentioned in the <templateInstance> elements
+  datasets_file:    an xml file containing a set of datasets.
 
 Output: the generated workflow xml file to STDOUT
 

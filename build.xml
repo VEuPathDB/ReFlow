@@ -25,6 +25,7 @@
 
   <target name="ReFlow-Installation" depends="ReFlow/Controller-Installation,
                                             ReFlow/TestFlow-Installation,
+                                            ReFlow/Dataset-Installation,
                                             ReFlow/DataSource-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -59,6 +60,13 @@
     <ant target="defaultComponentInstall">
       <property name="project" value="ReFlow"/>
       <property name="component" value="TestFlow"/>
+    </ant>
+  </target>  
+
+  <target name="ReFlow/Dataset-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="Dataset"/>
     </ant>
   </target>  
 

@@ -6,7 +6,7 @@ use XML::Simple;
 use Data::Dumper;
 
 sub new {
-  my ($classesFile) = @_;
+  my ($class, $classesFile) = @_;
 
   my $self = {};
 
@@ -33,7 +33,7 @@ sub _parseXmlFile {
   my $xml = new XML::Simple();
   $self->{data} = eval{ $xml->XMLin($classesFile, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference']) };
 #  print STDERR Dumper $self->{data};
-  die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
+  die "$@\nerror processing XML file $classesFile\n" if($@);
 }
 
 1;
