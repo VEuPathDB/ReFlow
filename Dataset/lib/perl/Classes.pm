@@ -12,28 +12,35 @@ sub new {
 
   bless($self,$class);
 
-  $self->_parseXmlFile($self->{classesFile});
+  $self->_parseXmlFile($classesFile);
 
   return $self;
 }
 
-sub getPlans2Classes {
+sub validateClassName {
+  my ($self, $className) = @_;
 
+  return $self->{data}->{datasetClass}->{$className};
 }
 
 # get list of plans used
-sub getPlanFiles {
-    my ($classNamesUsed) = @_;
-
+sub getPlan2Classes {
+    my ($self, $classNamesUsed) = @_;
+    my %plan2classes;
+    foreach my $className (@$classNamesUsed) {
+      my $planFile = $self->{data}->{datasetClass}->{$className}->{graphFile}->{planFile};
+      push(@{$plan2classes{$planFile}}, $className) if $planFile;
+    }
+    return \%plan2classes;
 }
 
 sub _parseXmlFile {
   my ($self, $classesFile) = @_;
 
   my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($classesFile, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference']) };
+  $self->{data} = eval{ $xml->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass']) };
 #  print STDERR Dumper $self->{data};
-  die "$@\nerror processing XML file $classesFile\n" if($@);
+  die "$@\nerror processing classes XML file $classesFile\n" if($@);
 }
 
 1;

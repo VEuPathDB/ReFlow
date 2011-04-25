@@ -6,29 +6,29 @@ use XML::Twig;
 use ReFlow::Dataset::Datasets;
 use ReFlow::Dataset::Classes;
 use ReFlow::Dataset::Template;
+use Data::Dumper;
 
-usage() unless scalar(@ARGV) == 1;
+usage() unless scalar(@ARGV) == 2;
 
-my ($datasetFile) = @ARGV;
+my ($datasetFile, $classesFile) = @ARGV;
 
 # parse datasets file
 my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
 # parse class file
-my $classes = ReFlow::Dataset::Classes->new();
+my $classes = ReFlow::Dataset::Classes->new($classesFile);
 
-my $graphPlans2classes = $classes->getPlans2Classes();
-
-# get list of plans used
-my $planFilesUsed = $classes->getPlanFiles($classNamesUsed);
+# hash of plan->classes_that_use_the_plan
+my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
 
 
 # process each plan
-foreach my $planFileName (@$planFilesUsed) {
+foreach my $planFileName (keys(%$graphPlan2classes)) {
   my $planText = parseAndWritePlanFile($planFileName);
   my $templates = ReFlow::Dataset::Template->getTemplates($planFileName);
   foreach my $template (@$templates) {
+    $classes->validateClassName($template->getClassName());
     my $templateDatasets = $datasets->getDatasetsByClass($template->getClassName());
     foreach my $dataset (@$templateDatasets) {
       $template->addInstance($dataset);
@@ -52,10 +52,11 @@ sub usage {
   print "
 Create graph files for a dataset, from graph plan files
 
-Usage:  workflowDataset2Graphs datasets_file
+Usage:  workflowDataset2Graphs datasets_file classes_file
 
 Where:
   datasets_file:    an xml file containing a set of datasets.
+  classes_file:     an xml file containing a set of dataset classes.
 
 Output: the generated workflow xml file to STDOUT
 

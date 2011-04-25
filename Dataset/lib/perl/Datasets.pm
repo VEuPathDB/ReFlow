@@ -28,13 +28,15 @@ sub getClassNamesUsed {
   my ($self) = @_;
   if (!$self->{classNamesUsed}) {
     my $datasets = $self->{data}->{dataset};
-    $self->{classNamesUsed} = [];
+    $self->{classNamesUsed} = {};
     foreach my $dataset (@$datasets) {
-      $self->{classNamesUsed}->{class} = [] unless $self->{classNamesUsed}->{class};
-      push(@{$self->{classNamesUsed}->{class}}, $dataset;
+      my $class = $dataset->{class};
+      $self->{classNamesUsed}->{$class} = [] unless $self->{classNamesUsed}->{$class};
+      push(@{$self->{classNamesUsed}->{$class}}, $dataset);
     }
   }
-  return keys(%{$self->{classNamesUsed}};
+  my @a = keys(%{$self->{classNamesUsed}});
+  return \@a;
 }
 
 sub getName {
@@ -44,9 +46,9 @@ sub getName {
 
 sub getDatasetsByClass {
     my ($self, $className) = @_;
-    if (!$self->{className2datasets}) {
-    }
-    return $self->{className2datasets}->{$className};
+    $self->getClassNamesUsed();  # in case it hasn't been called yet
+    return $self->{classNamesUsed}->{$className};
+
 }
 
 sub _parseXmlFile {
@@ -70,7 +72,7 @@ sub _substituteConstants {
   my ($self, $xmlFile, $constants) = @_;
 
   my $xmlString;
-  open(FILE, $xmlFile) || die "Cannot open resources XML file '$xmlFile'\n";
+  open(FILE, $xmlFile) || die "Cannot open datasets XML file '$xmlFile'\n";
   while (<FILE>) {
     my $line = $_;
     my @constantKeys = /\$\$([\w.]+)\$\$/g;   # allow keys of the form nrdb.release
