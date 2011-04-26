@@ -55,14 +55,14 @@ sub _parseXmlFile {
   my ($self, $datasetsFile) = @_;
 
   my $xml = new XML::Simple();
-  my $firstParse = eval{ $xml->XMLin($datasetsFile, SuppressEmpty => undef, ForceArray=>['dataset']) };
+  my $firstParse = eval{ $xml->XMLin($datasetsFile, SuppressEmpty => undef, ForceArray=>['constant'])};
 
   my $constants = $firstParse->{constant};
 
   my $xmlString = $self->_substituteConstants($datasetsFile, $constants);
 
   # parse again, this time w/ constants resolved
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset']) };
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset', 'prop'], KeyAttr=>{prop=>'name'}, ContentKey=>'-content') };
 
 #  print STDOUT Dumper $self->{data};
   die "$@\nerror processing XML file $datasetsFile\n" if($@);
