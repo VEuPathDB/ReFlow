@@ -56,15 +56,6 @@ sub getClassName {
 
 }
 
-sub getTemplateClass {
-  my $t= XML::Twig->new( twig_handlers => 
-                          { section => \&section,
-                            para   => sub { $_->set_tag( 'p'); }
-                          },
-                       );
-
-}
-
 sub getTemplateAsText {
   my ($self) = @_;
 
