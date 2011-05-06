@@ -13,12 +13,14 @@ usage() unless scalar(@ARGV) == 2;
 
 my ($datasetFile, $classesFile) = @ARGV;
 
+# parse class file
+my $classes = ReFlow::Dataset::Classes->new($classesFile);
+
 # parse datasets file
 my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
-# parse class file
-my $classes = ReFlow::Dataset::Classes->new($classesFile);
+# NEED TO VALIDATE DATASET AGAINST CLASSES
 
 # hash of plan->classes_that_use_the_plan
 my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
@@ -38,9 +40,9 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
     }
     $planFileAsText = $template->substituteInstancesIntoPlanText($planFileAsText);
   }
-  my ($planFileBasename,$path,$suffix) = fileparse($planFileName);
+  my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
   my $datasetsName = $datasets->getName();
-  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_$planFileBasename";
+  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_${planFileBasename}.xml";
   open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
   print GRAPH $planFileAsText;
 }

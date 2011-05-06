@@ -17,7 +17,7 @@ sub new {
 
   $self->_parseXmlFile($datasetsFile);
 
-  my ($name,$path,$suffix) = fileparse($datasetsFile);
+  my ($name,$path,$suffix) = fileparse($datasetsFile, '.xml');
 
   $self->{name} = $name;
 
