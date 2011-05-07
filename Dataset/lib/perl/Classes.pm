@@ -12,7 +12,7 @@ sub new {
 
   bless($self,$class);
 
-  my $self->{xml} = new XML::Simple();
+  $self->{xml} = new XML::Simple();
 
   $self->_parseXmlFile($classesFile);
 
@@ -46,14 +46,29 @@ sub getClass {
 sub getResourceText {
     my ($self, $dataset) = @_;
     my $class = $self->getClass($dataset->{class});
-    my $resource = $class->{resource};
-    return "" unless $resource;
+    my $resource;
+    $resource->{resource} = $class->{resource}; # hack a little to outsmart XMLout
+    return "" unless $resource->{resource};
 
-    my $rawResourceText = $self->{xml}->xmlOut($resource);
-    my ($resourceText, $err) = substitutePropsIntoXmlText($rawResourceText, $dataset);
+    my $rawResourceText = $self->{xml}->XMLout($resource);
+
+    # jump through some hoops to lose weird lines out put by XMLout
+    # probably a better way to do this
+    my @lines = split(/\n/,$rawResourceText);
+    my @lines2;
+    foreach my $line (@lines) {
+      next if $line =~ /^\<opt/;
+      next if $line =~ /^\<\/opt/;
+      next if $line =~ /^$/;
+      push(@lines2,$line);
+    }
+    my $rawResourceText2 = join("\n", @lines2);
+
+    my ($resourceText, $err) = substitutePropsIntoXmlText($rawResourceText2, $dataset);
     if ($err) {
 	die "the <resource> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
     }
+    return "$resourceText\n";
 }
 
 # static method
@@ -62,12 +77,13 @@ sub substitutePropsIntoXmlText {
 
     my $newXmlText = $xmlText;
     foreach my $propKey (keys(%{$dataset->{prop}})) {
-      my $propValue = $datasetAsHash->{prop}->{$propKey};
+#      print STDERR "prop: $propKey\n";
+      my $propValue = $dataset->{prop}->{$propKey};
       $newXmlText =~ s/\$\{$propKey\}/$propValue/g;
     }
 
     my $err = 0;
-    if ($xmlText =~ /(\$\{.*?\})/) {
+    if ($newXmlText =~ /(\$\{.*?\})/) {
 	$err = $1;
     }
     return ($newXmlText, $err);
@@ -76,7 +92,7 @@ sub substitutePropsIntoXmlText {
 sub _parseXmlFile {
   my ($self, $classesFile) = @_;
 
-  $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass']) };
+  $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass','pluginArgs','manualGet']) };
 #  print STDERR Dumper $self->{data};
   die "$@\nerror processing classes XML file $classesFile\n" if($@);
 }

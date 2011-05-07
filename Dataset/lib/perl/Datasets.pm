@@ -44,6 +44,11 @@ sub getName {
   return $self->{name};
 }
 
+sub getDatasets {
+  my ($self) = @_;
+  return $self->{data}->{dataset};
+}
+
 sub getDatasetsByClass {
     my ($self, $className) = @_;
     $self->getClassNamesUsed();  # in case it hasn't been called yet
@@ -65,7 +70,7 @@ sub _parseXmlFile {
 
   my $constants = $firstParse->{constant};
 
-  my $self->{xmlString} = $self->_substituteConstants($datasetsFile, $constants);
+  my $xmlString = $self->_substituteConstants($datasetsFile, $constants);
 
   # parse again, this time w/ constants resolved
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset', 'prop'], KeyAttr=>{prop=>'name'}, ContentKey=>'-content') };

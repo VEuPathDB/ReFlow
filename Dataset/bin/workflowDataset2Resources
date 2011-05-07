@@ -23,12 +23,12 @@ my $classNamesUsed = $datasets->getClassNamesUsed();
 # NEED TO VALIDATE DATASET AGAINST CLASSES
 
 print STDOUT "<resources>\n\n";
-foreach my $dataset (@$datasets) {
+foreach my $dataset (@{$datasets->getDatasets()}) {
     my $resourceText = $classes->getResourceText($dataset);
-    print STDOUT $resourceText;
+    print STDOUT "$resourceText\n";
 }
 print STDOUT "</resources>\n\n";
-    
+
 
 sub usage {
 
