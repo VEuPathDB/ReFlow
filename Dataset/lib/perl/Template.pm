@@ -64,24 +64,24 @@ sub getTemplateAsText {
 
 # add a text instance
 sub addInstance {
-    my ($self, $datasetAsHash) = @_;
+    my ($self, $dataset) = @_;
 
-    my @a = split(/\n/, $self->getTemplateAsText());
-    my @b;
-    foreach my $x (@a) {
-      push(@b, $x) unless $x =~ /datasetTemplate/ || $x =~ /\<prop/;
+    my @templateLines = split(/\n/, $self->getTemplateAsText());
+    my @graphLines;
+
+    # keep only the lines in the template that are actual graph
+    foreach my $l (@templateLines) {
+      push(@graphLines, $l) unless $l =~ /datasetTemplate/ || $l =~ /\<prop/;
     }
-    my $t = join("\n", @b);
+    my $graphText = join("\n", @graphLines);
     
-    # substitute props
-    foreach my $propKey (keys(%{$datasetAsHash->{prop}})) {
-      my $propValue = $datasetAsHash->{prop}->{$propKey};
-      $t =~ s/\$\{$propKey\}/$propValue/g;
+    my ($instantiatedGraphText, $err) = 
+	ReFlow::Dataset::Classes::substitutePropsIntoXmlText($graphText, $dataset);
+
+    if ($err) {
+      die "\nError: <datasetTemplate class=\"$self->{class}\"> in plan file $self->{planFile} has an invalid property macro: $err\n";
     }
-    if ($t =~ /(\$\{.*?\})/) {
-      die "\nError: <datasetTemplate class=\"$self->{class}\"> in plan file $self->{planFile} has an invalid property macro: $1\n";
-    }
-    push(@{$self->{instances}}, $t);
+    push(@{$self->{instances}}, $graphText);
 }
 
 # this is an inefficient implementation, but beats trying to learn

@@ -51,6 +51,12 @@ sub getDatasetsByClass {
 
 }
 
+sub printResourceXml {
+    my ($self) = @_;
+    my $xml = new XML::Simple();
+    print STDOUT $xml->xmlOut($self->{data});
+}
+
 sub _parseXmlFile {
   my ($self, $datasetsFile) = @_;
 
@@ -59,7 +65,7 @@ sub _parseXmlFile {
 
   my $constants = $firstParse->{constant};
 
-  my $xmlString = $self->_substituteConstants($datasetsFile, $constants);
+  my $self->{xmlString} = $self->_substituteConstants($datasetsFile, $constants);
 
   # parse again, this time w/ constants resolved
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset', 'prop'], KeyAttr=>{prop=>'name'}, ContentKey=>'-content') };

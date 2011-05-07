@@ -12,6 +12,8 @@ sub new {
 
   bless($self,$class);
 
+  my $self->{xml} = new XML::Simple();
+
   $self->_parseXmlFile($classesFile);
 
   return $self;
@@ -34,11 +36,47 @@ sub getPlan2Classes {
     return \%plan2classes;
 }
 
+sub getClass {
+    my ($self, $className) = @_;
+    my $class = $self->{data}->{datasetClass}->{$className};
+    die "Can't find class with name '$className'\n" unless $class;
+    return $class;
+}
+
+sub getResourceText {
+    my ($self, $dataset) = @_;
+    my $class = $self->getClass($dataset->{class});
+    my $resource = $class->{resource};
+    return "" unless $resource;
+
+    my $rawResourceText = $self->{xml}->xmlOut($resource);
+    my ($resourceText, $err) = substitutePropsIntoXmlText($rawResourceText, $dataset);
+    if ($err) {
+	die "the <resource> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
+    }
+}
+
+# static method
+sub substitutePropsIntoXmlText {
+    my ($xmlText, $dataset) = @_;
+
+    my $newXmlText = $xmlText;
+    foreach my $propKey (keys(%{$dataset->{prop}})) {
+      my $propValue = $datasetAsHash->{prop}->{$propKey};
+      $newXmlText =~ s/\$\{$propKey\}/$propValue/g;
+    }
+
+    my $err = 0;
+    if ($xmlText =~ /(\$\{.*?\})/) {
+	$err = $1;
+    }
+    return ($newXmlText, $err);
+}
+
 sub _parseXmlFile {
   my ($self, $classesFile) = @_;
 
-  my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass']) };
+  $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass']) };
 #  print STDERR Dumper $self->{data};
   die "$@\nerror processing classes XML file $classesFile\n" if($@);
 }
