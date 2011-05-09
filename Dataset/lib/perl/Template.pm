@@ -81,7 +81,7 @@ sub addInstance {
     if ($err) {
       die "\nError: <datasetTemplate class=\"$self->{class}\"> in plan file $self->{planFile} has an invalid property macro: $err\n";
     }
-    push(@{$self->{instances}}, $graphText);
+    push(@{$self->{instances}}, $instantiatedGraphText);
 }
 
 # this is an inefficient implementation, but beats trying to learn
