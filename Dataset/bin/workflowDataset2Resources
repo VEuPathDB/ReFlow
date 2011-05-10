@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use XML::Twig;
+use File::Basename;
+use ReFlow::Dataset::Datasets;
+use ReFlow::Dataset::Classes;
+use ReFlow::Dataset::Template;
+use Data::Dumper;
+
+usage() unless scalar(@ARGV) == 2;
+
+my ($datasetFile, $classesFile) = @ARGV;
+
+# parse class file
+my $classes = ReFlow::Dataset::Classes->new($classesFile);
+
+# parse datasets file
+my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
+my $classNamesUsed = $datasets->getClassNamesUsed();
+
+# NEED TO VALIDATE DATASET AGAINST CLASSES
+
+print STDOUT "<resources>\n\n";
+foreach my $dataset (@{$datasets->getDatasets()}) {
+    my $resourceText = $classes->getResourceText($dataset);
+    print STDOUT "$resourceText\n";
+}
+print STDOUT "</resources>\n\n";
+
+
+sub usage {
+
+  print "
+Create a resource xml file for a dataset
+
+Usage:  workflowDataset2Resources datasets_file classes_file
+
+Where:
+  datasets_file:    an xml file containing a set of datasets.
+  classes_file:     an xml file containing a set of dataset classes.
+
+Output: the generated resource xml file to STDOUT
+
+";
+
+  exit(1);
+}

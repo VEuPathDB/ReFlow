@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use XML::Twig;
+use File::Basename;
+use ReFlow::Dataset::Datasets;
+use ReFlow::Dataset::Classes;
+use ReFlow::Dataset::Template;
+use Data::Dumper;
+
+usage() unless scalar(@ARGV) == 2;
+
+my ($datasetFile, $classesFile) = @ARGV;
+
+# parse class file
+my $classes = ReFlow::Dataset::Classes->new($classesFile);
+
+# parse datasets file
+my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
+my $classNamesUsed = $datasets->getClassNamesUsed();
+
+# NEED TO VALIDATE DATASET AGAINST CLASSES
+
+# hash of plan->classes_that_use_the_plan
+my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
+
+
+# process each plan
+foreach my $planFileName (keys(%$graphPlan2classes)) {
+  my $fullPlanFileName = "$ENV{GUS_HOME}/lib/xml/workflowPlans/$planFileName";
+  die "\nError: Classes file $classesFile references plan '$planFileName' which is not found in $ENV{GUS_HOME}/lib/xml/workflowPlans/" unless -e $fullPlanFileName;
+  my $planFileAsText = parseAndWritePlanFile($fullPlanFileName);
+  my $templates = ReFlow::Dataset::Template::getTemplates($planFileName);
+  foreach my $template (@$templates) {
+    $classes->validateClassName($template->getClassName());
+    my $templateDatasets = $datasets->getDatasetsByClass($template->getClassName());
+    foreach my $dataset (@$templateDatasets) {
+      $template->addInstance($dataset);
+    }
+    $planFileAsText = $template->substituteInstancesIntoPlanText($planFileAsText);
+  }
+  my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
+  my $datasetsName = $datasets->getName();
+  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_${planFileBasename}.xml";
+  open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
+  print GRAPH $planFileAsText;
+}
+
+sub parseAndWritePlanFile {
+  my ($fullPlanFileName) = @_;
+  print STDERR "parsing plan file $fullPlanFileName\n";
+  my $twig= new XML::Twig(pretty_print => 'indented');
+  $twig->parsefile($fullPlanFileName);
+  return $twig->sprint();
+}
+
+sub usage {
+
+  print "
+Create graph files for a dataset, from graph plan files
+
+Usage:  workflowDataset2Graphs datasets_file classes_file
+
+Where:
+  datasets_file:    an xml file containing a set of datasets.
+  classes_file:     an xml file containing a set of dataset classes.
+
+Output: the generated workflow xml file to STDOUT
+
+";
+
+  exit(1);
+}
