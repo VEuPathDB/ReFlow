@@ -78,7 +78,7 @@ sub substitutePropsIntoXmlText {
     my $newXmlText = $xmlText;
     foreach my $propKey (keys(%{$dataset->{prop}})) {
 #      print STDERR "prop: $propKey\n";
-      my $propValue = $dataset->{prop}->{$propKey};
+      my $propValue = $dataset->{prop}->{$propKey}->{content};
       $newXmlText =~ s/\$\{$propKey\}/$propValue/g;
     }
 
