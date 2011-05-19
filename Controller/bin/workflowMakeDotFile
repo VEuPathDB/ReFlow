@@ -12,6 +12,8 @@ my %stepDependsOn;
 my @shapes;
 my @depends;
 
+usage() if scalar(@ARGV) != 0;
+
 $| = 1;
 
 print "
@@ -65,3 +67,19 @@ foreach my $depend (@depends) {
 }
 
 print "}\n";
+
+sub usage {
+    print STDERR "
+Make a graphviz .dot file from the output of workflowXml (on stdin)
+
+usage:  workflowMakeDotFile  > my_graph.dot
+
+To draw a graph:
+  - install GraphViz
+  - run this command:
+    % dot -Tsvg my_graph.dot > my_graph.svg
+";
+
+    exit(1);
+
+}
