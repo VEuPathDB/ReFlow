@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+use strict;
+use Data::Dumper;
+
+my $stepName;
+my $subgraphXml;
+my $dependsOn;
+my $shapeCount;
+my %stepNames;
+my %stepDependsOn;
+my @shapes;
+my @depends;
+
+$| = 1;
+
+print "
+digraph name {
+  graph [fontsize=8, rankdir=\"LR\", ranksep=0 ] ;
+  node [ fontsize=12, height=0, width=0 ] ;
+  edge [ fontsize=8  ] ;
+";
+
+while(<>) {
+  chomp;
+  if (/name\:\s+(\S+)/) {
+    $stepName = $1;
+    $subgraphXml = "";
+    $dependsOn = "";
+  } elsif (/subgraphXml\s+(\S+)/) {
+    $subgraphXml = $1;
+  } elsif (/depends on\:\s+(\S.*)$/) {
+    $dependsOn = $1;
+  } elsif (/^\,/ || /^\]/) {  #also check for last guy
+    $shapeCount++;
+    my @stepNamePath = split(/\./, $stepName);
+    my $baseName = $stepNamePath[$#stepNamePath];
+    my $style = "shape=rectangle";
+    if ($subgraphXml ne 'null' && $baseName ne 'return') {
+      $style = "shape=oval color=orange";
+    }
+    my $shapeName = "s$shapeCount";
+    $stepNames{$stepName} = $shapeName;
+    my $shapeStr = "$shapeName \[ $style ]";
+    push(@shapes, "$shapeStr");
+    $stepDependsOn{$stepName} = $dependsOn;
+  }
+}
+
+foreach my $stepNm (keys(%stepDependsOn)) {
+  my $dependsOn = $stepDependsOn{$stepNm};
+    my @stepDepends = split(/\, /, $dependsOn);
+    foreach my $d (@stepDepends) {
+      my $parentShape = $stepNames{$d};
+      die "can't find parent '$d' for shape '$stepNm'" unless $parentShape;
+      push(@depends, "$parentShape -> $stepNames{$stepNm}");
+    }
+}
+
+foreach my $shape (@shapes) {
+  print "$shape\n";
+}
+foreach my $depend (@depends) {
+    print "$depend\n";
+}
+
+print "}\n";
