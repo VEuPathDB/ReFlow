@@ -1,18 +1,5 @@
 package org.gusdb.workflow.visualization;
 
-import edu.uci.ics.jung.algorithms.layout.FRLayout;
-import edu.uci.ics.jung.graph.DirectedGraph;
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
-import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
-import edu.uci.ics.jung.visualization.control.PluggableGraphMouse;
-import edu.uci.ics.jung.visualization.control.PickingGraphMousePlugin;
-import edu.uci.ics.jung.visualization.control.ScalingGraphMousePlugin;
-import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
-
-import java.io.IOException;
-
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,39 +13,37 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
-import org.apache.commons.collections15.Transformer;
-
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
-
+import org.apache.commons.collections15.Transformer;
 import org.gusdb.workflow.Utilities;
 import org.gusdb.workflow.Workflow;
 import org.gusdb.workflow.WorkflowGraph;
 import org.gusdb.workflow.WorkflowStep;
-import org.gusdb.workflow.WorkflowXmlParser;
-
 import org.gusdb.workflow.visualization.layout.AssistedTreeLayout;
-import org.gusdb.workflow.visualization.mouse.PopupVertexEdgeMenuMousePlugin;
 import org.gusdb.workflow.visualization.mouse.WorkflowViewerMousePlugin;
 
-import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
+import edu.uci.ics.jung.graph.DirectedGraph;
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import edu.uci.ics.jung.visualization.GraphZoomScrollPane;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
+import edu.uci.ics.jung.visualization.control.PickingGraphMousePlugin;
+import edu.uci.ics.jung.visualization.control.PluggableGraphMouse;
+import edu.uci.ics.jung.visualization.control.ScalingGraphMousePlugin;
+import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
 public class WorkflowViewer extends JFrame implements ActionListener {
 
@@ -204,7 +189,7 @@ public class WorkflowViewer extends JFrame implements ActionListener {
     // sets the initial size of the layout space
     // The VisualizationViewer is parameterized by the vertex and edge types
 
-    VisualizationViewer vv = new VisualizationViewer(layout);
+    VisualizationViewer<WorkflowStep, Integer> vv = new VisualizationViewer<WorkflowStep, Integer>(layout);
     vv.getRenderContext().setVertexShapeTransformer(shaper);
     vv.getRenderContext().setVertexLabelTransformer(labeler);
     vv.getRenderContext().setVertexFontTransformer(fontStyler);
@@ -223,7 +208,7 @@ public class WorkflowViewer extends JFrame implements ActionListener {
         0.9f));
     gm.add(new WorkflowViewerMousePlugin(this));
     // gm.add(mousePlugin);
-    gm.add(new PickingGraphMousePlugin());
+    gm.add(new PickingGraphMousePlugin<WorkflowStep, Integer>());
 
     vv.setGraphMouse(gm);
 

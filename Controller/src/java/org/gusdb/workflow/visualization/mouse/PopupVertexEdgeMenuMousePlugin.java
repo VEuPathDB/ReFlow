@@ -52,6 +52,7 @@ public class PopupVertexEdgeMenuMousePlugin<V, E> extends AbstractPopupGraphMous
      * work gets done. You shouldn't have to modify unless you really want to...
      * @param e 
      */
+    @SuppressWarnings("unchecked")
     protected void handlePopup(MouseEvent e) {
         final VisualizationViewer<V,E> vv =
                 (VisualizationViewer<V,E>)e.getSource();
@@ -74,12 +75,13 @@ public class PopupVertexEdgeMenuMousePlugin<V, E> extends AbstractPopupGraphMous
         }
     }
     
-    private void updateVertexMenu(V v, VisualizationViewer vv, Point2D point) {
+    @SuppressWarnings("unchecked")
+    private void updateVertexMenu(V v, VisualizationViewer<V, E> vv, Point2D point) {
         if (vertexPopup == null) return;
         Component[] menuComps = vertexPopup.getComponents();
         for (Component comp: menuComps) {
-            if (comp instanceof VertexMenuListener) {
-                ((VertexMenuListener)comp).setVertexAndView(v, vv);
+            if (comp instanceof VertexMenuListener<?>) {
+                ((VertexMenuListener<V>)comp).setVertexAndView(v, vv);
             }
             if (comp instanceof MenuPointListener) {
                 ((MenuPointListener)comp).setPoint(point);
@@ -120,12 +122,13 @@ public class PopupVertexEdgeMenuMousePlugin<V, E> extends AbstractPopupGraphMous
         this.vertexPopup = vertexPopup;
     }
     
-    private void updateEdgeMenu(E edge, VisualizationViewer vv, Point2D point) {
+    @SuppressWarnings("unchecked")
+    private void updateEdgeMenu(E edge, VisualizationViewer<V, E> vv, Point2D point) {
         if (edgePopup == null) return;
         Component[] menuComps = edgePopup.getComponents();
         for (Component comp: menuComps) {
             if (comp instanceof EdgeMenuListener) {
-                ((EdgeMenuListener)comp).setEdgeAndView(edge, vv);
+                ((EdgeMenuListener<E>)comp).setEdgeAndView(edge, vv);
             }
             if (comp instanceof MenuPointListener) {
                 ((MenuPointListener)comp).setPoint(point);

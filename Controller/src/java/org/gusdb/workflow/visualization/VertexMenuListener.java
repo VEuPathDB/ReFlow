@@ -18,5 +18,5 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
  * @author Dr. Greg M. Bernstein
  */
 public interface VertexMenuListener<V> {
-    void setVertexAndView(V v, VisualizationViewer visView);    
+    void setVertexAndView(V v, VisualizationViewer<V, ?> visView);    
 }
