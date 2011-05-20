@@ -1,0 +1,3 @@
+name=Test Workflow
+version=1.0
+workflowXmlFile=testWorkflow.xml
