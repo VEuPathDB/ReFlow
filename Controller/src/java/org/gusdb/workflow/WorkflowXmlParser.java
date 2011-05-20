@@ -30,6 +30,7 @@ import org.gusdb.workflow.Name;
 
 public class WorkflowXmlParser<T extends WorkflowStep> extends XmlParser {
 
+    @SuppressWarnings("unused")
     private static final Logger logger = Logger.getLogger(WorkflowXmlParser.class);
     private Class<T> stepClass;
 
@@ -38,7 +39,7 @@ public class WorkflowXmlParser<T extends WorkflowStep> extends XmlParser {
     }
 
     @SuppressWarnings("unchecked")
-    public WorkflowGraph<T> parseWorkflow(Workflow workflow, Class<T> stepClass,
+    public WorkflowGraph<T> parseWorkflow(Workflow<T> workflow, Class<T> stepClass,
             String xmlFileName, Map<String, T> globalSteps, 
             Map<String,String> globalConstants, boolean isGlobalGraph) throws SAXException, IOException, Exception {
         this.stepClass = stepClass;

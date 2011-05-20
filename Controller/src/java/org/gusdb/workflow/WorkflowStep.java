@@ -43,7 +43,7 @@ import java.util.HashMap;
 
 */
 
-public class WorkflowStep implements Comparable {
+public class WorkflowStep implements Comparable<WorkflowStep> {
 
     // from construction and configuration
     protected String subgraphXmlFileName;
@@ -558,8 +558,7 @@ public class WorkflowStep implements Comparable {
 	return buf.toString();
     }
 
-    public int compareTo(Object o) {
-	WorkflowStep s = (WorkflowStep) o;
+    public int compareTo(WorkflowStep s) {
 	return baseName.compareTo(s.getBaseName());
     }
 

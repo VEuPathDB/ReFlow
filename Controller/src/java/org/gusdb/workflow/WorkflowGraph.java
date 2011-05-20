@@ -24,21 +24,21 @@ import org.xml.sax.SAXException;
 /*
  * Overall subgraph strategy
  *  (1) parse a graph (starting w/ root graph)
-       - read xml, and digest it
+ *     - read xml, and digest it
  *     - set parent child links
-       - insert sugraph return nodes
+ *     - insert subgraph return nodes
  *  
  *  (2) expand subgraphs
  *     - starting with root graph, bottom up recursion through graph/subgraph
  *       hierarchy.  
  *     - for each graph
-           - parse as in (1)
-           - expand its subgraphs
-             - replace each calling step with a pair of steps: caller and return
-             - move caller's children to return; make return be caller's only child
-           - insert it into parent graph
-              - attach its root steps to parent caller
-              - attach its leaf steps to parent return
+ *         - parse as in (1)
+ *         - expand its subgraphs
+ *           - replace each calling step with a pair of steps: caller and return
+ *           - move caller's children to return; make return be caller's only child
+ *         - insert it into parent graph
+ *            - attach its root steps to parent caller
+ *            - attach its leaf steps to parent return
  *   
  *  (3) in a final pass, set the path of each of the steps (top down recursion)
  * 

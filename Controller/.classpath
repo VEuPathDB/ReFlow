@@ -9,12 +9,12 @@
 	<classpathentry kind="lib" path="lib/java/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-beanutils.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/java/commons-collections-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-algorithms-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-api-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-graph-impl-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-io-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-visualization-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/java/collections-generic-4.01.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

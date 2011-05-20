@@ -21,6 +21,9 @@ import javax.swing.JPopupMenu;
 import org.gusdb.workflow.WorkflowStep;
 
 public class WorkflowStepMenu extends JPopupMenu {        
+
+  private static final long serialVersionUID = 1L;
+
     // private JFrame frame; 
     public WorkflowStepMenu(JFrame frame) {
 	super("Edge Menu");
@@ -29,6 +32,7 @@ public class WorkflowStepMenu extends JPopupMenu {
     
     public static class WorkflowStepDetailsItem extends JMenuItem implements VertexMenuListener<WorkflowStep>,
 									     MenuPointListener {
+      private static final long serialVersionUID = 1L;
         WorkflowStep step;
         VisualizationViewer visComp;
         Point2D point;

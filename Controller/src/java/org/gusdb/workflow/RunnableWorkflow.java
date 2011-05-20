@@ -222,8 +222,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
                 for (RunnableWorkflowStep step: runningSteps) {
                     errStr += step.getFullName() + nl;
                 }
-                if (errStr != null)
-                    error("The following steps are running.  Can't start an undo while steps are running.  Wait for all steps to complete (or kill them), and try to run undo again" + nl +errStr);
+                //if (errStr != null)
+                //    error("The following steps are running.  Can't start an undo while steps are running.  Wait for all steps to complete (or kill them), and try to run undo again" + nl +errStr);
             }
             
             // find the step based on its name, and set undo_step_id       
