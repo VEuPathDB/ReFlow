@@ -16,5 +16,6 @@
 	<classpathentry kind="lib" path="lib/java/jung-io-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/jung-visualization-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/collections-generic-4.01.jar"/>
+	<classpathentry kind="lib" path="lib/java/commons-collections-3.1.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
