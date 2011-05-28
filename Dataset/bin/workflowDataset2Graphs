@@ -3,6 +3,7 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 use XML::Twig;
+use XML::Simple;
 use File::Basename;
 use ReFlow::Dataset::Datasets;
 use ReFlow::Dataset::Classes;
@@ -40,6 +41,8 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
     }
     $planFileAsText = $template->substituteInstancesIntoPlanText($planFileAsText);
   }
+
+  resolveDependsPatterns($planFileAsText, $planFileName);
   my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
   my $datasetsName = $datasets->getName();
   my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_${planFileBasename}.xml";
@@ -55,6 +58,59 @@ sub parseAndWritePlanFile {
   return $twig->sprint();
 }
 
+sub resolveDependsPatterns {
+  my ($instantiatedPlanText, $planFileName) = @_;
+
+  # parse the text (again!) but this time with the datasets instantiated
+  my $xml = new XML::Simple();
+  my $data = eval{ $xml->XMLin($instantiatedPlanText, SuppressEmpty => undef, ForceArray=>['step', 'subgraph'])};
+
+
+  # gather all step and subgraph names
+  my @stepNames;
+  foreach my $step ($data->{step}) {
+    push(@stepNames, $step->{name});
+  }
+
+  foreach my $subgraph ($data->{subgraph}) {
+    push(@stepNames, $subgraph->{name});
+  }
+
+  # find all dependsPatterns and make the substitution
+  foreach my $step ($data->{step}) {
+    expandPatterns($step, \@stepNames);
+  }
+
+  foreach my $subgraph ($data->{subgraph}) {
+    expandPatterns($subgraph, \@stepNames);
+  }
+
+}
+
+sub expandPatterns {
+  my ($stepOrSubgraph, $stepNames) = @_;
+
+  $stepOrSubgraph->{depends} = [] unless $stepOrSubgraph->{depends};
+  $stepOrSubgraph->{dependsPattern} = undef; # they are now converted, so lose em
+
+  foreach my $dependsPattern ($stepOrSubgraph->{dependsPattern}) {
+    my $pattern = $dependsPattern->{name};
+    # replace * wild card with .+
+    my $x = '.+';		# avoid syntax highlighting error
+    $pattern =~ s/\*/$x/;
+
+    # find all step or subgraph names that match the pattern
+    my @matchingStepNames = grep(/$pattern/, @$stepNames);
+
+    # for all matches, create a new <depends> element
+    foreach my $matchingStepName (@matchingStepNames) {
+      my $newDepends = {};
+      $newDepends->{name} = $matchingStepName;
+      push(@{$stepOrSubgraph->{depends}}, $newDepends);
+    }
+  }
+}
+
 sub usage {
 
   print "
@@ -66,7 +122,7 @@ Where:
   datasets_file:    an xml file containing a set of datasets.
   classes_file:     an xml file containing a set of dataset classes.
 
-Output: the generated workflow xml file to STDOUT
+Output: the generated workflow xml file in \$GUS_HOME/lib/xml/workflow
 
 ";
 
