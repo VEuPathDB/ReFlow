@@ -2,7 +2,6 @@ package ReFlow::Dataset::Datasets;
 
 use strict;
 
-use ReFlow::Dataset::Dataset;
 use File::Basename;
 
 use XML::Simple;
