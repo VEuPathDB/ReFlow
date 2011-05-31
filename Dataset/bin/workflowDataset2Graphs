@@ -42,7 +42,9 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
     $planFileAsText = $template->substituteInstancesIntoPlanText($planFileAsText);
   }
 
-  resolveDependsPatterns($planFileAsText, $planFileName);
+  # subsitute in <depends> elements for <dependsPattern>
+  $planFileAsText = resolveDependsPatterns($planFileAsText, $planFileName);
+
   my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
   my $datasetsName = $datasets->getName();
   my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_${planFileBasename}.xml";
@@ -52,7 +54,6 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
 
 sub parseAndWritePlanFile {
   my ($fullPlanFileName) = @_;
-  print STDERR "parsing plan file $fullPlanFileName\n";
   my $twig= new XML::Twig(pretty_print => 'indented');
   $twig->parsefile($fullPlanFileName);
   return $twig->sprint();
@@ -63,50 +64,62 @@ sub resolveDependsPatterns {
 
   # parse the text (again!) but this time with the datasets instantiated
   my $xml = new XML::Simple();
-  my $data = eval{ $xml->XMLin($instantiatedPlanText, SuppressEmpty => undef, ForceArray=>['step', 'subgraph'])};
+  my $data = eval{ $xml->XMLin($instantiatedPlanText, SuppressEmpty => undef, ForceArray=>['step', 'subgraph', 'depends', 'dependsPattern'])};
 
+#  print Dumper $data;
 
   # gather all step and subgraph names
   my @stepNames;
-  foreach my $step ($data->{step}) {
-    push(@stepNames, $step->{name});
+  foreach my $stepName (keys(%{$data->{step}})) {
+    push(@stepNames, $stepName);
   }
 
-  foreach my $subgraph ($data->{subgraph}) {
-    push(@stepNames, $subgraph->{name});
+  foreach my $subgraphName (keys(%{$data->{subgraph}})) {
+    push(@stepNames, $subgraphName);
   }
+
+  my $expandedPatterns = {};
 
   # find all dependsPatterns and make the substitution
-  foreach my $step ($data->{step}) {
-    expandPatterns($step, \@stepNames);
+  foreach my $stepName (keys(%{$data->{step}})) {
+    expandPatterns($data->{step}->{$stepName}, \@stepNames, $expandedPatterns);
   }
 
-  foreach my $subgraph ($data->{subgraph}) {
-    expandPatterns($subgraph, \@stepNames);
+  foreach my $subgraphName (keys(%{$data->{subgraph}})) {
+    expandPatterns($data->{subgraph}->{$subgraphName}, \@stepNames, $expandedPatterns);
   }
 
+  # use text substitution to insert the new <depends>
+  foreach my $expandedPattern (keys(%$expandedPatterns)) {
+    my $newDepends = join("\n", @{$expandedPatterns->{$expandedPattern}});
+    $newDepends = "\n$newDepends\n";
+    $expandedPattern =~ s/\*/\\*/g;
+    $instantiatedPlanText =~ s|\s+<dependsPattern name=\"$expandedPattern\"/>\s*|$newDepends|g;
+#    $instantiatedPlanText =~ s|\s+<dependsPattern name=\"$expandedPattern|$newDepends|g;
+  }
+  return $instantiatedPlanText;
 }
 
+# find any step or subgraph that has one or more dependsPattern element
+# for each one, expand it, creating depends elements that match the pattern.
+# add to the output hash a key for each pattern with values in an array ref
+# of step or subgraph names that match.
 sub expandPatterns {
-  my ($stepOrSubgraph, $stepNames) = @_;
+  my ($stepOrSubgraph, $stepNames, $outputHash) = @_;
 
-  $stepOrSubgraph->{depends} = [] unless $stepOrSubgraph->{depends};
-  $stepOrSubgraph->{dependsPattern} = undef; # they are now converted, so lose em
-
-  foreach my $dependsPattern ($stepOrSubgraph->{dependsPattern}) {
-    my $pattern = $dependsPattern->{name};
+  foreach my $dependsPatternValue (keys(%{$stepOrSubgraph->{dependsPattern}})) {
+    my $dependsPatternRegex = $dependsPatternValue;
     # replace * wild card with .+
     my $x = '.+';		# avoid syntax highlighting error
-    $pattern =~ s/\*/$x/;
+    $dependsPatternRegex =~ s/\*/$x/;
 
     # find all step or subgraph names that match the pattern
-    my @matchingStepNames = grep(/$pattern/, @$stepNames);
+    my @matchingStepNames = grep(/$dependsPatternRegex/, @$stepNames);
 
     # for all matches, create a new <depends> element
     foreach my $matchingStepName (@matchingStepNames) {
-      my $newDepends = {};
-      $newDepends->{name} = $matchingStepName;
-      push(@{$stepOrSubgraph->{depends}}, $newDepends);
+      push(@{$outputHash->{$dependsPatternValue}},
+	   "    <depends name=\"$matchingStepName\"/>");
     }
   }
 }
