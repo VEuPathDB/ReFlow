@@ -440,7 +440,8 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
             paramValues.put(paramName, newParamValue); 
             if (check) {
                 if (newParamValue.indexOf("$$") != -1) 
-                    Utilities.error("Parameter '" + paramName + "' in step '" 
+                    Utilities.error("In graph file " + subgraphXmlFileName +
+				    ", parameter '" + paramName + "' in step '" 
                                     + getFullName() 
                                     + "' includes an unresolvable variable reference: '"
                                     + newParamValue + "'");
@@ -467,7 +468,8 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
                 Utilities.substituteMacrosIntoString(paramValue, globalProps);
             paramValues.put(paramName, newParamValue); 
             if (newParamValue.indexOf("@@") != -1) 
-                    Utilities.error("Parameter '" + paramName + "' in step '" 
+                    Utilities.error("In graph file " + subgraphXmlFileName +
+				    ", parameter '" + paramName + "' in step '" 
                                     + getFullName() 
                                     + "' includes an unresolvable macro reference: '"
                                     + newParamValue + "'");
@@ -479,7 +481,8 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 	    
 	if (check) {
 	    if (newIf.indexOf("$$") != -1) 
-		Utilities.error(type + " in step '"  + getFullName() 
+		Utilities.error("In graph file " + subgraphXmlFileName +
+				", " + type + " in step '"  + getFullName() 
 				+ "' includes an unresolvable variable reference: '"
 				+ newIf + "'");
 	    if (!newIf.equals("true") && !newIf.equals("false"))

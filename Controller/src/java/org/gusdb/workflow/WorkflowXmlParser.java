@@ -49,8 +49,7 @@ public class WorkflowXmlParser<T extends WorkflowStep> extends XmlParser {
         // construct urls to model file, prop file, and config file
         URL modelURL = makeURL(gusHome + "/lib/xml/workflow/" + xmlFileName);
 
-        if (!validate(modelURL))
-            throw new Exception("validation failed.");
+        if (!validate(modelURL)) System.exit(1);
 
         Document doc = buildDocument(modelURL);
 
