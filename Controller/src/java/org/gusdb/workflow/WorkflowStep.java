@@ -151,7 +151,10 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     void checkLoadTypes() throws FileNotFoundException, IOException {
         for (String loadType : loadTypes) {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(loadType);
-	    if (val == null) Utilities.error("Step " + getFullName() + " has unknown stepLoadType: " + loadType);
+	    if (val == null) 
+		Utilities.error("Step " + getFullName() + " in graph file " +
+				workflowGraph.getXmlFileName() + 
+				" has unknown stepLoadType: " + loadType);
         }
     }
     
@@ -440,7 +443,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
             paramValues.put(paramName, newParamValue); 
             if (check) {
                 if (newParamValue.indexOf("$$") != -1) 
-                    Utilities.error("In graph file " + subgraphXmlFileName +
+                    Utilities.error("In graph file " + workflowGraph.getXmlFileName() +
 				    ", parameter '" + paramName + "' in step '" 
                                     + getFullName() 
                                     + "' includes an unresolvable variable reference: '"
@@ -468,7 +471,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
                 Utilities.substituteMacrosIntoString(paramValue, globalProps);
             paramValues.put(paramName, newParamValue); 
             if (newParamValue.indexOf("@@") != -1) 
-                    Utilities.error("In graph file " + subgraphXmlFileName +
+                    Utilities.error("In graph file " + workflowGraph.getXmlFileName() +
 				    ", parameter '" + paramName + "' in step '" 
                                     + getFullName() 
                                     + "' includes an unresolvable macro reference: '"
@@ -481,7 +484,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 	    
 	if (check) {
 	    if (newIf.indexOf("$$") != -1) 
-		Utilities.error("In graph file " + subgraphXmlFileName +
+		Utilities.error("In graph file " + workflowGraph.getXmlFileName() +
 				", " + type + " in step '"  + getFullName() 
 				+ "' includes an unresolvable variable reference: '"
 				+ newIf + "'");
