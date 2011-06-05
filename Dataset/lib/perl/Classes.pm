@@ -43,6 +43,13 @@ sub getClass {
     return $class;
 }
 
+sub getClassGraphFileDir {
+    my ($self, $className) = @_;
+    my $class = $self->{data}->{datasetClass}->{$className};
+    die "Can't find class with name '$className'\n" unless $class;
+    return $class->{graphFile}->{dir};
+}
+
 sub getResourceText {
     my ($self, $dataset) = @_;
     my $class = $self->getClass($dataset->{class});

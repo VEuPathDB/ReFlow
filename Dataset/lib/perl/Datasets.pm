@@ -18,7 +18,8 @@ sub new {
 
   my ($name,$path,$suffix) = fileparse($datasetsFile, '.xml');
 
-  $self->{name} = $name;
+  $path =~ /.*lib\/xml\/datasets\/(.*)/ || die "Dataset file name '$datasetsFile' is not in a path including lib/xml/datasets";
+  $self->{fullName} = "$1$name";
 
   return $self;
 }
@@ -38,9 +39,9 @@ sub getClassNamesUsed {
   return \@a;
 }
 
-sub getName {
+sub getFullName {
   my ($self) = @_;
-  return $self->{name};
+  return $self->{fullName};
 }
 
 sub getDatasets {

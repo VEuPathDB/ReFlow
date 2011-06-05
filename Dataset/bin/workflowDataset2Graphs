@@ -9,6 +9,7 @@ use ReFlow::Dataset::Datasets;
 use ReFlow::Dataset::Classes;
 use ReFlow::Dataset::Template;
 use Data::Dumper;
+use File::Path;
 
 usage() unless scalar(@ARGV) == 2;
 
@@ -22,6 +23,8 @@ my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
 # NEED TO VALIDATE DATASET AGAINST CLASSES
+
+# NEED TO VALIDATE TEMPLATES AGAINST CLASSES
 
 # hash of plan->classes_that_use_the_plan
 my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
@@ -46,16 +49,27 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
   $planFileAsText = resolveDependsPatterns($planFileAsText, $planFileName);
 
   my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
-  my $datasetsName = $datasets->getName();
-  my $graphFile = "$ENV{GUS_HOME}/lib/xml/workflow/${datasetsName}_${planFileBasename}.xml";
+  my $datasetsFullName = $datasets->getFullName();
+  my $graphFilePath = "$ENV{GUS_HOME}/lib/xml/workflow/$datasetsFullName";
+  mkpath($graphFilePath);
+  my $graphFile = "$graphFilePath/${planFileBasename}.xml";
   open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
   print GRAPH $planFileAsText;
 }
 
+
+##########################################################################
+
 sub parseAndWritePlanFile {
   my ($fullPlanFileName) = @_;
-  my $twig= new XML::Twig(pretty_print => 'indented');
-  $twig->parsefile($fullPlanFileName);
+  my $twig;
+  eval {
+    $twig= new XML::Twig(pretty_print => 'indented');
+    $twig->parsefile($fullPlanFileName);
+  };
+
+  die "Error parsing plan file $fullPlanFileName:$@\n" if $@;
+
   return $twig->sprint();
 }
 
@@ -127,12 +141,17 @@ sub expandPatterns {
 sub usage {
 
   print "
-Create graph files for a dataset, from graph plan files
+Create graph files for a dataset, from graph plan files (in \$GUS_HOME)
 
 Usage:  workflowDataset2Graphs datasets_file classes_file
 
 Where:
-  datasets_file:    an xml file containing a set of datasets.
+  datasets_file:    an xml file containing a set of datasets.  Must be in a file
+                    path including lib/xml/datasets/XXX/YYY.xml where XXX is one
+                    or more optional subirs, and YYY is the name of the dataset.
+                    Files generated from plans will be named like this:
+                    XXX/YYY/planFileName.xml
+
   classes_file:     an xml file containing a set of dataset classes.
 
 Output: the generated workflow xml file in \$GUS_HOME/lib/xml/workflow
