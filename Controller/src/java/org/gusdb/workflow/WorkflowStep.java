@@ -154,7 +154,8 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 	    if (val == null) 
 		Utilities.error("Step " + getFullName() + " in graph file " +
 				workflowGraph.getXmlFileName() + 
-				" has unknown stepLoadType: " + loadType);
+				" has unknown stepLoadType: " + loadType +
+				". Please add it to config/loadBalance.prop");
         }
     }
     
