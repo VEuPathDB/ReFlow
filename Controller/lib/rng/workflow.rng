@@ -52,6 +52,9 @@
               <attribute name="stepLoadTypes"/>
             </optional>
             <optional>
+              <attribute name="excludeIfXmlFileDoesNotExist"/>
+            </optional>
+            <optional>
               <attribute name="undoRoot"/>
             </optional>
             <zeroOrMore>

@@ -63,6 +63,7 @@ public class WorkflowStep implements Comparable {
     private String[] loadTypes = {"total"};
     private String includeIf_string;
     private String excludeIf_string;
+    private String excludeIfNoXml_string;
     private Boolean excludeFromGraph = null;
     private String undoRoot;
     
@@ -167,6 +168,12 @@ public class WorkflowStep implements Comparable {
     
     String getExcludeIfString() { return excludeIf_string; }
     
+    public void setExcludeIfXmlFileDoesNotExist(String excludeIfNoXml_str) {
+        excludeIfNoXml_string = excludeIfNoXml_str;
+    }
+    
+    String getExcludeIfStringXmlFileDoesNotExist() { return excludeIfNoXml_string; }
+    
     public boolean getExcludeFromGraph() throws FileNotFoundException, IOException{
 	if (excludeFromGraph == null) {
 	    boolean efg = false;
@@ -178,6 +185,11 @@ public class WorkflowStep implements Comparable {
 		String gr = isSubgraphCall? "SUBGRAPH " : "";
 		if (!isSubgraphReturn)
 		    workflowGraph.getWorkflow().log("Excluding " + gr + getFullName());
+	    } else if (isSubgraphCall && excludeIfNoXml_string != null 
+		      && excludeIfNoXml_string.equals("true")) {
+		efg = true;
+		workflowGraph.getWorkflow().log("Excluding subgraph " getFullName() + ": optional xml file " + subgraphXmlFileName + " is not found");
+		
 	    }
 	    excludeFromGraph = new Boolean(efg);
 	}
