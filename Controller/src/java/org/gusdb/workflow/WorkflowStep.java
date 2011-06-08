@@ -45,7 +45,11 @@ import java.util.HashMap;
 
 public class WorkflowStep implements Comparable<WorkflowStep> {
 
-    // from construction and configuration
+    // static
+    private static final String nl = System.getProperty("line.separator");
+    private static final String defaultLoadType = "total";
+
+        // from construction and configuration
     protected String subgraphXmlFileName;
     protected WorkflowGraph<? extends WorkflowStep> workflowGraph;
     protected String invokerClassName;
@@ -60,7 +64,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     public WorkflowStep subgraphReturnStep;  // if this step is a caller, its associated return step.
     private String paramsDigest;
     private int depthFirstOrder;
-    private String[] loadTypes = {"total"};
+    private String[] loadTypes = {defaultLoadType};
     private String includeIf_string;
     private String excludeIf_string;
     private Boolean excludeFromGraph = null;
@@ -88,10 +92,6 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     protected boolean prevOffline;
     protected boolean prevStopAfter;
 
-    // static
-    private static final String nl = System.getProperty("line.separator");
-
-    
     public void setName(String name) {
         this.baseName = name;
     }
@@ -103,7 +103,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     public void setStepLoadTypes(String loadTypes) {
 	String[] tmp = loadTypes.split(",\\s*");
 	this.loadTypes = new String[tmp.length+1];
-	this.loadTypes[0] = "total";
+	this.loadTypes[0] = defaultLoadType;
 	for (int i=0; i<tmp.length; i++) this.loadTypes[i+1] = tmp[i];
     }
     
@@ -151,11 +151,13 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     void checkLoadTypes() throws FileNotFoundException, IOException {
         for (String loadType : loadTypes) {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(loadType);
-	    if (val == null) 
-		Utilities.error("Step " + getFullName() + " in graph file " +
-				workflowGraph.getXmlFileName() + 
-				" has unknown stepLoadType: " + loadType +
-				". Please add it to config/loadBalance.prop");
+	    if (val == null) {
+		if (loadType eq defaultLoadType) 
+		    Utilities.error("Config file loadBalancing.prop must have a line with " + defaultLoadType + "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
+
+		else 
+		    Utilities.error("Step " + getFullName() + " has unknown stepLoadType: " + loadType);
+	    }
         }
     }
     
