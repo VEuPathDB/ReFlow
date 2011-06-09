@@ -197,7 +197,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 		File xmlFile = new File(gusHome + "/lib/xml/workflow/" + subgraphXmlFileName);
 		if (!xmlFile.exists()) {
 		    efg = true;
-		    workflowGraph.getWorkflow().log("Excluding SUBGRAPH " + getFullName() + ": optional xml file " + subgraphXmlFileName + " is not found in $GUS_HOME/lib/xml/workflow");
+		    workflowGraph.getWorkflow().log("Excluding SUBGRAPH " + getFullName() + ": optional xml file " + subgraphXmlFileName + " is absent from $GUS_HOME/lib/xml/workflow");
 		}
 	    }
 	    excludeFromGraph = new Boolean(efg);
