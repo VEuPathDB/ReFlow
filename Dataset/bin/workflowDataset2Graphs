@@ -22,6 +22,12 @@ my $classes = ReFlow::Dataset::Classes->new($classesFile);
 my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
+# make graph files target dir
+my $datasetsFullName = $datasets->getFullName();
+my $graphFilePath = "$ENV{GUS_HOME}/lib/xml/workflow/$datasetsFullName";
+mkpath($graphFilePath);
+unlink(glob("$graphFilePath/*.xml")); # clean out old xml files
+
 # NEED TO VALIDATE DATASET AGAINST CLASSES
 
 # NEED TO VALIDATE TEMPLATES AGAINST CLASSES
@@ -49,9 +55,6 @@ foreach my $planFileName (keys(%$graphPlan2classes)) {
   $planFileAsText = resolveDependsPatterns($planFileAsText, $planFileName);
 
   my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
-  my $datasetsFullName = $datasets->getFullName();
-  my $graphFilePath = "$ENV{GUS_HOME}/lib/xml/workflow/$datasetsFullName";
-  mkpath($graphFilePath);
   my $graphFile = "$graphFilePath/${planFileBasename}.xml";
   open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
   print GRAPH $planFileAsText;
