@@ -67,6 +67,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     private String[] loadTypes = {defaultLoadType};
     private String includeIf_string;
     private String excludeIf_string;
+    private String excludeIfNoXml_string;
     private Boolean excludeFromGraph = null;
     private String undoRoot;
     
@@ -152,7 +153,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
         for (String loadType : loadTypes) {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(loadType);
 	    if (val == null) {
-		if (loadType eq defaultLoadType) 
+		if (loadType.equals(defaultLoadType)) 
 		    Utilities.error("Config file loadBalancing.prop must have a line with " + defaultLoadType + "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
 
 		else 
@@ -173,7 +174,13 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     
     String getExcludeIfString() { return excludeIf_string; }
     
-    public boolean getExcludeFromGraph() throws FileNotFoundException, IOException{
+     public void setExcludeIfXmlFileDoesNotExist(String excludeIfNoXml_str) {
+        excludeIfNoXml_string = excludeIfNoXml_str;
+    }
+    
+    String getExcludeIfNoXmlString() { return excludeIfNoXml_string; }
+    
+   public boolean getExcludeFromGraph() throws FileNotFoundException, IOException{
 	if (excludeFromGraph == null) {
 	    boolean efg = false;
 	    if (callingStep != null && callingStep.getExcludeFromGraph()) {
@@ -184,6 +191,14 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 		String gr = isSubgraphCall? "SUBGRAPH " : "";
 		if (!isSubgraphReturn)
 		    workflowGraph.getWorkflow().log("Excluding " + gr + getFullName());
+	    } else if (isSubgraphCall && excludeIfNoXml_string != null
+		       && excludeIfNoXml_string.equals("true")) {
+		String gusHome = System.getProperty("GUS_HOME");
+		File xmlFile = new File(gusHome + "/lib/xml/workflow/" + subgraphXmlFileName);
+		if (!xmlFile.exists()) {
+		    efg = true;
+		    workflowGraph.getWorkflow().log("Excluding SUBGRAPH " + getFullName() + ": optional xml file " + subgraphXmlFileName + " is not found in $GUS_HOME/lib/xml/workflow");
+		}
 	    }
 	    excludeFromGraph = new Boolean(efg);
 	}
