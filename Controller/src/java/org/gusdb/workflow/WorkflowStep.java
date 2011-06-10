@@ -507,7 +507,8 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 				+ "' includes an unresolvable variable reference: '"
 				+ newIf + "'");
 	    if (!newIf.equals("true") && !newIf.equals("false"))
-		Utilities.error(type + " in step '"  + getFullName() 
+		Utilities.error("In graph file " + workflowGraph.getXmlFileName() +
+				", " + type + " in step '"  + getFullName() 
 				+ "' is neither 'true' nor 'false': '"
 				+ newIf + "'");
 	}
