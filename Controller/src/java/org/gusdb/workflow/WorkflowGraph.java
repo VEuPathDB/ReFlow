@@ -687,7 +687,8 @@ public class WorkflowGraph<T extends WorkflowStep> {
         WorkflowXmlParser<S> parser = new WorkflowXmlParser<S>();
         WorkflowGraph<S> graph =
                 parser.parseWorkflow(workflow, stepClass, xmlFileName,
-                        globalSteps, globalConstants, isGlobal); 
+				     callerXmlFileName,
+				     globalSteps, globalConstants, isGlobal); 
 
         // clean up the unexpanded graph, after its creation by digester
 	graph.postprocessSteps();

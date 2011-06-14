@@ -40,7 +40,7 @@ public class WorkflowXmlParser<T extends WorkflowStep> extends XmlParser {
 
     @SuppressWarnings("unchecked")
     public WorkflowGraph<T> parseWorkflow(Workflow<T> workflow, Class<T> stepClass,
-            String xmlFileName, Map<String, T> globalSteps, 
+            String xmlFileName, String callerXmlFileName, Map<String, T> globalSteps, 
             Map<String,String> globalConstants, boolean isGlobalGraph) throws SAXException, IOException, Exception {
         this.stepClass = stepClass;
 
@@ -49,7 +49,15 @@ public class WorkflowXmlParser<T extends WorkflowStep> extends XmlParser {
         // construct urls to model file, prop file, and config file
         URL modelURL = makeURL(gusHome + "/lib/xml/workflow/" + xmlFileName);
 
-        if (!validate(modelURL)) System.exit(1);
+        try {
+	    if (!validate(modelURL)) {
+		System.err.println("Called from: " + callerXmlFileName);
+		System.exit(1);
+	    }
+        } catch ( Exception ex ) {
+	    System.err.println("Called from: " + callerXmlFileName);
+            throw ex;
+	}
 
         Document doc = buildDocument(modelURL);
 
