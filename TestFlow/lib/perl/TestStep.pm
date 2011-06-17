@@ -1,4 +1,4 @@
-package GUS::Workflow::TestStep;
+package ReFlow::TestFlow::TestStep;
 
 @ISA = (GUS::Workflow::WorkflowStepInvoker);
 use strict;
@@ -36,14 +36,7 @@ sub getConfigDeclaration {
   return $properties;
 }
 
-sub getParamDeclaration {
-  my $properties =
-    [
-     # [name, default, description]
-     ['msg', "", ""],
-    ];
-  return $properties;
-}
+
 
 sub getDocumentation {
 }
