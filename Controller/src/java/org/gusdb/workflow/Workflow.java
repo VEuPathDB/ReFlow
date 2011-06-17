@@ -259,20 +259,26 @@ public class Workflow <T extends WorkflowStep> {
     }
 
     String getWorkflowConfig(String key) throws FileNotFoundException, IOException {
+	String configFileName = getHomeDir() + "/config/workflow.prop";
         if (workflowProps == null) {
             workflowProps = new Properties();
-            workflowProps.load(new FileInputStream(getHomeDir() + "/config/workflow.prop"));
+            workflowProps.load(new FileInputStream(configFileName));
         }
-        return workflowProps.getProperty(key);
+        String value = workflowProps.getProperty(key);
+	if (value == null) error("Required property " + key + " not found in workflow properties file: " + configFileName);
+	return value;
     }
  
     String getGusConfig(String key) throws FileNotFoundException, IOException {
+	String gusHome = System.getProperty("GUS_HOME");
+	String configFileName = gusHome + "/config/gus.config";
         if (gusProps == null) {
-	    String gusHome = System.getProperty("GUS_HOME");
             gusProps = new Properties();
-            gusProps.load(new FileInputStream(gusHome + "/config/gus.config"));
+            gusProps.load(new FileInputStream(configFileName));
         }
-        return gusProps.getProperty(key);
+        String value = gusProps.getProperty(key);
+	if (value == null) error("Required property " + key + " not found in gus.config file: " + configFileName);
+	return value;
     }
  
     Integer getLoadBalancingConfig(String key) throws FileNotFoundException, IOException {
