@@ -5,7 +5,7 @@ use strict;
 use GUS::Workflow::WorkflowStepInvoker;
 
 sub run {
-  my ($self, $test) = @_;
+  my ($self, $test, $undo) = @_;
 
   my $name = $self->getConfig('name');
   my $wait = $self->getConfig('wait');
@@ -17,13 +17,6 @@ sub run {
   if (!$test) {
     sleep($wait);
   }
-}
-
-sub restart {
-}
-
-sub undo {
-
 }
 
 sub getConfigDeclaration {
@@ -38,5 +31,3 @@ sub getConfigDeclaration {
 
 
 
-sub getDocumentation {
-}
