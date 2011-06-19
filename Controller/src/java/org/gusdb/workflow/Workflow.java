@@ -105,6 +105,14 @@ public class Workflow <T extends WorkflowStep> {
 	return workflowStepTable;
     }
 
+    String getName() {
+	return name;
+    }
+
+    String getVersion() {
+	return version;
+    }
+
     //////////////////////////////////////////////////////////////////////////
     //   Initialization
     //////////////////////////////////////////////////////////////////////////

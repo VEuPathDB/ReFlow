@@ -786,7 +786,11 @@ public class WorkflowGraph<T extends WorkflowStep> {
     }
     
     static <S extends WorkflowStep > Map<String,String>getGlobalPropValues(Workflow<S> workflow) throws FileNotFoundException, IOException {
-        return readPropFile(workflow, "stepsShared.prop");
+	Map<String,String> map = readPropFile(workflow, "stepsShared.prop");
+
+	// make these available to graph files
+	map.put("workflowName", workflow.getName());
+	map.put("workflowVersion", workflow.getName());
     }
     
     @SuppressWarnings("unchecked")
