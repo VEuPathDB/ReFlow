@@ -791,6 +791,7 @@ public class WorkflowGraph<T extends WorkflowStep> {
 	// make these available to graph files
 	map.put("workflowName", workflow.getName());
 	map.put("workflowVersion", workflow.getName());
+	return map;
     }
     
     @SuppressWarnings("unchecked")
