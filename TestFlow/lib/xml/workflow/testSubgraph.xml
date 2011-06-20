@@ -3,12 +3,12 @@
   <param name="prefix"/>
 
   <step name="fourthStep"
-        stepClass="GUS::Workflow::TestStep">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">$$prefix$$/purple</paramValue>
   </step>
 
   <step name="fifthStep"
-        stepClass="GUS::Workflow::TestStep">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">black</paramValue>
     <depends name="fourthStep"/>
   </step>

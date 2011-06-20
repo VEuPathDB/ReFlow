@@ -2,7 +2,44 @@ package ReFlow::TestFlow::TestStep;
 
 @ISA = (GUS::Workflow::WorkflowStepInvoker);
 use strict;
-use GUS::Workflow::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepInvoker;
+
+sub new {
+  my ($class, $stepName, $workflow) = @_;
+
+  my $self = {
+	      workflow=> $workflow,
+	      name => $stepName,
+	     };
+  bless($self,$class);
+  return $self;
+}
+
+sub setParamValues {
+    # do nothing here...?
+}
+
+sub getParamValue {
+    return "";
+}
+
+sub runInWrapper {
+    run(@_);
+}
+
+sub getConfig {
+    my %config = ();
+    return %config;
+}
+
+sub getSharedConfig {
+    my %sharedConfig = ();
+    return %sharedConfig;
+}
+
+sub runCmd {
+    system($_[1]);
+}
 
 sub run {
   my ($self, $test, $undo) = @_;
@@ -12,7 +49,7 @@ sub run {
   my $mood = $self->getSharedConfig('mood');
   my $msg = $self->getParamValue('msg');
 
-  $self->runCmd($test, "echo $name $mood $msg > teststep.out");
+  $self->runCmd($test, "echo 'testing... $name $mood $msg' > teststep.out");
 
   if (!$test) {
     sleep($wait);
@@ -28,6 +65,3 @@ sub getConfigDeclaration {
     ];
   return $properties;
 }
-
-
-

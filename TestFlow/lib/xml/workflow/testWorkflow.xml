@@ -1,6 +1,6 @@
 <workflowGraph name="root">
 
-  <param name="shape"/>
+  <constant name="shape">rectangle</constant>
 
   <constant name="blue">very blue</constant>
 
@@ -9,12 +9,12 @@
   </subgraph>
 
   <step name="secondStep"
-        stepClass="GUS::Workflow::TestStep">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">green</paramValue>
   </step>
 
   <step name="thirdStep"
-        stepClass="GUS::Workflow::TestStep">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">$$shape$$</paramValue>
     <depends name="firstStep"/>
     <depends name="secondStep"/>
