@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+use WDK::Model::CommandHelper;
+use File::Spec;
+
+my $GUS_HOME = $ENV{GUS_HOME};
+my $CLASSPATH = &WDK::Model::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &WDK::Model::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
+
+sub main { # takes one arg: output directory
+
+    $port = $_[0];
+    $filesDir = $_[1];
+    if (!File::Spec->file_name_is_absolute($filesDir)) {
+	printf "Converted relative path to absolute: $filesDir -> ";
+        $filesDir = File::Spec->rel2abs($filesDir);
+        printf "$filesDir\n";
+    }
+
+    $jettyHome = $ENV{'JETTY_HOME'};
+    printf "Jetty home set to $jettyHome\n";
+    if ($jettyHome eq "") {
+	printf(STDERR "ERROR: Jetty must be installed and its home recorded in the JETTY_HOME environment variable.\n");
+	exit 2;
+    }
+
+    $confFile = "/tmp/workflowGraphServer.$$.xml";
+
+    # create xml file for server; dump to tmp
+    open(JETTY_CONF, ">$confFile");
+    print JETTY_CONF <<ENDFILE;
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/config
+ure.dtd">
+
+<Configure id="Server" class="org.mortbay.jetty.Server">
+    <Call name="addConnector">
+      <Arg>
+          <New class="org.mortbay.jetty.nio.SelectChannelConnector">
+            <Set name="port"><SystemProperty name="jetty.port" default="$port"/></Set>
+          </New>
+      </Arg>
+    </Call>
+    <Set name="handler">
+        <New id="ResourceHandler" class="org.mortbay.jetty.handler.ResourceHandler">
+            <Set name="resourceBase">$filesDir</Set>
+        </New>
+    </Set>
+</Configure>
+ENDFILE
+    close(JETTY_CONF);
+
+    chdir $jettyHome;
+    #system("java -jar start.jar $confFile");
+    my $pid = fork();
+    if ($pid == 0) {
+	exec("java -jar start.jar $confFile");
+    } else {
+        sleep(2);
+        unlink($confFile);
+	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
+    }
+    return 0;
+}
+
+################### Parse args and call main sub ###################
+
+if ($#ARGV != 1) { # i.e. !(2 args)
+    printf(STDERR "\nUSAGE: workflowGraphServer <port> <directory>\n\n");
+    printf(STDERR "   port      : port on which to server\n");
+    printf(STDERR "   directory : local dir from which HTML files should be served\n\n");
+    exit 1;
+}
+
+exit(main($ARGV[0], $ARGV[1]));

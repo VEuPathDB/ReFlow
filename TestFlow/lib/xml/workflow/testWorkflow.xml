@@ -1,5 +1,6 @@
 <workflowGraph name="root">
 
+  <!--<param name="shape"/>-->
   <constant name="shape">rectangle</constant>
 
   <constant name="blue">very blue</constant>

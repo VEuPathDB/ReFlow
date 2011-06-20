@@ -1,0 +1,182 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+use WDK::Model::CommandHelper;
+use File::Basename;
+use File::stat;
+
+my $GUS_HOME = $ENV{GUS_HOME};
+my $CLASSPATH = &WDK::Model::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &WDK::Model::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
+#my $args = &WDK::Model::CommandHelper::getJavaArgs(@ARGV);
+
+sub main { # takes two args: input file/directory, output directory
+
+    $inputFile = $_[0];
+    $outputLoc = $_[1];
+    %results = ( 'TRY', 0, 'FAIL', 0, 'UTD', 0, 'SUCCESS', 0 );
+
+    # if single file is passed, just parse it
+    if (-f $inputFile) {
+	$results{'TRY'}++;
+	$results{buildHtml($inputFile, $outputLoc)}++;
+	printf("Successfully generated $numSuccessful/1 HTML files.\n");
+    }
+    # if directory is passed, parse each xml inside and rebuild index
+    elsif (-d $inputFile) {
+	@names = `ls $inputFile/*.xml`;
+	foreach $name(@names) {
+	    chomp($name);
+	    $results{'TRY'}++;
+	    $results{buildHtml($name, $outputLoc)}++;
+	}
+	buildIndex($outputLoc);
+    }
+    else {
+	printf(STDERR "ERROR: $inputFile is not a file or directory\n");
+	return 1;
+    }
+    printf("Num HTML attempted:   $results{'TRY'}\n");
+    printf("Num HTML completed:   $results{'SUCCESS'}\n");
+    printf("Num HTML up-to-date:  $results{'UTD'}\n");
+    printf("Num HTML failed:      $results{'FAIL'}\n");
+
+    return 0;
+}
+
+sub buildHtml { # two args: XML file, output directory
+
+    $fileToParse = $_[0];
+    $outputDir = $_[1];
+
+    $fileName = basename($fileToParse);
+
+    $htmlName = $fileName;
+    $htmlName =~ s/\.xml/\.html/;
+
+    $imageName = $fileName;
+    $imageName =~ s/\.xml/\.gif/;
+
+    if (!(-e $outputDir)) {
+        printf("Generating $outputDir/...");
+	system("mkdir $outputDir");
+        printf("done.\n");
+    }
+    # mkdir -p was throwing error for images (??)
+    if (!(-e "$outputDir/images")) {
+	printf("Generating $outputDir/images/...");
+        system("mkdir $outputDir/images");
+	printf("done.\n");
+    }
+    if (!(-e "$outputDir/xml")) {
+	printf("Generating $outputDir/xml/...");
+        system("mkdir $outputDir/xml");
+	printf("done.\n");
+    }
+
+    # copy xml file over so html page can link to it
+    system("cp $fileToParse $outputDir/xml");
+
+    printf("Generating $outputDir/$htmlName...");
+
+    if (-f "$outputDir/$htmlName") {
+        $htmlModTime = stat("$outputDir/$htmlName")->mtime;
+        $xmlModTime = stat("$fileToParse")->mtime;
+        if ($htmlModTime > $xmlModTime) {
+	    printf("up to date.\n");
+	    return 'UTD';
+	}
+    }
+
+    $cmd = "java $sysProps -classpath $CLASSPATH org.gusdb.workflow.authoring.DotFileBuilder $fileToParse > tmp.dot";
+    system($cmd);
+
+    $exitCode = ($? >> 8);
+    if ($exitCode != 0) {
+	printf(STDERR "failure in DotFileBuilder.\n");
+        return 'FAIL';
+    }
+
+    system("dot -Tcmapx_np -otmp.map -Tgif -o$outputDir/images/$imageName tmp.dot");
+
+    $exitCode = ($? >> 8);
+    if ($exitCode != 0) {
+	printf(STDERR "failure in dot.\n");
+        return 'FAIL';
+    }
+
+    open(HTML_FILE, ">$outputDir/$htmlName");
+    printf HTML_FILE "<html><body>";
+    printf HTML_FILE "  <div style=\"margin:10px; font-weight:bold; font-size:12pt; text-align:center\">\n";
+    printf HTML_FILE "    <a href=\"xml/$fileName\">$fileName</a>\n";
+    printf HTML_FILE "  </div>\n";
+    printf HTML_FILE "  <img style=\"border:0px;\" src=\"images/$imageName\" usemap=\"#name\"/>\n";
+
+    # append the map contents
+    open(MAP_FILE, "<tmp.map");
+    while (<MAP_FILE>) {
+	printf HTML_FILE "$_\n";
+    }
+    close(MAP_FILE);
+
+    printf HTML_FILE "</body></html>\n";
+    close(HTML_FILE);
+    system("rm -f tmp.map tmp.dot");
+    printf("done.\n");
+    return 'SUCCESS';
+}
+
+sub buildIndex { # one arg: output directory
+
+    $outputDir = $_[0];
+
+    # remove old html files so they're not placed in the index
+    system("rm -f $outputDir/index.html $outputDir/menu.html $outputDir/welcome.html");
+
+    # generate menu.html
+    printf("Generating $outputDir/menu.html...");
+    @names = `cd $outputDir; ls *.html | sort`;
+    open(MENU, ">$outputDir/menu.html");
+    printf MENU "<html><body><h3>Contents</h3>\n";
+    foreach $name(@names) {
+	chomp($name);
+        $graphName = $name;
+        $graphName =~ s/\.html//;
+        printf MENU "<a target=\"right\" href=\"$name\">$graphName</a><br/>\n";
+    }
+    printf MENU "</body></html>\n";
+    close(MENU);
+    printf("done.\n");
+
+    # generate index.html
+    printf("Generating $outputDir/index.html...");
+    open(INDEX, ">$outputDir/index.html");
+    printf INDEX "<html><frameset cols=\"25%,75%\">";
+    printf INDEX "<frame name=\"left\" src=\"menu.html\"/>";
+    printf INDEX "<frame name=\"right\" src=\"welcome.html\"/>";
+    printf INDEX "</frameset></html>";
+    close(INDEX);
+    printf("done.\n");
+
+    # generate welcome.html
+    printf("Generating $outputDir/welcome.html...");
+    open(INDEX, ">$outputDir/welcome.html");
+    printf INDEX "<html><body><h2>Workflow Viewer</h2><p>\n";
+    printf INDEX "Click the links to the left to view workflow diagrams.\n";
+    printf INDEX "</p></body></html>\n";
+    close(INDEX);
+    printf("done.\n");
+}
+
+################### Parse args and call main sub ###################
+
+if ($#ARGV != 1) { # i.e. !(2 args)
+    printf(STDERR "\nUSAGE: workflowHtmlGenerator (<input_file>|<input_dir>) <output_dir>\n\n");
+    printf(STDERR "   input_file : a single XML file to be updated\n");
+    printf(STDERR "   input_dir  : a directory; all XML files inside will be updated\n");
+    printf(STDERR "   output_dir : location to which HTML files will be dumped\n\n");
+    printf(STDERR "Note: index.html and menu.html will only be regenerated if input_dir is passed\n\n");
+    exit 1;
+}
+
+exit(main($ARGV[0], $ARGV[1]));

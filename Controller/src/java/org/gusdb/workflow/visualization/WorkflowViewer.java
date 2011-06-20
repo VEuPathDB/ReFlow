@@ -31,6 +31,7 @@ import org.apache.commons.collections15.Transformer;
 import org.gusdb.workflow.Utilities;
 import org.gusdb.workflow.Workflow;
 import org.gusdb.workflow.WorkflowGraph;
+import org.gusdb.workflow.WorkflowGraphUtil;
 import org.gusdb.workflow.WorkflowStep;
 import org.gusdb.workflow.visualization.layout.AssistedTreeLayout;
 import org.gusdb.workflow.visualization.mouse.WorkflowViewerMousePlugin;
@@ -100,9 +101,13 @@ public class WorkflowViewer extends JFrame implements ActionListener {
 
   private void createViewFromWorkflow() {
     try {
+      @SuppressWarnings("unchecked")
+      Class<WorkflowGraph<WorkflowStep>> containerClass =
+        Utilities.getXmlContainerClass(WorkflowStep.class, WorkflowGraph.class);
+      
       // create root graph for this workflow
-      WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraph.constructFullGraph(
-          WorkflowStep.class, workflow);
+      WorkflowGraph<WorkflowStep> rootGraph =
+        WorkflowGraphUtil.constructFullGraph(WorkflowStep.class, containerClass, workflow);
 
       createViewGraph(workflow.getWorkflowXmlFileName(),
           rootGraph.getRootSteps());

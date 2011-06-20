@@ -5,7 +5,7 @@
 	<classpathentry kind="lib" path="lib/java/db_driver/postgresql-8.3-603.jdbc3.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/java/jing-20030619.jar"/>
-	<classpathentry kind="lib" path="lib/java/commons-digester-1.7.jar"/>
+	<classpathentry kind="lib" path="lib/java/commons-digester-1.7.jar" sourcepath="/home/ryan/.m2/repository/commons-digester/commons-digester/1.7/commons-digester-1.7-sources.jar"/>
 	<classpathentry kind="lib" path="lib/java/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-beanutils.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>

@@ -81,7 +81,7 @@ public class Workflow <T extends WorkflowStep> {
     /////////////////////////////////////////////////////////////////////////
     //        Properties
     /////////////////////////////////////////////////////////////////////////
-    void setWorkflowGraph(WorkflowGraph<T> workflowGraph) {
+    public void setWorkflowGraph(WorkflowGraph<T> workflowGraph) {
         this.workflowGraph = workflowGraph;
     }
     
@@ -486,11 +486,17 @@ public class Workflow <T extends WorkflowStep> {
 	 
 	 // runnable workflow, either test or run mode
          if (cmdLine.hasOption("r") || cmdLine.hasOption("t")) {
-	     System.err.println("Initializing...");
+           System.err.println("Initializing...");
              RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
+             
+             // get references to the Class types we'll be using
              Class<RunnableWorkflowStep> stepClass = RunnableWorkflowStep.class;
+             @SuppressWarnings("unchecked")
+             Class<WorkflowGraph<RunnableWorkflowStep>> containerClass =
+               Utilities.getXmlContainerClass(RunnableWorkflowStep.class, WorkflowGraph.class);
+             
              WorkflowGraph<RunnableWorkflowStep> rootGraph = 
-                 WorkflowGraph.constructFullGraph(stepClass, runnableWorkflow);
+               WorkflowGraphUtil.constructFullGraph(stepClass, containerClass, runnableWorkflow);
              runnableWorkflow.setWorkflowGraph(rootGraph);
              boolean testOnly = cmdLine.hasOption("t");
              runnableWorkflow.undoStepName = 
@@ -529,9 +535,15 @@ public class Workflow <T extends WorkflowStep> {
          // compile check or detailed step report
          else if (cmdLine.hasOption("c") || cmdLine.hasOption("d")) {
              Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
+             
+             // get references to the Class types we'll be using
              Class<WorkflowStep> stepClass = WorkflowStep.class;
+             @SuppressWarnings("unchecked")
+             Class<WorkflowGraph<WorkflowStep>> containerClass =
+               Utilities.getXmlContainerClass(WorkflowStep.class, WorkflowGraph.class);
+             
              WorkflowGraph<WorkflowStep> rootGraph = 
-                 WorkflowGraph.constructFullGraph(stepClass, workflow);
+               WorkflowGraphUtil.constructFullGraph(stepClass, containerClass, workflow);
              workflow.setWorkflowGraph(rootGraph);
              if (cmdLine.hasOption("d")) {
                  String[] desiredStates = getDesiredStates(cmdLine, "d");

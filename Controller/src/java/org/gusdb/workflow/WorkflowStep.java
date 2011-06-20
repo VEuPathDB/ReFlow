@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 
+
 /*
 
   the following "state diagram" shows allowed state transitions by
@@ -43,14 +44,15 @@ import java.util.HashMap;
 
 */
 
-public class WorkflowStep implements Comparable<WorkflowStep> {
+public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // static
     private static final String nl = System.getProperty("line.separator");
     private static final String defaultLoadType = "total";
 
         // from construction and configuration
-    protected String subgraphXmlFileName;
+    protected String subgraphXmlFileName; // file referenced as subgraph in this step
+    protected String sourceXmlFileName; // file containing this step
     protected WorkflowGraph<? extends WorkflowStep> workflowGraph;
     protected String invokerClassName;
     private String baseName;
@@ -323,7 +325,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
         return workflowGraph.getWorkflow().getUndoStepId() != null;
     }
 
-    List<Name> getDependsNames() {
+    public List<Name> getDependsNames() {
         return dependsNames;
     }
     
@@ -357,13 +359,25 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
         dependsGlobalNames.add(dependsName);
     }
     
+    //TODO Java6 @Override
     public void setXmlFile(String subgraphXmlFileName) {
         this.subgraphXmlFileName = subgraphXmlFileName;
         isSubgraphCall = true;
     }
     
+    //TODO Java6 @Override
     public String getSubgraphXmlFileName() {
         return subgraphXmlFileName;
+    }
+    
+    //TODO Java6 @Override
+    public void setSourceXmlFileName(String fileName) {
+      this.sourceXmlFileName = fileName;
+    }
+    
+    //TODO Java6 @Override
+    public String getSourceXmlFileName() {
+      return workflowGraph.getXmlFileName();
     }
     
     String getParamsDigest() throws NoSuchAlgorithmException, Exception {
@@ -560,6 +574,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
 	    + "name:       " + getFullName() + nl
 	    + "id:         " + workflow_step_id + nl
 	    + "stepClass:  " + invokerClassName + nl
+	    + "sourceXml:  " + workflowGraph.getXmlFileName() + nl
 	    + "subgraphXml " + subgraphXmlFileName + nl
 	    + "state:      " + state + nl
             + "undo_state: " + undo_state + nl
@@ -584,7 +599,7 @@ public class WorkflowStep implements Comparable<WorkflowStep> {
     }
 
     public int compareTo(WorkflowStep s) {
-	return baseName.compareTo(s.getBaseName());
+      return baseName.compareTo(s.getBaseName());
     }
 
 }
