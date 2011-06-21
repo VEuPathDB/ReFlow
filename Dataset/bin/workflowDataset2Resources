@@ -26,7 +26,6 @@ my $datasetsFullName = $datasets->getFullName();
 my $resourcesFileName = "$ENV{GUS_HOME}/lib/xml/datasources/${datasetsFullName}.xml";
 my ($basename,$path,$suffix) = fileparse($resourcesFileName, '.xml');
 mkpath($path);
-print STDERR "$path\n";
 open(F, ">$resourcesFileName") || die "Can't open file file '$resourcesFileName' for writing\n";
 
 print F "<resources>\n\n";
