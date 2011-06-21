@@ -1,6 +1,6 @@
 package ReFlow::TestFlow::TestStep;
 
-@ISA = (GUS::Workflow::WorkflowStepInvoker);
+@ISA = (ReFlow::Controller::WorkflowStepInvoker);
 use strict;
 use ReFlow::Controller::WorkflowStepInvoker;
 
@@ -13,32 +13,6 @@ sub new {
 	     };
   bless($self,$class);
   return $self;
-}
-
-sub setParamValues {
-    # do nothing here...?
-}
-
-sub getParamValue {
-    return "";
-}
-
-sub runInWrapper {
-    run(@_);
-}
-
-sub getConfig {
-    my %config = ();
-    return %config;
-}
-
-sub getSharedConfig {
-    my %sharedConfig = ();
-    return %sharedConfig;
-}
-
-sub runCmd {
-    system($_[1]);
 }
 
 sub run {
