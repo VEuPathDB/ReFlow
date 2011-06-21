@@ -1,0 +1,8 @@
+secondStep.name=winnie
+secondStep.wait=3
+firstStep.fourthStep.name=piglet
+firstStep.fourthStep.wait=2
+firstStep.fifthStep.name=eeyore
+firstStep.fifthStep.wait=1
+thirdStep.name=owl
+thirdStep.wait=1
