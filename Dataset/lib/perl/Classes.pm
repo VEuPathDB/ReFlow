@@ -8,7 +8,7 @@ use Data::Dumper;
 sub new {
   my ($class, $classesFile) = @_;
 
-  my $self = {};
+  my $self = {classesFile => $classesFile};
 
   bless($self,$class);
 
@@ -39,14 +39,13 @@ sub getPlan2Classes {
 sub getClass {
     my ($self, $className) = @_;
     my $class = $self->{data}->{datasetClass}->{$className};
-    die "Can't find class with name '$className'\n" unless $class;
+    die "Can't find class with name '$className' in classes file $self->{classesFile}\n" unless $class;
     return $class;
 }
 
 sub getClassGraphFileDir {
     my ($self, $className) = @_;
-    my $class = $self->{data}->{datasetClass}->{$className};
-    die "Can't find class with name '$className'\n" unless $class;
+    my $class = $self->getClass($className);
     return $class->{graphFile}->{dir};
 }
 
@@ -73,7 +72,7 @@ sub getResourceText {
 
     my ($resourceText, $err) = substitutePropsIntoXmlText($rawResourceText2, $dataset);
     if ($err) {
-	die "the <resource> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
+	die "Error: in classes file $self->{classesFile}, the <resource> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
     }
     return "$resourceText\n";
 }
