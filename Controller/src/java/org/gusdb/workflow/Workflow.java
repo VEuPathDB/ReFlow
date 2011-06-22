@@ -71,7 +71,7 @@ public class Workflow <T extends WorkflowStep> {
     private List<Process> bgdProcesses = new ArrayList<Process>();  // list of processes to clean
    
     public Workflow(String homeDir) throws FileNotFoundException, IOException {
-	this.homeDir = homeDir + "/";
+	this.homeDir = homeDir.replaceAll("/$","");
 	name = getWorkflowConfig("name");
 	version = getWorkflowConfig("version");
 	workflowTable = getWorkflowConfig("workflowTable");
@@ -305,7 +305,7 @@ public class Workflow <T extends WorkflowStep> {
     
     public String getWorkflowXmlFileName() throws FileNotFoundException, IOException {
         Properties workflowProps = new Properties();        
-        workflowProps.load(new FileInputStream(getHomeDir() + "config/workflow.prop"));
+        workflowProps.load(new FileInputStream(getHomeDir() + "/config/workflow.prop"));
         return workflowProps.getProperty("workflowXmlFile");
     }
     
