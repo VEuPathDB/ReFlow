@@ -64,12 +64,12 @@ public class WorkflowGraphUtil {
     // set the caller step of its unexpanded steps, since we now know it now
     graph.setCallingStep(subgraphCallerStep);
 
-    // instantiate local macros before expanding subgraphs
-    graph.instantiateMacros(macroValuesMap);
-
     // instantiate global and local param values before expanding subgraphs
     graph.instantiateValues(baseName, callerXmlFileName, globalConstants,
         paramValuesMap, paramErrorsMap);
+
+    // instantiate local macros before expanding subgraphs
+    graph.instantiateMacros(macroValuesMap);
 
     graph.setRootsAndLeafs();
 
