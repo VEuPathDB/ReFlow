@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import oracle.jdbc.driver.OracleDriver;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
@@ -250,7 +252,7 @@ public class Workflow <T extends WorkflowStep> {
             String dsn = getGusConfig("jdbcDsn");
             String login = getGusConfig("databaseLogin");
             log("Connecting to " + dsn + " (" + login + ")");
-            DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+            DriverManager.registerDriver (new OracleDriver());
             dbConnection = DriverManager.getConnection(dsn,
                     login,
                     getGusConfig("databasePassword"));
