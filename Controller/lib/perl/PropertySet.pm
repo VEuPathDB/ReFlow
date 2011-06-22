@@ -37,7 +37,7 @@ sub new {
     if ($propsFile) {
 #      print STDERR "Reading properties from $propsFile\n";
 
-      open(F, $propsFile) || die "Can't open property file $propsFile";
+      open(F, $propsFile) || die "Can't open property file $propsFile\n";
 
       my %duplicateCheck;
       while (<F>) {
@@ -88,7 +88,7 @@ sub new {
       }
     }
 
-    die "Fatal PropertySet error(s)" if $fatalError;
+    die "Fatal PropertySet error(s)\n" if $fatalError;
     return $self;
 }
 
@@ -96,7 +96,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    confess "Cannot find value for property '$name' in file '$self->{file}'\n" unless ($value ne "");
+    die "Cannot find value for property '$name' in file '$self->{file}'\n" unless ($value ne "");
     return $value;
 }
 
