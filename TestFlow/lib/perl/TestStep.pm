@@ -4,17 +4,6 @@ package ReFlow::TestFlow::TestStep;
 use strict;
 use ReFlow::Controller::WorkflowStepInvoker;
 
-sub new {
-  my ($class, $stepName, $workflow) = @_;
-
-  my $self = {
-	      workflow=> $workflow,
-	      name => $stepName,
-	     };
-  bless($self,$class);
-  return $self;
-}
-
 sub run {
   my ($self, $test, $undo) = @_;
 
