@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 
 use lib "$ENV{GUS_HOME}/lib/perl";
-use WDK::Model::CommandHelper;
+use FgpUtil::Runtime::CommandHelper;
 use File::Spec;
 
 my $GUS_HOME = $ENV{GUS_HOME};
-my $CLASSPATH = &WDK::Model::CommandHelper::getJavaClasspath($GUS_HOME);
-my $sysProps = &WDK::Model::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
+my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
 sub main { # takes one arg: output directory
 

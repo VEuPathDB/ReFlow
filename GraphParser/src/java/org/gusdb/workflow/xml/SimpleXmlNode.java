@@ -1,11 +1,10 @@
-package org.gusdb.workflow.authoring;
+package org.gusdb.workflow.xml;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.gusdb.workflow.Name;
-import org.gusdb.workflow.NamedValue;
-import org.gusdb.workflow.WorkflowNode;
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
 
 public class SimpleXmlNode implements WorkflowNode {
 

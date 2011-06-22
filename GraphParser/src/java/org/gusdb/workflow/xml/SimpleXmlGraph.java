@@ -1,4 +1,4 @@
-package org.gusdb.workflow.authoring;
+package org.gusdb.workflow.xml;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,9 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.workflow.Name;
-import org.gusdb.workflow.NamedValue;
-import org.gusdb.workflow.WorkflowXmlContainer;
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
 
 public class SimpleXmlGraph extends WorkflowXmlContainer<SimpleXmlNode> {
 

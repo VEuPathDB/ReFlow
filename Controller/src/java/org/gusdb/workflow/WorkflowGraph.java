@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
+import org.gusdb.workflow.xml.WorkflowXmlContainer;
 import org.xml.sax.SAXException;
 
 /*

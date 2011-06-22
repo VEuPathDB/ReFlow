@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.gusdb.workflow.xml.WorkflowXmlParser;
 import org.xml.sax.SAXException;
 
 public class WorkflowGraphUtil {

@@ -17,6 +17,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 
+import org.gusdb.fgputil.EncryptionUtil;
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
+import org.gusdb.workflow.xml.WorkflowNode;
+
 
 /*
 
@@ -382,7 +387,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     
     String getParamsDigest() throws NoSuchAlgorithmException, Exception {
         if (paramsDigest == null) 
-            paramsDigest = Utilities.encrypt(paramValues.toString());
+            paramsDigest = EncryptionUtil.encrypt(paramValues.toString());
         return paramsDigest;
     }
 

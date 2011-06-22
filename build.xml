@@ -4,29 +4,49 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
+  <target name="FgpUtil-Installation">
+    <ant antfile="../FgpUtil/build.xml" target="FgpUtil-Installation">
+      <property name="project" value="FgpUtil"/>
+    </ant>
+  </target>  
+    
+  <target name="FgpUtil-Checkout" unless="FgpUtil.present"> 
+    <ant target="defaultProjectCheckout" inheritAll="false">
+      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/FgpUtil"/>
+      <property name="project" value="FgpUtil"/>
+    </ant>
+  </target>
   
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ReFlow-ChildCheckout" />
-  
+  <target name="ReFlow-ChildCheckout">
+    <available file="../FgpUtil" type="dir" property="FgpUtil.present" />
+    <antcall target="FgpUtil-Checkout"/>
+  </target>
   
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
+  <!-- ooooooooooooooooooooooooooo    Update    ooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ReFlow-ChildUpdate" />
-
+  <target name="ReFlow-ChildUpdate">
+    <ant target="defaultProjectUpdate">
+      <property name="project" value="FgpUtil"/>
+    </ant>
+  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ReFlow-Installation" depends="ReFlow/Controller-Installation,
+  <target name="ReFlow-Installation" depends="FgpUtil-Installation,
+                                            ReFlow/GraphParser-Installation,
+                                            ReFlow/Controller-Installation,
                                             ReFlow/TestFlow-Installation,
                                             ReFlow/Dataset-Installation,
-                                            ReFlow/DataSource-Installation" >
+                                            ReFlow/DataSource-Installation,
+                                            ReFlow/AuthoringGui-Installation" >
 
     <ant target="defaultProjectInstall"/>
 
@@ -48,6 +68,13 @@
 
 
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
+
+  <target name="ReFlow/GraphParser-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="GraphParser"/>
+    </ant>
+  </target>
 
   <target name="ReFlow/Controller-Installation">
     <ant target="defaultComponentInstall">
@@ -75,8 +102,14 @@
       <property name="project" value="ReFlow"/>
       <property name="component" value="DataSource"/>
     </ant>
-  </target>  
-
+  </target>
+  
+  <target name="ReFlow/AuthoringGui-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="AuthoringGui"/>
+    </ant>
+  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->

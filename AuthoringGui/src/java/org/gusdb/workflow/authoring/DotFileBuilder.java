@@ -2,9 +2,12 @@ package org.gusdb.workflow.authoring;
 
 import java.io.File;
 
-import org.gusdb.workflow.Name;
-import org.gusdb.workflow.Utilities;
-import org.gusdb.workflow.WorkflowXmlParser;
+import org.gusdb.fgputil.FormatUtil;
+import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.workflow.xml.SimpleXmlGraph;
+import org.gusdb.workflow.xml.SimpleXmlNode;
+import org.gusdb.workflow.xml.WorkflowXmlParser;
 
 public class DotFileBuilder {
 
@@ -86,7 +89,7 @@ public class DotFileBuilder {
    */
   private static String formatNodeLabel(String baseName) {
 	// split camel-case into words
-	baseName = Utilities.splitCamelCase(baseName);
+	baseName = FormatUtil.splitCamelCase(baseName);
 	// capitalize first letter
     baseName = baseName.substring(0, 1).toUpperCase() + baseName.substring(1, baseName.length());
     // replace dashes with underscores (DOT format requires this)
@@ -94,7 +97,7 @@ public class DotFileBuilder {
     // get rid of single-underscore words
     baseName = baseName.replace("_ ", "");
     // convert to multi-line format and return
-    return Utilities.multiLineFormat("\"" + baseName + "\"", MAX_CHARS_PER_LINE);
+    return FormatUtil.multiLineFormat("\"" + baseName + "\"", MAX_CHARS_PER_LINE);
   }
 
   private static File parseArgs(String[] args) {
@@ -102,7 +105,7 @@ public class DotFileBuilder {
       System.err.println("USAGE: java " + DotFileBuilder.class.getName() + " <workflowXmlFile>");
       System.exit(1);
     }
-    return Utilities.getReadableFileOrDie(args[0]);
+    return IoUtil.getReadableFileOrDie(args[0]);
   }
   
 }

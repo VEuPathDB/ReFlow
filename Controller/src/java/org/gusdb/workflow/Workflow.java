@@ -21,6 +21,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
+import org.gusdb.fgputil.CliUtil;
+import org.gusdb.fgputil.IoUtil;
 
 /**
  *
@@ -431,7 +433,7 @@ public class Workflow <T extends WorkflowStep> {
          
          for (String dirName : homeDirSubDirs) {
              File dir = new File(getHomeDir() + "/" + dirName);
-             Utilities.deleteDir(dir);
+             IoUtil.deleteDir(dir);
              System.out.println("rm -rf " + dir);
          }
 
@@ -476,7 +478,7 @@ public class Workflow <T extends WorkflowStep> {
          String cmdlineSyntax = cmdName + " -h workflow_home_dir <-r | -t | -m | -q | -s <states>| -d <states>> <-u step_name>";
          String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
          CommandLine cmdLine =
-             Utilities.parseOptions(cmdlineSyntax, cmdDescrip, getUsageNotes(), options, args);
+             CliUtil.parseOptions(cmdlineSyntax, cmdDescrip, getUsageNotes(), options, args);
                  
          String homeDirName = cmdLine.getOptionValue("h");
 	 
@@ -561,7 +563,7 @@ public class Workflow <T extends WorkflowStep> {
 	     oops = true;
          }
 	 if (oops) {
-             Utilities.usage(cmdlineSyntax, cmdDescrip, getUsageNotes(), options);
+             CliUtil.usage(cmdlineSyntax, cmdDescrip, getUsageNotes(), options);
 	     System.exit(1);
 	     
 	 } else {
@@ -639,7 +641,7 @@ public class Workflow <T extends WorkflowStep> {
      private static Options declareOptions() {
          Options options = new Options();
 
-         Utilities.addOption(options, "h", "Workflow homedir (see below)", true);
+         CliUtil.addOption(options, "h", "Workflow homedir (see below)", true);
          
          OptionGroup actions = new OptionGroup();
          Option run = new Option("r", "Run a workflow for real");
@@ -671,7 +673,7 @@ public class Workflow <T extends WorkflowStep> {
          
          options.addOptionGroup(actions);
          
-         Utilities.addOption(options, "u", "Undo the specified step", false);         
+         CliUtil.addOption(options, "u", "Undo the specified step", false);         
 
          return options;
      }

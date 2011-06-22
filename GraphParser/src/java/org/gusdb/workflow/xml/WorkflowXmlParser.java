@@ -1,4 +1,4 @@
-package org.gusdb.workflow;
+package org.gusdb.workflow.xml;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,15 +18,13 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.commons.digester.Digester;
 import org.apache.log4j.Logger;
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
+import org.gusdb.fgputil.xml.XmlParser;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-
-import org.gusdb.workflow.WorkflowStep;
-import org.gusdb.workflow.Name;
 
 public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlContainer<T>> extends XmlParser {
 
@@ -149,45 +147,5 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         // construct input stream
         return new ByteArrayInputStream(content.getBytes());
     }
-    
-    public static void main(String[] args) throws Exception  {
-        String cmdName = System.getProperty("cmdName");
- 
-        // process args
-        Options options = declareOptions();
-        String cmdlineSyntax = cmdName + " -h workflowDir";
-        String cmdDescrip = "Parse and print out a workflow xml file.";
-        CommandLine cmdLine =
-            Utilities.parseOptions(cmdlineSyntax, cmdDescrip, "", options, args);
-        String homeDirName = cmdLine.getOptionValue("h");
-        
-        // create a parser, and parse the model file
-        Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
-        Class<WorkflowStep> stepClass = WorkflowStep.class;
-        
-        WorkflowGraph<WorkflowStep> rootGraph = new WorkflowGraph<WorkflowStep>();
-        
-        @SuppressWarnings("unchecked")
-        Class<WorkflowGraph<WorkflowStep>> containerClass =
-          (Class<WorkflowGraph<WorkflowStep>>)rootGraph.getClass();
-        
-        rootGraph = WorkflowGraphUtil.constructFullGraph(stepClass, containerClass, workflow);
-        workflow.setWorkflowGraph(rootGraph);      
-
-        // print out the model content
-        System.out.println(rootGraph.toString());
-        System.exit(0);
-    }
-
-    private static Options declareOptions() {
-        Options options = new Options();
-
-        Utilities.addOption(options, "h", "", true);
-
-        return options;
-    }
-
-
-
 
 }

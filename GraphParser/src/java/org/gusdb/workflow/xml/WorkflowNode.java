@@ -1,6 +1,9 @@
-package org.gusdb.workflow;
+package org.gusdb.workflow.xml;
 
 import java.util.List;
+
+import org.gusdb.fgputil.xml.Name;
+import org.gusdb.fgputil.xml.NamedValue;
 
 public interface WorkflowNode {
   
