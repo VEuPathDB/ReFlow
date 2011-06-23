@@ -1,14 +1,15 @@
 #!/usr/bin/perl
 
 use lib "$ENV{GUS_HOME}/lib/perl";
+
 use FgpUtil::Runtime::CommandHelper;
+
 use File::Basename;
 use File::stat;
 
 my $GUS_HOME = $ENV{GUS_HOME};
 my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
 my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
-#my $args = &FgpUtil::Runtime::CommandHelper::getJavaArgs(@ARGV);
 
 sub main { # takes two args: input file/directory, output directory
 
@@ -20,7 +21,6 @@ sub main { # takes two args: input file/directory, output directory
     if (-f $inputFile) {
 	$results{'TRY'}++;
 	$results{buildHtml($inputFile, $outputLoc)}++;
-	printf("Successfully generated $numSuccessful/1 HTML files.\n");
     }
     # if directory is passed, parse each xml inside and rebuild index
     elsif (-d $inputFile) {
@@ -33,9 +33,26 @@ sub main { # takes two args: input file/directory, output directory
 	buildIndex($outputLoc);
     }
     else {
+        # should never get here; file already checked
 	printf(STDERR "ERROR: $inputFile is not a file or directory\n");
 	return 1;
     }
+    printf("Num HTML attempted:   $results{'TRY'}\n");
+    printf("Num HTML completed:   $results{'SUCCESS'}\n");
+    printf("Num HTML up-to-date:  $results{'UTD'}\n");
+    printf("Num HTML failed:      $results{'FAIL'}\n");
+
+    return 0;
+}
+
+sub mainRecurse { # takes two args: input file/directory, output directory
+
+    $inputFile = $_[0];
+    $outputLoc = $_[1];
+    %results = ( 'TRY', 0, 'FAIL', 0, 'UTD', 0, 'SUCCESS', 0 );
+
+    printf("Doing the recursive thing with $inputFile and $outputLoc\n");
+
     printf("Num HTML attempted:   $results{'TRY'}\n");
     printf("Num HTML completed:   $results{'SUCCESS'}\n");
     printf("Num HTML up-to-date:  $results{'UTD'}\n");
@@ -168,15 +185,29 @@ sub buildIndex { # one arg: output directory
     printf("done.\n");
 }
 
-################### Parse args and call main sub ###################
-
-if ($#ARGV != 1) { # i.e. !(2 args)
-    printf(STDERR "\nUSAGE: workflowHtmlGenerator (<input_file>|<input_dir>) <output_dir>\n\n");
-    printf(STDERR "   input_file : a single XML file to be updated\n");
-    printf(STDERR "   input_dir  : a directory; all XML files inside will be updated\n");
-    printf(STDERR "   output_dir : location to which HTML files will be dumped\n\n");
-    printf(STDERR "Note: index.html and menu.html will only be regenerated if input_dir is passed\n\n");
+sub printUsageAndDie { # no arguments
+    printf(STDERR "\nUSAGE: workflowHtmlGenerator (-f|-d|-r) <input_file_or_directory> <output_dir>\n\n");
+    printf(STDERR "   -f input_file : a single XML file to be updated\n");
+    printf(STDERR "   -d input_dir  : a directory; all XML files inside will be updated\n");
+    printf(STDERR "   -r input_dir  : a directory; XML files will be recursively updated from the passed dir\n");
+    printf(STDERR "   output_dir    : location to which HTML files will be dumped\n\n");
+    printf(STDERR "Note: index.html and menu.html will only be regenerated if using -d or -r\n\n");
     exit 1;
 }
 
-exit(main($ARGV[0], $ARGV[1]));
+################### Parse args and call main sub ###################
+
+if ($#ARGV != 2) { # i.e. !(3 args)
+    printUsageAndDie();
+}
+
+if (($ARGV[0] eq "-f" && -f $ARGV[1]) ||
+    ($ARGV[0] eq "-d" && -d $ARGV[1])) {
+    exit(main($ARGV[1], $ARGV[2]));
+}
+
+if ($ARGV[0] eq "-r" && -d $ARGV[1]) {
+    exit(mainRecurse($ARGV[1], $ARGV[2]));
+}
+
+printUsageAndDie();
