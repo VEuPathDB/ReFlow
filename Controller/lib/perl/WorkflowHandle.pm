@@ -34,7 +34,7 @@ sub getStepNamesFromPattern {
     my ($self, $stepNamePattern) = @_;
 
     $self->getId();
-    my $result;
+    my $result = [];
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = 
 "SELECT name, state, undo_state

@@ -57,7 +57,7 @@ if ($inputType eq '-p') {
   $stepList = $workflow->getStepNamesFromFile($stepNameFile);
 }
 
-if (scalar(@$stepList) == 0) { print STDERR "No steps found."; }
+if (scalar(@$stepList) == 0) { print STDERR "No steps found.\n"; }
 
 my @errors;
 
