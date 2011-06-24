@@ -45,12 +45,19 @@ sub getDataSource {
     return ReFlow::DataSource::DataSource->new($dataSourceName, $self->{data}->{resource}->{$dataSourceName}, $self);
 }
 
+# static method to publicize elements that need forceArray.  this is used
+# by Dataset/Classes.pm in its code generating of resource files
+sub getForceArray {
+  return ['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference'];
+}
+
 sub _parseXmlFile {
   my ($self, $resourcesXmlFile, $properties) = @_;
 
   my $xmlString = $self->_substituteMacros($resourcesXmlFile, $properties);
   my $xml = new XML::Simple();
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','unpack', 'getAndUnpackOutput', 'resource', 'wdkReference']) };
+  my $forceArray = getForceArray();
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>$forceArray) };
 #  print STDERR Dumper $self->{data};
   die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
 }

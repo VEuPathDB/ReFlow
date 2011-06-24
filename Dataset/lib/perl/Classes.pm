@@ -4,6 +4,7 @@ use strict;
 
 use XML::Simple;
 use Data::Dumper;
+use ReFlow::DataSource::DataSources;
 
 sub new {
   my ($class, $classesFile) = @_;
@@ -98,7 +99,14 @@ sub substitutePropsIntoXmlText {
 sub _parseXmlFile {
   my ($self, $classesFile) = @_;
 
-  $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>['datasetClass','pluginArgs','manualGet']) };
+  # need to force all elements to be an array so that when we 
+  # use XMLout to print xml text, they stay as elements
+  my $fa = ReFlow::DataSource::DataSources::getForceArray();
+  my $forceArray = ['datasetClass','pluginArgs','manualGet', @$fa];
+  print STDERR join(" ", @$forceArray);
+
+  $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
+
 #  print STDERR Dumper $self->{data};
   die "$@\nerror processing classes XML file $classesFile\n" if($@);
 }
