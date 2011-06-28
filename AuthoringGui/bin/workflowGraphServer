@@ -11,12 +11,7 @@ my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'work
 sub main { # takes one arg: output directory
 
     $port = $_[0];
-    $filesDir = $_[1];
-    if (!File::Spec->file_name_is_absolute($filesDir)) {
-	printf "Converted relative path to absolute: $filesDir -> ";
-        $filesDir = File::Spec->rel2abs($filesDir);
-        printf "$filesDir\n";
-    }
+    $filesDir = absolutePath($_[1]);
 
     $jettyHome = $ENV{'JETTY_HOME'};
     printf "Jetty home set to $jettyHome\n";
@@ -62,6 +57,16 @@ ENDFILE
 	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
     }
     return 0;
+}
+
+sub absolutePath {
+    $filesDir = $_[1];
+    if (!File::Spec->file_name_is_absolute($filesDir)) {
+	printf "Converted relative path to absolute: $filesDir -> ";
+        $filesDir = File::Spec->rel2abs($filesDir);
+        printf "$filesDir\n";
+    }
+    return $filesDir;
 }
 
 ################### Parse args and call main sub ###################

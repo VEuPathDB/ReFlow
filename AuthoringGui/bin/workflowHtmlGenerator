@@ -6,21 +6,27 @@ use FgpUtil::Runtime::CommandHelper;
 
 use File::Basename;
 use File::stat;
+use File::Spec;
+
+use Cwd;
 
 my $GUS_HOME = $ENV{GUS_HOME};
 my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
 my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
+my $IMAGES_DIR = "images_";
+my $XML_DIR = "xml_";
+
 sub main { # takes two args: input file/directory, output directory
 
-    $inputFile = $_[0];
-    $outputLoc = $_[1];
+    $inputFile = absolutePath($_[0]);
+    $outputLoc = absolutePath($_[1]);
     %results = ( 'TRY', 0, 'FAIL', 0, 'UTD', 0, 'SUCCESS', 0 );
 
     # if single file is passed, just parse it
     if (-f $inputFile) {
 	$results{'TRY'}++;
-	$results{buildHtml($inputFile, $outputLoc)}++;
+	$results{buildHtml($inputFile, $outputLoc, "")}++;
     }
     # if directory is passed, parse each xml inside and rebuild index
     elsif (-d $inputFile) {
@@ -28,7 +34,7 @@ sub main { # takes two args: input file/directory, output directory
 	foreach $name(@names) {
 	    chomp($name);
 	    $results{'TRY'}++;
-	    $results{buildHtml($name, $outputLoc)}++;
+	    $results{buildHtml($name, $outputLoc, "")}++;
 	}
 	buildIndex($outputLoc);
     }
@@ -37,6 +43,7 @@ sub main { # takes two args: input file/directory, output directory
 	printf(STDERR "ERROR: $inputFile is not a file or directory\n");
 	return 1;
     }
+
     printf("Num HTML attempted:   $results{'TRY'}\n");
     printf("Num HTML completed:   $results{'SUCCESS'}\n");
     printf("Num HTML up-to-date:  $results{'UTD'}\n");
@@ -47,11 +54,41 @@ sub main { # takes two args: input file/directory, output directory
 
 sub mainRecurse { # takes two args: input file/directory, output directory
 
-    $inputFile = $_[0];
-    $outputLoc = $_[1];
+    $inputDir = absolutePath($_[0]);
+    $outputLoc = absolutePath($_[1]);
     %results = ( 'TRY', 0, 'FAIL', 0, 'UTD', 0, 'SUCCESS', 0 );
+    
+    if (!(-e $outputLoc)) {
+        printf("Generating $outputLoc/...");
+	system("mkdir $outputLoc");
+        printf("done.\n");
+    }
 
-    printf("Doing the recursive thing with $inputFile and $outputLoc\n");
+    chdir("$inputDir/..");
+
+    $inputDirName = basename($inputDir);
+    @names = `ls -1 -R $inputDirName`;
+
+    $reset = 1;
+    $currentDir = "";
+    foreach $name(@names) {
+        chomp($name);
+        if ($name eq "") {
+            $reset = 1;
+	}
+	elsif ($reset == 1) {
+            $reset = 0;
+            $currentDir = $name;
+            $currentDir =~ s/://g;
+	    #printf("Will now work with $currentDir\n");
+	}
+	elsif ($name =~ /.xml$/) {
+	    #printf("Found XML file in $currentDir: $name\n");
+	    $results{'TRY'}++;
+	    $results{buildHtml("$currentDir/$name", "$outputLoc/$currentDir", "--backtrack $currentDir")}++;
+	}
+    }
+    buildIndex($outputLoc);
 
     printf("Num HTML attempted:   $results{'TRY'}\n");
     printf("Num HTML completed:   $results{'SUCCESS'}\n");
@@ -61,10 +98,21 @@ sub mainRecurse { # takes two args: input file/directory, output directory
     return 0;
 }
 
-sub buildHtml { # two args: XML file, output directory
+sub absolutePath {
+    $filesDir = $_[0];
+    if (!File::Spec->file_name_is_absolute($filesDir)) {
+	printf "Converted relative path to absolute: $filesDir -> ";
+        $filesDir = File::Spec->rel2abs($filesDir);
+        printf "$filesDir\n";
+    }
+    return $filesDir;
+}
+
+sub buildHtml { # three args: XML file, output directory, additional java options
 
     $fileToParse = $_[0];
     $outputDir = $_[1];
+    $javaOpts = $_[2];
 
     $fileName = basename($fileToParse);
 
@@ -80,19 +128,19 @@ sub buildHtml { # two args: XML file, output directory
         printf("done.\n");
     }
     # mkdir -p was throwing error for images (??)
-    if (!(-e "$outputDir/images")) {
-	printf("Generating $outputDir/images/...");
-        system("mkdir $outputDir/images");
+    if (!(-e "$outputDir/$IMAGES_DIR")) {
+	printf("Generating $outputDir/$IMAGES_DIR/...");
+        system("mkdir $outputDir/$IMAGES_DIR");
 	printf("done.\n");
     }
-    if (!(-e "$outputDir/xml")) {
-	printf("Generating $outputDir/xml/...");
-        system("mkdir $outputDir/xml");
+    if (!(-e "$outputDir/$XML_DIR")) {
+	printf("Generating $outputDir/$XML_DIR/...");
+        system("mkdir $outputDir/$XML_DIR");
 	printf("done.\n");
     }
 
     # copy xml file over so html page can link to it
-    system("cp $fileToParse $outputDir/xml");
+    system("cp $fileToParse $outputDir/$XML_DIR");
 
     printf("Generating $outputDir/$htmlName...");
 
@@ -105,29 +153,31 @@ sub buildHtml { # two args: XML file, output directory
 	}
     }
 
-    $cmd = "java $sysProps -classpath $CLASSPATH org.gusdb.workflow.authoring.DotFileBuilder $fileToParse > tmp.dot";
+    $cmd = "java $sysProps -classpath $CLASSPATH org.gusdb.workflow.authoring.DotFileBuilder $javaOpts $fileToParse > tmp.dot";
     system($cmd);
 
     $exitCode = ($? >> 8);
     if ($exitCode != 0) {
 	printf(STDERR "failure in DotFileBuilder.\n");
+        system("rm tmp.dot");
         return 'FAIL';
     }
 
-    system("dot -Tcmapx_np -otmp.map -Tgif -o$outputDir/images/$imageName tmp.dot");
+    system("dot -Tcmapx_np -otmp.map -Tgif -o$outputDir/$IMAGES_DIR/$imageName tmp.dot");
 
     $exitCode = ($? >> 8);
     if ($exitCode != 0) {
 	printf(STDERR "failure in dot.\n");
+        system("rm tmp.dot");
         return 'FAIL';
     }
 
     open(HTML_FILE, ">$outputDir/$htmlName");
     printf HTML_FILE "<html><body>";
     printf HTML_FILE "  <div style=\"margin:10px; font-weight:bold; font-size:12pt; text-align:center\">\n";
-    printf HTML_FILE "    <a href=\"xml/$fileName\">$fileName</a>\n";
+    printf HTML_FILE "    <a href=\"$XML_DIR/$fileName\">$fileName</a>\n";
     printf HTML_FILE "  </div>\n";
-    printf HTML_FILE "  <img style=\"border:0px;\" src=\"images/$imageName\" usemap=\"#name\"/>\n";
+    printf HTML_FILE "  <img style=\"border:0px;\" src=\"$IMAGES_DIR/$imageName\" usemap=\"#name\"/>\n";
 
     # append the map contents
     open(MAP_FILE, "<tmp.map");
@@ -152,17 +202,7 @@ sub buildIndex { # one arg: output directory
 
     # generate menu.html
     printf("Generating $outputDir/menu.html...");
-    @names = `cd $outputDir; ls *.html | sort`;
-    open(MENU, ">$outputDir/menu.html");
-    printf MENU "<html><body><h3>Contents</h3>\n";
-    foreach $name(@names) {
-	chomp($name);
-        $graphName = $name;
-        $graphName =~ s/\.html//;
-        printf MENU "<a target=\"right\" href=\"$name\">$graphName</a><br/>\n";
-    }
-    printf MENU "</body></html>\n";
-    close(MENU);
+    generateMenu($outputDir);
     printf("done.\n");
 
     # generate index.html
@@ -183,6 +223,95 @@ sub buildIndex { # one arg: output directory
     printf INDEX "</p></body></html>\n";
     close(INDEX);
     printf("done.\n");
+}
+
+sub generateMenu { # one arg: output directory
+
+    $outputDir = $_[0];
+    $outputDirName = basename($outputDir);
+    chdir($outputDir);
+    @names = `ls -1 -R`;
+
+    $reset = 1;
+    $validDir = true;
+    $currentDir = "";
+    local %fileHash;
+
+    foreach $name(@names) {
+        chomp($name);
+        $name =~ s/^\.\///;
+        if ($name eq "") {
+            $reset = 1;
+	}
+	elsif ($reset == 1) {
+            $reset = 0;
+            $currentDir = $name;
+            $currentDir =~ s/://g;
+            if ( $currentDir =~ /[$IMAGES_DIR|$XML_DIR]$/ ) {
+		$validDir = false;
+	    }
+	    else {
+		$validDir = true;
+                @fileHash[$currentDir] = ();
+		#printf MENU "<li><a href=\"#\">$currentDir</a><ul>\n";
+	    }
+	}
+	elsif ($name =~ /.html$/ && $validDir) {
+	    $graphName = $name;
+	    $graphName =~ s/\.html//;
+	    #printf MENU "<a target=\"right\" href=\"$currentDir/$name\">$graphName</a><br/>\n";
+            push(@{$fileHash{$currentDir}}, $name);
+	}
+    }
+
+    open(MENU, ">$outputDir/menu.html");
+    printf MENU "<html>\n";
+    printf MENU "  <head>\n";
+    printf MENU "    <script type=\"text/javascript\" src=\"_lib/jquery.js\">/*-*/</script>\n";
+    printf MENU "    <script type=\"text/javascript\" src=\"jquery.jstree.js\">/*-*/</script>\n";
+    printf MENU "    <script type=\"text/javascript\">\n";
+    printf MENU "      \$(function() {\n";
+    printf MENU "        \$('#mytree')\n";
+    printf MENU "          .jstree({\n";
+    printf MENU "            core : { \"initially_open\" : [ \"root\" ] },\n";
+    printf MENU "            plugins : [ \"themes\", \"html_data\" ]\n";
+    printf MENU "        });\n";
+    printf MENU "      });\n";
+    printf MENU "    </script>\n";
+    printf MENU "  </head><body><h3>Contents</h3><div id=\"mytree\"><ul><li><a href=\"#\">$outputDirName</a><ul>\n";
+
+    @keys = sort(keys(%fileHash));
+    for ($i=0; $i < $#keys; $i++) {
+	@files = @{$fileHash{$keys[$i]}};
+	printf MENU "<li><a href=\"#\">$keys[$i]</a><ul>\n";
+        for ($j=0; $j < $#files; $j++) {
+	    $graphName = $files[$j];
+	    $graphName =~ s/\.html//;
+	    printf MENU "<li><a target=\"right\" href=\"$keys[$i]/$files[$j]\">$graphName</a></li>\n";
+	}
+	printf MENU "</ul></li>\n";
+    }
+
+    printf MENU "</ul></li></ul></div></body></html>\n";
+    close(MENU);
+
+    return;
+
+    # old way....
+    $outputDir = $_[0];
+    @names = `cd $outputDir; ls *.html | sort`;
+    open(MENU, ">$outputDir/menu.html");
+    printf MENU "<html><body><h3>Contents</h3>\n";
+    foreach $name(@names) {
+	chomp($name);
+        $graphName = $name;
+        $graphName =~ s/\.html//;
+        printf MENU "<a target=\"right\" href=\"$name\">$graphName</a><br/>\n";
+    }
+    printf MENU "</body></html>\n";
+    close(MENU);
+
+
 }
 
 sub printUsageAndDie { # no arguments

@@ -14,6 +14,9 @@ public class DotFileBuilder {
   private final static String NL = System.getProperty("line.separator");
   
   private final static int MAX_CHARS_PER_LINE = 20;
+
+  private static boolean _keepPath = false;
+  private static String _relativeDirPath;
   
   public static void main(String[] args) {
     try {
@@ -46,9 +49,19 @@ public class DotFileBuilder {
           }
           else {
             // add url, but make sure it points only to the file (html)
-            File htmlFile = new File(vertex.getSubgraphXmlFileName().replace(".xml", ".html"));
-            output.append(", URL=\"" + htmlFile.getName() + "\", color=blue, penwidth=2");
-          }
+            String htmlFileRelPath = vertex.getSubgraphXmlFileName().replace(".xml", ".html");
+            if (_keepPath) {
+              // count '/'s and subtract one for number of directories to backtrack
+              String[] dirs = _relativeDirPath.split("/");
+              String backtrack = "";
+	      for (int i=1; i < dirs.length; i++) backtrack += "../";
+              output.append(", URL=\"" + backtrack + htmlFileRelPath + "\", color=blue, penwidth=2");
+            }
+            else {
+      	      File htmlFile = new File(htmlFileRelPath);
+              output.append(", URL=\"" + htmlFile.getName() + "\", color=blue, penwidth=2");
+            }
+	  }
         }
         else {
           output.append(", color=black");
@@ -88,9 +101,9 @@ public class DotFileBuilder {
    * @return name formatted for display and DOT-file legality
    */
   private static String formatNodeLabel(String baseName) {
-	// split camel-case into words
-	baseName = FormatUtil.splitCamelCase(baseName);
-	// capitalize first letter
+    // split camel-case into words
+    baseName = FormatUtil.splitCamelCase(baseName);
+    // capitalize first letter
     baseName = baseName.substring(0, 1).toUpperCase() + baseName.substring(1, baseName.length());
     // replace dashes with underscores (DOT format requires this)
     baseName = baseName.replace('-', '_');
@@ -101,11 +114,28 @@ public class DotFileBuilder {
   }
 
   private static File parseArgs(String[] args) {
-    if (args.length != 1) {
-      System.err.println("USAGE: java " + DotFileBuilder.class.getName() + " <workflowXmlFile>");
-      System.exit(1);
+    String fileName = "";
+    if (args.length == 3) {
+      if (args[0].equals("--backtrack")) {
+        _keepPath = true;
+        _relativeDirPath = args[1];
+        fileName = args[2];
+      }
+      else {
+        printUsageAndDie();
+      }
     }
-    return IoUtil.getReadableFileOrDie(args[0]);
+    else if (args.length != 1) {
+      printUsageAndDie();
+    }
+    else {
+      fileName = args[0];
+    }
+    return IoUtil.getReadableFileOrDie(fileName);
   }
-  
+
+  private static void printUsageAndDie() {
+    System.err.println("USAGE: java " + DotFileBuilder.class.getName() + " [--backtrack <relativePath>] <workflowXmlFile>");
+    System.exit(1);
+  }
 }
