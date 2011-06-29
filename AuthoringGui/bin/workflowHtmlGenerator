@@ -11,6 +11,7 @@ use File::Spec;
 use Cwd;
 
 my $GUS_HOME = $ENV{GUS_HOME};
+my $PROJECT_HOME = $ENV{PROJECT_HOME};
 my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
 my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
@@ -101,9 +102,9 @@ sub mainRecurse { # takes two args: input file/directory, output directory
 sub absolutePath {
     $filesDir = $_[0];
     if (!File::Spec->file_name_is_absolute($filesDir)) {
-	printf "Converted relative path to absolute: $filesDir -> ";
+	#printf "Converted relative path to absolute: $filesDir -> ";
         $filesDir = File::Spec->rel2abs($filesDir);
-        printf "$filesDir\n";
+        #printf "$filesDir\n";
     }
     return $filesDir;
 }
@@ -173,11 +174,11 @@ sub buildHtml { # three args: XML file, output directory, additional java option
     }
 
     open(HTML_FILE, ">$outputDir/$htmlName");
-    printf HTML_FILE "<html><body>";
-    printf HTML_FILE "  <div style=\"margin:10px; font-weight:bold; font-size:12pt; text-align:center\">\n";
-    printf HTML_FILE "    <a href=\"$XML_DIR/$fileName\">$fileName</a>\n";
+    printf HTML_FILE "<html><body><div>";
+    printf HTML_FILE "  <div style=\"position:fixed; left:30px; margin-top:10px; margin-bottom:10px; font-weight:bold; font-size:12pt\">\n";
+    printf HTML_FILE "    <span><a href=\"$XML_DIR/$fileName\">$fileName</a><span>\n";
     printf HTML_FILE "  </div>\n";
-    printf HTML_FILE "  <img style=\"border:0px;\" src=\"$IMAGES_DIR/$imageName\" usemap=\"#name\"/>\n";
+    printf HTML_FILE "  <img style=\"border:0px; padding-top:45px\" src=\"$IMAGES_DIR/$imageName\" usemap=\"#name\"/>\n";
 
     # append the map contents
     open(MAP_FILE, "<tmp.map");
@@ -186,7 +187,7 @@ sub buildHtml { # three args: XML file, output directory, additional java option
     }
     close(MAP_FILE);
 
-    printf HTML_FILE "</body></html>\n";
+    printf HTML_FILE "</div></body></html>\n";
     close(HTML_FILE);
     system("rm -f tmp.map tmp.dot");
     printf("done.\n");
@@ -198,17 +199,20 @@ sub buildIndex { # one arg: output directory
     $outputDir = $_[0];
 
     # remove old html files so they're not placed in the index
-    system("rm -f $outputDir/index.html $outputDir/menu.html $outputDir/welcome.html");
+    system("rm -rf $outputDir/js $outputDir/index.html $outputDir/menu.html $outputDir/welcome.html");
 
     # generate menu.html
     printf("Generating $outputDir/menu.html...");
     generateMenu($outputDir);
     printf("done.\n");
 
+    # copy javascript/css libs into output directory
+    system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
+
     # generate index.html
     printf("Generating $outputDir/index.html...");
     open(INDEX, ">$outputDir/index.html");
-    printf INDEX "<html><frameset cols=\"25%,75%\">";
+    printf INDEX "<html><head><title>Workflow Authoring GUI</title></head><frameset cols=\"25%,75%\">";
     printf INDEX "<frame name=\"left\" src=\"menu.html\"/>";
     printf INDEX "<frame name=\"right\" src=\"welcome.html\"/>";
     printf INDEX "</frameset></html>";
@@ -253,13 +257,11 @@ sub generateMenu { # one arg: output directory
 	    else {
 		$validDir = true;
                 @fileHash[$currentDir] = ();
-		#printf MENU "<li><a href=\"#\">$currentDir</a><ul>\n";
 	    }
 	}
 	elsif ($name =~ /.html$/ && $validDir) {
 	    $graphName = $name;
 	    $graphName =~ s/\.html//;
-	    #printf MENU "<a target=\"right\" href=\"$currentDir/$name\">$graphName</a><br/>\n";
             push(@{$fileHash{$currentDir}}, $name);
 	}
     }
@@ -267,51 +269,74 @@ sub generateMenu { # one arg: output directory
     open(MENU, ">$outputDir/menu.html");
     printf MENU "<html>\n";
     printf MENU "  <head>\n";
-    printf MENU "    <script type=\"text/javascript\" src=\"_lib/jquery.js\">/*-*/</script>\n";
-    printf MENU "    <script type=\"text/javascript\" src=\"jquery.jstree.js\">/*-*/</script>\n";
+    printf MENU "    <script type=\"text/javascript\" src=\"js/_lib/jquery.js\">/*-*/</script>\n";
+    printf MENU "    <script type=\"text/javascript\" src=\"js/jquery.jstree.js\">/*-*/</script>\n";
     printf MENU "    <script type=\"text/javascript\">\n";
     printf MENU "      \$(function() {\n";
     printf MENU "        \$('#mytree')\n";
     printf MENU "          .jstree({\n";
-    printf MENU "            core : { \"initially_open\" : [ \"root\" ] },\n";
-    printf MENU "            plugins : [ \"themes\", \"html_data\" ]\n";
+    printf MENU "            \"core\" : { \"initially_open\" : [ \"root\" ] },\n";
+    printf MENU "            \"plugins\" : [ \"themes\", \"html_data\", \"types\" ],\n";
+    printf MENU "            \"themes\" : { \"theme\" : \"classic\" },\n";
+    printf MENU "            \"types\" : { \"types\" : { \"file\" : { \"icon\" : { \"image\" : \"js/graphFileIcon-16x16.gif\" }}}}\n";
     printf MENU "        });\n";
     printf MENU "      });\n";
     printf MENU "    </script>\n";
-    printf MENU "  </head><body><h3>Contents</h3><div id=\"mytree\"><ul><li><a href=\"#\">$outputDirName</a><ul>\n";
+    printf MENU "  </head><body><h3>Contents</h3><div id=\"mytree\">";
+    printf MENU "  <ul><li class=\"[ jstree-open ]\"><a href=\"#\">$outputDirName</a><ul>\n";
 
+    @stack = ();
+    $currentParent = "";
     @keys = sort(keys(%fileHash));
-    for ($i=0; $i < $#keys; $i++) {
-	@files = @{$fileHash{$keys[$i]}};
-	printf MENU "<li><a href=\"#\">$keys[$i]</a><ul>\n";
-        for ($j=0; $j < $#files; $j++) {
-	    $graphName = $files[$j];
-	    $graphName =~ s/\.html//;
-	    printf MENU "<li><a target=\"right\" href=\"$keys[$i]/$files[$j]\">$graphName</a></li>\n";
+    for ($i=0; $i <= $#keys; $i++) {
+        $dirPath = $keys[$i];
+        $dirName = basename($dirPath);
+
+        # if stack is empty, push first value onto the stack and start branch
+        if ($currentParent eq "") {
+	    $currentParent = $dirPath;
+	    printf MENU "<li><a href=\"#\">$dirName</a><ul>\n";
 	}
-	printf MENU "</ul></li>\n";
+        # otherwise check to see if subdir of current parent
+        elsif ($dirPath =~ /^$currentParent/) {
+	    # dirPath is subdir; nest subdir and make current parent
+            push(@stack, $currentParent);
+            $currentParent = $dirPath;
+	    printf MENU "<li><a href=\"#\">$dirName</a><ul>\n";
+	}
+	else { # not a subdir of the current parent
+	    # pop parents until a subdir is found
+	    do {
+                # close branch
+		@files = @{$fileHash{$currentParent}};
+		for ($j=0; $j <= $#files; $j++) {
+		    $graphName = $files[$j];
+		    $graphName =~ s/\.html//;
+		    printf MENU "<li class=\"jstree-leaf\" rel=\"file\"><a target=\"right\" href=\"$currentParent/$files[$j]\">$graphName</a></li>\n";
+		}
+		printf MENU "</ul></li>\n";
+		$currentParent = pop(@stack);
+	    } until ($dirPath =~ /^$currentParent/ );
+	    push(@stack, $currentParent);
+	    $currentParent = $dirPath;
+	    printf MENU "<li><a href=\"#\">$dirName</a><ul>\n";
+	}
+    }
+    if ($currentParent ne "") {
+	do {
+	    @files = @{$fileHash{$currentParent}};
+	    for ($j=0; $j <= $#files; $j++) {
+		$graphName = $files[$j];
+		$graphName =~ s/\.html//;
+		printf MENU "<li class=\"jstree-leaf\" rel=\"file\"><a target=\"right\" href=\"$currentParent/$files[$j]\">$graphName</a></li>\n";
+	    }
+	    printf MENU "</ul></li>\n";
+	    $currentParent = pop(@stack);
+	} until ($currentParent eq "");
     }
 
     printf MENU "</ul></li></ul></div></body></html>\n";
     close(MENU);
-
-    return;
-
-    # old way....
-    $outputDir = $_[0];
-    @names = `cd $outputDir; ls *.html | sort`;
-    open(MENU, ">$outputDir/menu.html");
-    printf MENU "<html><body><h3>Contents</h3>\n";
-    foreach $name(@names) {
-	chomp($name);
-        $graphName = $name;
-        $graphName =~ s/\.html//;
-        printf MENU "<a target=\"right\" href=\"$name\">$graphName</a><br/>\n";
-    }
-    printf MENU "</body></html>\n";
-    close(MENU);
-
-
 }
 
 sub printUsageAndDie { # no arguments
