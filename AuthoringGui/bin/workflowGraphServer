@@ -3,15 +3,35 @@
 use lib "$ENV{GUS_HOME}/lib/perl";
 use FgpUtil::Runtime::CommandHelper;
 use File::Spec;
+use File::Basename;
 
 my $GUS_HOME = $ENV{GUS_HOME};
 my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
 my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
-sub main { # takes one arg: output directory
+sub main { # takes two args: port number and output directory
 
     $port = $_[0];
     $filesDir = absolutePath($_[1]);
+    $filesDirName = basename($filesDir);
+
+    chdir("$filesDir");
+    my $pid = fork();
+    if ($pid == 0) {
+	exec("python -m CGIHTTPServer $port");
+    } else {
+        sleep(2);
+	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
+	printf "To access, reference http://localhost:$port\n";
+    }
+    return 0;
+}
+
+sub mainJetty { # takes two args: port number and output directory
+
+    $port = $_[0];
+    $filesDir = absolutePath($_[1]);
+    $filesDirName = basename($filesDir);
 
     $jettyHome = $ENV{'JETTY_HOME'};
     printf "Jetty home set to $jettyHome\n";
@@ -46,8 +66,7 @@ ure.dtd">
 ENDFILE
     close(JETTY_CONF);
 
-    chdir $jettyHome;
-    #system("java -jar start.jar $confFile");
+    chdir($jettyHome);
     my $pid = fork();
     if ($pid == 0) {
 	exec("java -jar start.jar $confFile");
@@ -55,27 +74,42 @@ ENDFILE
         sleep(2);
         unlink($confFile);
 	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
+	printf "To access, reference http://localhost:$port\n";
     }
     return 0;
 }
 
 sub absolutePath {
-    $filesDir = $_[1];
+    $filesDir = $_[0];
     if (!File::Spec->file_name_is_absolute($filesDir)) {
-	printf "Converted relative path to absolute: $filesDir -> ";
+	#printf "Converted relative path to absolute: $filesDir -> ";
         $filesDir = File::Spec->rel2abs($filesDir);
-        printf "$filesDir\n";
+        #printf "$filesDir\n";
     }
     return $filesDir;
 }
 
-################### Parse args and call main sub ###################
-
-if ($#ARGV != 1) { # i.e. !(2 args)
-    printf(STDERR "\nUSAGE: workflowGraphServer <port> <directory>\n\n");
+sub printUsageAndDie {
+    printf(STDERR "\nUSAGE: workflowGraphServer [-jetty] <port> <directory>\n\n");
+    printf(STDERR "   -jetty    : if Jetty should be used as the webserver (uses python webserver by default)\n");
     printf(STDERR "   port      : port on which to server\n");
     printf(STDERR "   directory : local dir from which HTML files should be served\n\n");
     exit 1;
 }
 
-exit(main($ARGV[0], $ARGV[1]));
+################### Parse args and call main sub ###################
+
+if ($#ARGV != 1 && $#ARGV != 2) { # i.e. !(2 args or 3 args)
+    printUsageAndDie();
+}
+elsif ($#ARGV == 2) {
+    if ($ARGV[0] eq "-jetty") {
+	exit(mainJetty($ARGV[1], $ARGV[2]));
+    }
+    else {
+	printUsageAndDie();
+    }
+}
+else {
+    exit(main($ARGV[0], $ARGV[1]));
+}
