@@ -2,6 +2,7 @@ package ReFlow::Controller::WorkflowStepInvoker;
 
 @ISA = qw(ReFlow::Controller::Base);
 use strict;
+use FgpUtil::Prop::PropertySet;
 use ReFlow::Controller::Base;
 use ReFlow::DataSource::DataSources;
 use Sys::Hostname;
@@ -47,7 +48,7 @@ sub getConfig {
       push(@$fullDeclaration,$fd);
     }
     $self->{stepConfig} = 
-      ReFlow::Controller::PropertySet->new($propFile, $fullDeclaration, 1);
+      FgpUtil::Prop::PropertySet->new($propFile, $fullDeclaration, 1);
   }
 
   # first try explicit step property
@@ -76,7 +77,7 @@ sub getSharedConfigProperties {
     if (!$self->{globalStepsConfig}) {
       my $homeDir = $self->getWorkflowHomeDir();
       $self->{globalStepsConfig} =
-	ReFlow::Controller::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
+	FgpUtil::Prop::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
     }
     return $self->{globalStepsConfig};
 }

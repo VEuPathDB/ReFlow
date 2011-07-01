@@ -6,7 +6,7 @@ our @EXPORT = qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
 use strict;
 use DBI;
-use ReFlow::Controller::PropertySet;
+use FgpUtil::Prop::PropertySet;
 use Carp;
 
 BEGIN {
@@ -82,7 +82,7 @@ sub getGusConfig {
     if (!$self->{gusConfig}) {
       my $gusConfigFile = "$self->{gusHome}/config/gus.config";
       $self->{gusConfig} =
-	ReFlow::Controller::PropertySet->new($gusConfigFile, \@properties, 1);
+	FgpUtil::Prop::PropertySet->new($gusConfigFile, \@properties, 1);
     }
     return $self->{gusConfig}->getProp($key);
 }
@@ -103,7 +103,7 @@ sub getWorkflowConfig {
     if (!$self->{workflowConfig}) {
       my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
       $self->{workflowConfig} =
-	ReFlow::Controller::PropertySet->new($workflowConfigFile, \@properties);
+	FgpUtil::Prop::PropertySet->new($workflowConfigFile, \@properties);
 
     }
     return $self->{workflowConfig}->getProp($key);
