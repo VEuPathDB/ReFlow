@@ -26,6 +26,11 @@ sub validateClassName {
   return $self->{data}->{datasetClass}->{$className};
 }
 
+sub getClassesFile {
+    my ($self) = @_;
+    return $self->{classesFile};
+}
+
 # get list of plans used
 sub getPlan2Classes {
     my ($self, $classNamesUsed) = @_;

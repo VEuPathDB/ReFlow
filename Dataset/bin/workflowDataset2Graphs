@@ -19,7 +19,7 @@ my ($datasetFile, $classesFile) = @ARGV;
 my $classes = ReFlow::Dataset::Classes->new($classesFile);
 
 # parse datasets file
-my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
+my $datasets = ReFlow::Dataset::Datasets->new($datasetFile, $classes);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
 # make graph files target dir
@@ -36,7 +36,7 @@ unlink(glob("$graphFilePath/*.xml")); # clean out old xml files
 my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
 
 
-# process each plan
+# process each plan that is refered to by any class
 foreach my $planFileName (keys(%$graphPlan2classes)) {
   my $fullPlanFileName = "$ENV{GUS_HOME}/lib/xml/workflowPlans/$planFileName";
   die "\nError: Classes file $classesFile references plan '$planFileName' which is not found in $ENV{GUS_HOME}/lib/xml/workflowPlans/" unless -e $fullPlanFileName;

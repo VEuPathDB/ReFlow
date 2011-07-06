@@ -8,9 +8,12 @@ use XML::Simple;
 use Data::Dumper;
 
 sub new {
-  my ($class, $datasetsFile) = @_;
+  my ($class, $datasetsFile, $classes) = @_;
 
-  my $self = {};
+  my $self = {
+      classes => $classes,
+      datasetsFile => $datasetsFile
+  };
 
   bless($self,$class);
 
@@ -22,6 +25,41 @@ sub new {
   $self->{fullName} = "$1$name";
 
   return $self;
+}
+
+sub validateAgainstClasses {
+  my ($self) = @_;
+  
+  my $datasets = $self->{data}->{dataset};
+  my $errs = {};
+  foreach my $dataset (@$datasets) {
+      my $className = $dataset->{class};
+      my $class = $self->{classes}->getClass($className);
+      my $classProps = $class->getProps();
+      
+      foreach my $prop (@$classProps) {
+	  $self->datasetErr($dataset, $prop) unless $dataset->{prop}->{$prop};
+      }
+  }
+}
+
+# have to print out whole dataset xml because there is no identifier for
+# a dataset
+sub datasetErr {
+  my ($self, $dataset, $missingProp) = @_;
+  my @props;
+  foreach my $prop (keys(%{$dataset->{prop}})) {
+      push (@prop, "    <prop name=\"$prop\">$dataset->{prop}->{$prop}</prop.");
+  }
+
+  $props = join("\n",@props);
+  my $classesFile = $self->{classes}->getClassFile();
+  my $className = $dataset->{class};
+
+  die "
+Error.  The following dataset in file $self->{datasetsFile} is missing <prop name=\"$missingProp\">.  Compare it with the dataset class in file $classesFile
+  <dataset class=\"$className\">$props
+  </dataset>\n\n"
 }
 
 sub getClassNamesUsed {
