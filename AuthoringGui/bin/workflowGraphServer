@@ -18,7 +18,7 @@ sub main { # takes two args: port number and output directory
     chdir("$filesDir");
     my $pid = fork();
     if ($pid == 0) {
-	exec("python -m CGIHTTPServer $port");
+	exec("python -m SimpleHTTPServer $port");
     } else {
         sleep(2);
 	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
