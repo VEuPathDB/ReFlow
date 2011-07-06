@@ -16,14 +16,10 @@ sub main { # takes two args: port number and output directory
     $filesDirName = basename($filesDir);
 
     chdir("$filesDir");
-    my $pid = fork();
-    if ($pid == 0) {
-	exec("python -m SimpleHTTPServer $port");
-    } else {
-        sleep(2);
-	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
-	printf "To access, reference http://localhost:$port\n";
-    }
+    printf "Starting HTTP Server serving files from $filesDir on port $port\n";
+    printf "To access, reference http://localhost:$port\n";
+    
+    system("python -m SimpleHTTPServer $port");
     return 0;
 }
 
@@ -67,15 +63,10 @@ ENDFILE
     close(JETTY_CONF);
 
     chdir($jettyHome);
-    my $pid = fork();
-    if ($pid == 0) {
-	exec("java -jar start.jar $confFile");
-    } else {
-        sleep(2);
-        unlink($confFile);
-	printf "Http Server serving files from $filesDir on port $port under PID $pid\n";
-	printf "To access, reference http://localhost:$port\n";
-    }
+    printf "Starting HTTP Server serving files from $filesDir on port $port\n";
+    printf "To access, reference http://localhost:$port\n";
+    system("java -jar start.jar $confFile");
+    unlink($confFile);
     return 0;
 }
 
