@@ -71,7 +71,7 @@ sub _substituteMacros {
     my $line = $_;
     my @macroKeys = /\@\@([\w.]+)\@\@/g;   # allow keys of the form nrdb.release
     foreach my $macroKey (@macroKeys) {
-      my $val = $props->getProp($macroKey);
+      my $val = $props->getPropRelaxed($macroKey);
       die "Invalid macro '\@\@$macroKey\@\@' in xml file $xmlFile" unless defined $val;
       $line =~ s/\@\@$macroKey\@\@/$val/g;
     }
