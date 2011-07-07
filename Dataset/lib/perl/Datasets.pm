@@ -49,16 +49,16 @@ sub datasetErr {
   my ($self, $dataset, $missingProp) = @_;
   my @props;
   foreach my $prop (keys(%{$dataset->{prop}})) {
-      push (@prop, "    <prop name=\"$prop\">$dataset->{prop}->{$prop}</prop.");
+      push (@props, "    <prop name=\"$prop\">$dataset->{prop}->{$prop}</prop.");
   }
 
-  $props = join("\n",@props);
+  my $propsStr = join("\n",@props);
   my $classesFile = $self->{classes}->getClassFile();
   my $className = $dataset->{class};
 
   die "
 Error.  The following dataset in file $self->{datasetsFile} is missing <prop name=\"$missingProp\">.  Compare it with the dataset class in file $classesFile
-  <dataset class=\"$className\">$props
+  <dataset class=\"$className\">$propsStr
   </dataset>\n\n"
 }
 
