@@ -18,10 +18,12 @@ my ($datasetFile, $classesFile) = @ARGV;
 my $classes = ReFlow::Dataset::Classes->new($classesFile);
 
 # parse datasets file
-my $datasets = ReFlow::Dataset::Datasets->new($datasetFile);
+my $datasets = ReFlow::Dataset::Datasets->new($datasetFile, $classes);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
-# NEED TO VALIDATE DATASET AGAINST CLASSES
+# validate all dataset properties against classes
+$datasets->validateAgainstClasses();
+
 my $datasetsFullName = $datasets->getFullName();
 my $resourcesFileName = "$ENV{GUS_HOME}/lib/xml/datasources/${datasetsFullName}.xml";
 my ($basename,$path,$suffix) = fileparse($resourcesFileName, '.xml');

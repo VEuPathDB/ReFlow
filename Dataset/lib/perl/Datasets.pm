@@ -29,19 +29,21 @@ sub new {
 
 sub validateAgainstClasses {
   my ($self) = @_;
-  
+
   my $datasets = $self->{data}->{dataset};
   my $errs = {};
   foreach my $dataset (@$datasets) {
       my $className = $dataset->{class};
       my $class = $self->{classes}->getClass($className);
-      my $classProps = $class->getProps();
-      
+      my $classProps = $class->{prop};
+
       foreach my $prop (@$classProps) {
-	  $self->datasetErr($dataset, $prop) unless $dataset->{prop}->{$prop};
+	my $propName = $prop->{name};
+	$self->datasetErr($dataset, $propName) unless $dataset->{prop}->{$propName};
       }
   }
 }
+
 
 # have to print out whole dataset xml because there is no identifier for
 # a dataset
@@ -49,16 +51,17 @@ sub datasetErr {
   my ($self, $dataset, $missingProp) = @_;
   my @props;
   foreach my $prop (keys(%{$dataset->{prop}})) {
-      push (@props, "    <prop name=\"$prop\">$dataset->{prop}->{$prop}</prop.");
+      push (@props, "    <prop name=\"$prop\">$dataset->{prop}->{$prop}->{content}</prop.");
   }
 
   my $propsStr = join("\n",@props);
-  my $classesFile = $self->{classes}->getClassFile();
+  my $classesFile = $self->{classes}->getClassesFile();
   my $className = $dataset->{class};
 
   die "
 Error.  The following dataset in file $self->{datasetsFile} is missing <prop name=\"$missingProp\">.  Compare it with the dataset class in file $classesFile
-  <dataset class=\"$className\">$propsStr
+  <dataset class=\"$className\">
+$propsStr
   </dataset>\n\n"
 }
 

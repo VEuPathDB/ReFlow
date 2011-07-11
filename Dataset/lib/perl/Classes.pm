@@ -108,7 +108,6 @@ sub _parseXmlFile {
   # use XMLout to print xml text, they stay as elements
   my $fa = ReFlow::DataSource::DataSources::getForceArray();
   my $forceArray = ['datasetClass','pluginArgs','manualGet', @$fa];
-  print STDERR join(" ", @$forceArray);
 
   $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
 

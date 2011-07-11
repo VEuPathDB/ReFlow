@@ -18,7 +18,7 @@ use Sys::Hostname;
 sub getParamValue {
   my ($self, $name) = @_;
   $self->log("accessing parameter '$name=$self->{paramValues}->{$name}'");
-  $self->error("Can't find parameter '$name'") unless defined($self->{paramValues}->{$name});
+  $self->error("This step must provide a <paramValue name=\"$name\"> (it is required by the step class)") unless defined($self->{paramValues}->{$name});
   return $self->{paramValues}->{$name};
 }
 
