@@ -1,32 +1,37 @@
-<workflowGraph name="testRepeatMask">
+<workflowGraph name="">
 
-  <constant name="dataDir">repeatMask</constant>
-  <constant name="seqFile">$$dataDir$$/seqs.fsa</constant>
+  <param name="seqFile"/>
 
-  <step name="makeDataDir" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MakeDataDir">
-    <paramValue name="dataDir">repeatMask</paramValue>
+  <constant name="dataDir">computeClusterTest</constant>
+
+  <step name="makeDataDir" stepClass="ReFlow::StepClasses::MakeDataDir">
+    <paramValue name="dataDir">$$dataDir$$</paramValue>
   </step>
 
-  <step name="makeClusterTaskInputDir" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MakeRepeatMaskTaskInputDir">
+    <step name="initClusterHomeDir"
+          stepClass="ReFlow::StepClasses::InitClusterHomeDir">
+    </step>
+
+  <step name="makeClusterTaskInputDir" stepClass="ReFlow::TestFlow::MakeRepeatMaskTaskInputDir">
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
     <paramValue name="seqsFile">$$seqFile$$</paramValue>
     <paramValue name="dangleMax">30</paramValue>
     <paramValue name="options"></paramValue>
   </step>
 
-  <step name="mirrorToCluster" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MirrorToComputeCluster">
+  <step name="mirrorToCluster" stepClass="ReFlow::StepClasses::MirrorToComputeCluster">
     <paramValue name="fileOrDirToMirror">$$dataDir$$</paramValue>
     <depends name="makeClusterTaskInputDir"/>
   </step>
 
-  <step name="runClusterTask" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::RunAndMonitorClusterTask" stepLoadTypes="cluster">
+  <step name="runClusterTask" stepClass="ReFlow::StepClasses::RunAndMonitorClusterTask" stepLoadTypes="cluster">
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
     <paramValue name="numNodes">20</paramValue>
     <paramValue name="processorsPerNode">1</paramValue>
     <depends name="mirrorToCluster"/>
   </step>
 
-  <step name="mirrorFromCluster" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MirrorFromComputeCluster">
+  <step name="mirrorFromCluster" stepClass="ReFlow::StepClasses::MirrorFromComputeCluster">
     <paramValue name="fileOrDirToMirror">$$dataDir$$/master</paramValue>
     <paramValue name="outputDir">$$dataDir$$/master/mainresult</paramValue>
     <paramValue name="outputFiles">blocked.err,blocked.seq</paramValue>
