@@ -1,0 +1,36 @@
+<workflowGraph name="testRepeatMask">
+
+  <constant name="dataDir">repeatMask</constant>
+  <constant name="seqFile">$$dataDir$$/seqs.fsa</constant>
+
+  <step name="makeDataDir" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MakeDataDir">
+    <paramValue name="dataDir">repeatMask</paramValue>
+  </step>
+
+  <step name="makeClusterTaskInputDir" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MakeRepeatMaskTaskInputDir">
+    <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
+    <paramValue name="seqsFile">$$seqFile$$</paramValue>
+    <paramValue name="dangleMax">30</paramValue>
+    <paramValue name="options"></paramValue>
+  </step>
+
+  <step name="mirrorToCluster" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MirrorToComputeCluster">
+    <paramValue name="fileOrDirToMirror">$$dataDir$$</paramValue>
+    <depends name="makeClusterTaskInputDir"/>
+  </step>
+
+  <step name="runClusterTask" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::RunAndMonitorClusterTask" stepLoadTypes="cluster">
+    <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
+    <paramValue name="numNodes">20</paramValue>
+    <paramValue name="processorsPerNode">1</paramValue>
+    <depends name="mirrorToCluster"/>
+  </step>
+
+  <step name="mirrorFromCluster" stepClass="ApiCommonWorkflow::Main::WorkflowSteps::MirrorFromComputeCluster">
+    <paramValue name="fileOrDirToMirror">$$dataDir$$/master</paramValue>
+    <paramValue name="outputDir">$$dataDir$$/master/mainresult</paramValue>
+    <paramValue name="outputFiles">blocked.err,blocked.seq</paramValue>
+    <depends name="runClusterTask"/>
+  </step>
+
+</workflowGraph>

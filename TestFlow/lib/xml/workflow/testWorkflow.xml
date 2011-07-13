@@ -1,4 +1,5 @@
 <workflowGraph name="root">
+  <param name="testComputeCluster"/>
 
   <!--<param name="shape"/>-->
   <constant name="shape">rectangle</constant>
@@ -20,5 +21,8 @@
     <depends name="firstStep"/>
     <depends name="secondStep"/>
   </step>
+
+  <subgraph name="repeatMask" xmlFile="testRepeatMask.xml" includeIf="$testComputeCluster">
+  </subgraph>
 
 </workflowGraph>
