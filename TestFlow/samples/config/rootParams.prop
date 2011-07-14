@@ -1,1 +1,3 @@
 shape=triangle
+testComputeCluster=false
+seqFile=dont_know

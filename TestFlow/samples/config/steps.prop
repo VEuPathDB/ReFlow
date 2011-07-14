@@ -3,3 +3,6 @@ secondStep.name=winnie
 firstStep.fourthStep.name=piglet
 firstStep.fifthStep.name=eeyore
 thirdStep.name=owl
+
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.taskSize=15
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.taskSize.rmPath=/genomics/share/src/bio/RepeatMasker/RepeatMasker-open-3-1-5

@@ -1,1 +1,7 @@
 mood=happy
+
+clusterBaseDir=/genomics/binf/scratch
+clusterServer=beta.genomics.upenn.edu
+clusterQueue=apidb
+nodeClass=DJob::DistribJob::SgeNode
+nodePath=/scratch/user/$ENV{USER}

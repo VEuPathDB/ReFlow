@@ -26,7 +26,7 @@
 
   <!--  test compute cluster by calling the repeatMasker program on the cluster -->
 
-  <subgraph name="testComputeCluster" xmlFile="testComputeCluster.xml" includeIf="$testComputeCluster">
+  <subgraph name="testComputeCluster" xmlFile="testComputeCluster.xml" includeIf="$$testComputeCluster$$">
     <paramValue name="seqFile">$$seqFile$$</paramValue>
   </subgraph>
 

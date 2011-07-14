@@ -8,15 +8,22 @@
     <paramValue name="dataDir">$$dataDir$$</paramValue>
   </step>
 
-    <step name="initClusterHomeDir"
-          stepClass="ReFlow::StepClasses::InitClusterHomeDir">
-    </step>
+  <step name="initClusterHomeDir" stepClass="ReFlow::StepClasses::InitClusterHomeDir">
+  </step>
+
+  <step name="acquireSeqFile" stepClass="ReFlow::TestFlow::AcquireFile">
+    <paramValue name="inputFile">$$seqFile$$</paramValue>
+    <paramValue name="outputFile">$$dataDir$$/seqs.fasta</paramValue>
+    <depends name="makeDataDir"/>
+  </step>
 
   <step name="makeClusterTaskInputDir" stepClass="ReFlow::TestFlow::MakeRepeatMaskTaskInputDir">
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
-    <paramValue name="seqsFile">$$seqFile$$</paramValue>
+    <paramValue name="seqsFile">$$dataDir$$/seqs.fasta</paramValue>
     <paramValue name="dangleMax">30</paramValue>
     <paramValue name="options"></paramValue>
+    <depends name="acquireSeqFile"/>
+    <depends name="initClusterHomeDir"/>
   </step>
 
   <step name="mirrorToCluster" stepClass="ReFlow::StepClasses::MirrorToComputeCluster">
