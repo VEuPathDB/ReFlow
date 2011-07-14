@@ -46,6 +46,7 @@
                                             ReFlow/TestFlow-Installation,
                                             ReFlow/Dataset-Installation,
                                             ReFlow/DataSource-Installation,
+                                            ReFlow/StepClasses-Installation,
                                             ReFlow/AuthoringGui-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -101,6 +102,13 @@
     <ant target="defaultComponentInstall">
       <property name="project" value="ReFlow"/>
       <property name="component" value="DataSource"/>
+    </ant>
+  </target>
+  
+  <target name="ReFlow/StepClasses-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="ReFlow"/>
+      <property name="component" value="StepClasses"/>
     </ant>
   </target>
   
