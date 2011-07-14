@@ -31,7 +31,7 @@
     <depends name="makeClusterTaskInputDir"/>
   </step>
 
-  <step name="runClusterTask" stepClass="ReFlow::StepClasses::RunAndMonitorClusterTask" stepLoadTypes="cluster">
+  <step name="runClusterTask" stepClass="ReFlow::StepClasses::RunAndMonitorDistribJob" stepLoadTypes="cluster">
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
     <paramValue name="numNodes">20</paramValue>
     <paramValue name="processorsPerNode">1</paramValue>
