@@ -4,8 +4,11 @@ package ReFlow::Controller::WorkflowStepInvoker;
 use strict;
 use FgpUtil::Prop::PropertySet;
 use ReFlow::Controller::Base;
+use ReFlow::Controller::SshComputeCluster;
+use ReFlow::Controller::LocalComputeCluster;
 use ReFlow::DataSource::DataSources;
 use Sys::Hostname;
+
 
 #
 # Super class of workflow steps written in perl, and called by the wrapper
@@ -178,6 +181,143 @@ sub log {
   print F localtime() . "\t$msg\n\n";
   close(F);
 }
+
+sub getComputeClusterHomeDir {
+    my ($self) = @_;
+    my $clusterServer = $self->getSharedConfig('clusterServer');
+    my $clusterBase = $self->getSharedConfig("$clusterServer.clusterBaseDir");
+    my $projectName = $self->getWorkflowConfig('name');
+    my $projectVersion = $self->getWorkflowConfig('version');
+    return "$clusterBase/$projectName/$projectVersion";
+}
+
+sub getClusterWorkflowDataDir {
+    my ($self) = @_;
+    my $home = $self->getComputeClusterHomeDir();
+    return "$home/data";
+}
+
+
+sub getCluster {
+    my ($self) = @_;
+
+    if (!$self->{cluster}) {
+	my $clusterServer = $self->getSharedConfig('clusterServer');
+	my $clusterUser = $ENV{USER};
+	if ($clusterServer ne "none") {
+	    $self->{cluster} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
+							      $clusterUser,
+							      $self);
+	} else {
+	    $self->{cluster} = ReFlow::Controller::LocalComputeCluster->new($self);
+	}
+    }
+    return $self->{cluster};
+}
+
+sub runCmdOnCluster {
+  my ($self, $test, $cmd) = @_;
+
+  $self->getCluster()->runCmdOnCluster($test, $cmd);
+}
+
+sub copyToCluster {
+    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    $self->getCluster()->copyTo($fromDir, $fromFile, $toDir);
+}
+
+sub copyFromCluster {
+    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir);
+}
+
+
+########## Distrib Job subroutines.  Should be factored to a pluggable
+########## class (to enable alternatives like Map/Reduce on the cloud)
+
+sub getDistribJobLogsDir {
+    my ($self) = @_;
+    my $home = $self->getComputeClusterHomeDir();
+    return "$home/taskLogs";
+}
+
+# should be renamed/refactored to makeDistribJobControllerPropFile
+sub makeDistribJobControllerPropFile {
+  my ($self, $taskInputDir, $slotsPerNode, $taskSize, $taskClass, $keepNode) = @_;
+
+  my $clusterServer = $self->getSharedConfig('clusterServer');
+
+  my $nodePath = $self->getSharedConfig("$clusterServer.nodePath");
+  my $nodeClass = $self->getSharedConfig("$clusterServer.nodeClass");
+
+  # tweak inputs
+  my $masterDir = $taskInputDir;
+  $masterDir =~ s/input/master/;
+  $nodeClass = 'DJob::DistribJob::BprocNode' unless $nodeClass;
+
+  # construct dir paths
+  my $workflowDataDir = $self->getWorkflowDataDir();
+  my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
+
+  # print out the file
+  my $controllerPropFile = "$workflowDataDir/$taskInputDir/controller.prop";
+
+  my $controllerPropFileContent = "
+masterdir=$clusterWorkflowDataDir/$masterDir
+inputdir=$clusterWorkflowDataDir/$taskInputDir
+nodedir=$nodePath
+slotspernode=$slotsPerNode
+subtasksize=$taskSize
+taskclass=$taskClass
+nodeclass=$nodeClass
+restart=no
+";
+
+  $controllerPropFileContent .= "keepNodeForPostProcessing=$keepNode\n" if $keepNode;
+
+  open(F, ">$controllerPropFile")
+      || $self->error("Can't open controller prop file '$controllerPropFile' for writing");
+  print F "$controllerPropFileContent\n";
+
+  close(F);
+}
+
+sub runAndMonitorDistribJob {
+    my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn) = @_;
+
+    # if not already started, start it up (otherwise the local process was restarted)
+    if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
+	my $cmd = "workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn";
+	$self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'&");
+    }
+
+    return 1 if ($test);
+
+    while (1) {
+	sleep(5);
+	last if !$self->_distribJobRunning($processIdFile,$user, $server);
+    }
+
+    my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+    return $done && $done =~ /Done/;
+}
+
+sub _distribJobRunning {
+    my ($self, $processIdFile, $user, $server) = @_;
+
+    my $processId = `ssh -2 $user\@$server 'if [ -a $processIdFile ];then cat $processIdFile; fi'`;
+
+    chomp $processId;
+
+    my $status = 0;
+    if ($processId) {
+      system("ssh -2 $user\@$server 'ps -p $processId > /dev/null'");
+      $status = $? >> 8;
+      $status = !$status;
+    }
+    return $status;
+}
+
 
 #######################################################################
 ## Methods called by workflowstepwrap
