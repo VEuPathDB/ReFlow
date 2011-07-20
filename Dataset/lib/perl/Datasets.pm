@@ -37,6 +37,8 @@ sub validateAgainstClasses {
       my $class = $self->{classes}->getClass($className);
       my $classProps = $class->{prop};
 
+      next unless $classProps;  # some classes have no props
+
       foreach my $prop (@$classProps) {
 	my $propName = $prop->{name};
 	$self->datasetErr($dataset, $propName) unless $dataset->{prop}->{$propName};
@@ -107,7 +109,7 @@ sub _parseXmlFile {
   my ($self, $datasetsFile) = @_;
 
   my $xml = new XML::Simple();
-  my $firstParse = eval{ $xml->XMLin($datasetsFile, SuppressEmpty => undef, ForceArray=>['constant'])};
+  my $firstParse = eval{ $xml->XMLin($datasetsFile, SuppressEmpty => undef, ForceArray=>['constant', 'prop'])};
 
   my $constants = $firstParse->{constant};
 

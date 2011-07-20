@@ -45,13 +45,22 @@ sub getConfig {
   $className =~ s/\:\:/\//g;
 
   if (!$self->{stepConfig}) {
-    my @rawDeclaration = $self->getConfigDeclaration();
+
+    # retire use of declarations.  they are not essential since test mode
+    # tests all properties.  they are a hassle to maintain (and are not
+    # in practice), and they prevent dynamically created property names,
+    # such as we use for the compute cluster
+
+    #my @rawDeclaration = $self->getConfigDeclaration();
+    #my $fullDeclaration = [];
+    #foreach my $rd (@rawDeclaration) {
+    #  my $fd = ["$self->{name}.$rd->[0]", $rd->[1], '', "$className.$rd->[0]"];
+    #  push(@$fullDeclaration,$fd);
+    #}
+
     my $fullDeclaration = [];
-    foreach my $rd (@rawDeclaration) {
-      my $fd = ["$self->{name}.$rd->[0]", $rd->[1], '', "$className.$rd->[0]"];
-      push(@$fullDeclaration,$fd);
-    }
-    $self->{stepConfig} = 
+
+    $self->{stepConfig} =
       FgpUtil::Prop::PropertySet->new($propFile, $fullDeclaration, 1);
   }
 
