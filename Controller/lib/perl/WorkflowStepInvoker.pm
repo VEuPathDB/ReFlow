@@ -25,6 +25,14 @@ sub getParamValue {
   return $self->{paramValues}->{$name};
 }
 
+sub getBooleanParamValue {
+  my ($self, $name) = @_;
+  my $val = $self->getParamValue($paramName);
+  $self->error("Param $name must be either 'true' or 'false'") unless $val eq 'true' || $val eq 'false';
+  return $val;
+}
+
+
 sub getId {
   my ($self) = @_;
   return $self->{id};
@@ -115,6 +123,7 @@ sub getName {
 
   return $self->{name};
 }
+
 
 sub testInputFile {
   my ($self, $paramName, $fileName, $directory) = @_;
