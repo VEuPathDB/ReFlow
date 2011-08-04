@@ -94,6 +94,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String stepDir;   
     private List<Name> dependsNames = new ArrayList<Name>();
     private List<Name> dependsGlobalNames = new ArrayList<Name>();
+    private List<Name> dependsExternalNames = new ArrayList<Name>();
+    private String externalName;  // only used so steps can declare a dependsExternal to this step
     private String dependsString;
     protected Map<String,String> paramValues = new HashMap<String,String>();
     protected String prevState;
@@ -102,6 +104,14 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     public void setName(String name) {
         this.baseName = name;
+    }
+    
+    public void setExternalName(String externalName) {
+        this.externalName = externalName;
+    }
+    
+    public String getExternalName() {
+	return externalName;
     }
     
     public void setStepClass(String invokerClassName) {
@@ -253,12 +263,23 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return paramValues;
     }
     
-    void addToList(List<WorkflowStep> list) {
-        if (list.contains(this)) return;
+    // use poppedSteps to detect cycles.  we have a cycle if we see this step
+    // again before it has completed processing its kids
+    void addToList(List<WorkflowStep> list, Set<WorkflowStep> poppedSteps) {
+
+	// check if we have already seen this step
+        if (list.contains(this)) {
+	    if (poppedSteps.contains(this)) return; //ok if done processing kids
+	    else
+		Utilities.error("Step " + getFullName() + " in graph file "
+				+ workflowGraph.getXmlFileName()
+				+ " is reached by an illegal cycle in the graph. Please check if it is referenced by a dependsExternal that might be causing the cycle ");
+	}
         list.add(this);
         for (WorkflowStep child : getChildren()) {
-            child.addToList(list);
+            child.addToList(list, poppedSteps);
         }
+	poppedSteps.add(this);
     }
         
     // insert a child between this step and its previous children
@@ -352,16 +373,16 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dependsGlobalNames;
     }
     
-    String getDependsGlobalString() {
-        return dependsGlobalNames.toString();
-    }
-
-   boolean getHasGlobalDepends() {
-        return dependsGlobalNames.size() != 0;
-    }
-
     public void addDependsGlobalName(Name dependsName) {
         dependsGlobalNames.add(dependsName);
+    }
+    
+    List<Name> getDependsExternalNames() {
+        return dependsExternalNames;
+    }
+    
+    public void addDependsExternalName(Name dependsName) {
+        dependsExternalNames.add(dependsName);
     }
     
     //TODO Java6 @Override
