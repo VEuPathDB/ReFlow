@@ -221,7 +221,7 @@ sub getCluster {
 
     if (!$self->{cluster}) {
 	my $clusterServer = $self->getSharedConfig('clusterServer');
-	my $clusterUser = $ENV{USER};
+	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterServer ne "none") {
 	    $self->{cluster} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
 							      $clusterUser,
