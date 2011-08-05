@@ -123,6 +123,8 @@ public class WorkflowGraphUtil {
               + NL + buf);
     }
 
+    graph.resolveExternalDepends();
+
     return graph;
   }
 

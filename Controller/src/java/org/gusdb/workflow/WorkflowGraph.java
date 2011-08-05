@@ -255,14 +255,21 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
    * standard full name (with path) and so are available anywhere, but
    * the constraint on them is that the parent steps must be in the global.xml
    * file.
+   *
+   * This method should only be called on the fully expanded graph, after
+   * graph expansion is complete
    */
-  void resolveExternalDependencies() {
+  void resolveExternalDepends() {
       Set<T> stepsWithExternalDepends = new HashSet<T>();
       Map<String, T> externalName2Step = new HashMap<String,T>();
       // pass through steps to find all externalNames and dependsExternal
       for (T step: getSortedSteps()) {
-	  if (step.getExternalName() != null)
+	  if (step.getExternalName() != null) {
+	      if (externalName2Step.containsKey(step.getExternalName()))
+		  Utilities.error("Step " + step.getFullName()
+				  + " has a non-unique externalName");
 	      externalName2Step.put(step.getExternalName(), step);
+	  }
 	  if (step.getDependsExternalNames() != null
 	      && step.getDependsExternalNames().size() != 0)
 	      stepsWithExternalDepends.add(step);
@@ -272,9 +279,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	  for (Name externalDependsName : step.getDependsExternalNames()) {
 	      String extDepStr = externalDependsName.getName();
 	      T externalStep = externalName2Step.get(extDepStr);
-	      String err = "In file " + xmlFileName + ", step '"
-		  + step.getBaseName() + "' has a dependsExternal '"
-		  + extDepStr
+	      String err = "Step '" + step.getFullName()
+		  + "' has a dependsExternal '" + extDepStr
 		  + "' for which no referent step can be found";
 	      if (externalName2Step == null) Utilities.error(err);
 	      makeParentChildLink(externalStep, step, true);

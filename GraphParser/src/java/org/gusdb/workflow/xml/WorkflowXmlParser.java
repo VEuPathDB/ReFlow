@@ -105,6 +105,8 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
 
         configureNode(digester, "workflowGraph/step/dependsGlobal", Name.class, "addDependsGlobalName");
 
+        configureNode(digester, "workflowGraph/step/dependsExternal", Name.class, "addDependsExternalName");
+
         configureNode(digester, "workflowGraph/step/paramValue", NamedValue.class, "addParamValue");
         digester.addCallMethod("workflowGraph/step/paramValue", "setValue", 0);
         
@@ -113,6 +115,8 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         configureNode(digester, "workflowGraph/subgraph/depends", Name.class, "addDependsName");
 
         configureNode(digester, "workflowGraph/subgraph/dependsGlobal", Name.class, "addDependsGlobalName");
+
+        configureNode(digester, "workflowGraph/subgraph/dependsExternal", Name.class, "addDependsExternalName");
 
         configureNode(digester, "workflowGraph/subgraph/paramValue", NamedValue.class, "addParamValue");
         digester.addCallMethod("workflowGraph/subgraph/paramValue", "setValue", 0);

@@ -43,6 +43,9 @@
             <attribute name="name" />
             <attribute name="stepClass"/>
             <optional>
+	      <attribute name="externalName" />
+            </optional>
+            <optional>
               <choice>
                 <attribute name="includeIf"/>
                 <attribute name="excludeIf"/>
@@ -70,10 +73,18 @@
                 <attribute name="name" />
               </element>
             </zeroOrMore>       
+            <zeroOrMore>
+              <element name="dependsExternal">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
           </element>
           <element name="subgraph">
             <attribute name="name" />
             <attribute name="xmlFile"/>
+            <optional>
+	      <attribute name="externalName" />
+            </optional>
             <optional>
               <choice>
                 <attribute name="includeIf"/>
@@ -96,6 +107,11 @@
             </zeroOrMore>       
             <zeroOrMore>
               <element name="dependsGlobal">
+                <attribute name="name" />
+              </element>
+            </zeroOrMore>       
+            <zeroOrMore>
+              <element name="dependsExternal">
                 <attribute name="name" />
               </element>
             </zeroOrMore>       
