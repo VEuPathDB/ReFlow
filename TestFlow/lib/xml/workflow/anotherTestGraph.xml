@@ -1,0 +1,15 @@
+<workflowGraph name="sub">
+
+  <step name="mickeyStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">i am mickey</paramValue>
+  </step>
+
+  <step name="mouseStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">i am a mouse</paramValue>
+    <depends name="mickeyStep"/>
+    <dependsExternal name="testCC"/>
+  </step>
+
+</workflowGraph>

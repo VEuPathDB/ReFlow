@@ -279,6 +279,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	  for (Name externalDependsName : step.getDependsExternalNames()) {
 	      String extDepStr = externalDependsName.getName();
 	      T externalStep = externalName2Step.get(extDepStr);
+	      if (externalStep == step) continue;
 	      String err = "Step '" + step.getFullName()
 		  + "' has a dependsExternal '" + extDepStr
 		  + "' for which no referent step can be found";
