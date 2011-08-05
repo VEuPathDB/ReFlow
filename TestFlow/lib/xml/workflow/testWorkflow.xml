@@ -9,6 +9,8 @@
 
   <subgraph name="firstStep" xmlFile="testSubgraph.xml">
     <paramValue name="prefix">$$blue$$</paramValue>
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+    <paramValue name="seqFile">$$seqFile$$</paramValue>
   </subgraph>
 
   <step name="secondStep"
@@ -23,11 +25,8 @@
     <depends name="secondStep"/>
   </step>
 
-
-  <!--  test compute cluster by calling the repeatMasker program on the cluster -->
-
-  <subgraph name="testComputeCluster" xmlFile="testComputeCluster.xml" includeIf="$$testComputeCluster$$">
-    <paramValue name="seqFile">$$seqFile$$</paramValue>
+  <subgraph name="whateverStep" xmlFile="anotherTestGraph.xml">
   </subgraph>
+
 
 </workflowGraph>

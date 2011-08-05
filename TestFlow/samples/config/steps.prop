@@ -1,8 +1,13 @@
 ReFlow/TestFlow/TestStep.wait=3
 secondStep.name=winnie
-firstStep.fourthStep.name=piglet
-firstStep.fifthStep.name=eeyore
+firstStep.firstStep.name=piglet
+firstStep.secondStep.name=eeyore
 thirdStep.name=owl
+whateverStep.mickeyStep.name=mickey
+whateverStep.mouseStep.name=mouse
 
-ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.taskSize=15
-ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.taskSize.rmPath=/genomics/share/src/bio/RepeatMasker/RepeatMasker-open-3-1-5
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.beta.genomics.upenn.edu.taskSize=15
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.beta.genomics.upenn.edu.taskSize.rmPath=/genomics/share/src/bio/RepeatMasker/RepeatMasker-open-3-1-5
+
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.rcluster.rcc.uga.edu.taskSize=15
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.rcluster.rcc.uga.edu.rmPath=/usr/local/RepeatMasker-latest/RepeatMasker
