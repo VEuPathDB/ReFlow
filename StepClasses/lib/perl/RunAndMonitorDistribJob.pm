@@ -34,7 +34,7 @@ sub run {
       $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/master");
   }else{
 
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, 15000, $clusterQueue, $processorsPerNode);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, 0, $clusterQueue, $processorsPerNode);
       if (!$success){
 	  $self->error ("Task did not successfully run. Check log file: $logFile\n");
       }
