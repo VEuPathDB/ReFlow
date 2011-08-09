@@ -20,8 +20,6 @@
   <step name="makeClusterTaskInputDir" stepClass="ReFlow::TestFlow::MakeRepeatMaskTaskInputDir">
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
     <paramValue name="seqsFile">$$dataDir$$/seqs.fasta</paramValue>
-    <paramValue name="dangleMax">30</paramValue>
-    <paramValue name="options"></paramValue>
     <depends name="acquireSeqFile"/>
     <depends name="initClusterHomeDir"/>
   </step>

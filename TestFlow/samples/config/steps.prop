@@ -10,4 +10,4 @@ ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.beta.genomics.upenn.edu.taskSize=15
 ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.beta.genomics.upenn.edu.taskSize.rmPath=/genomics/share/src/bio/RepeatMasker/RepeatMasker-open-3-1-5
 
 ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.rcluster.rcc.uga.edu.taskSize=15
-ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.rcluster.rcc.uga.edu.rmPath=/usr/local/RepeatMasker-latest/RepeatMasker
+ReFlow/TestFlow/MakeRepeatMaskTaskInputDir.rcluster.rcc.uga.edu.rmPath=/usr/local/RepeatMasker-latest

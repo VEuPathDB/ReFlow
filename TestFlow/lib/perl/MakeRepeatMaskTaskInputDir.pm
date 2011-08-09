@@ -10,8 +10,6 @@ sub run {
   # get parameters
   my $taskInputDir = $self->getParamValue('taskInputDir');
   my $seqsFile = $self->getParamValue('seqsFile');
-  my $options = $self->getParamValue('options');
-  my $dangleMax = $self->getParamValue('dangleMax');
 
   # get step properties
   my $clusterServer = $self->getSharedConfig('clusterServer');
@@ -41,8 +39,7 @@ sub run {
 "rmPath=$rmPath
 inputFilePath=$clusterWorkflowDataDir/$seqsFile
 trimDangling=y
-rmOptions=$options
-dangleMax=$dangleMax
+dangleMax=5
 ";
       close(F);
   }
