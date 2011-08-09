@@ -33,8 +33,8 @@ sub run {
       my ($relativeTaskInputDir, $relativeDir) = fileparse($taskInputDir);
       $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/master");
   }else{
-
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, 0, $clusterQueue, $processorsPerNode);
+      my $expectedTime = 0;  # don't provide any
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode);
       if (!$success){
 	  $self->error ("Task did not successfully run. Check log file: $logFile\n");
       }
