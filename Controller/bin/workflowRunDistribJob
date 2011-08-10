@@ -10,6 +10,8 @@ close(F);
 
 my $cmd = "liniacsubmit $numNodes $time $propFile --queue $queue $p>& $logFile";
 
+print STDERR "\nRunning command: $cmd\n\n";
+
 system($cmd);
 
 
