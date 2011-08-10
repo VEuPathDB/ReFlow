@@ -8,7 +8,7 @@ open(F, ">$processIdFile") || die "can't open processIdFile '$processIdFile' for
 print F "$$\n";
 close(F);
 
-my $cmd = "liniacsubmit $numNodes $time $propFile $queue $p>& $logFile";
+my $cmd = "liniacsubmit $numNodes $time $propFile --queue $queue $p>& $logFile";
 
 system($cmd);
 
