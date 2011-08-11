@@ -116,7 +116,7 @@ sub _parseXmlFile {
   my $xmlString = $self->_substituteConstants($datasetsFile, $constants);
 
   # parse again, this time w/ constants resolved
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset', 'prop'], KeyAttr=>{prop=>'name'}) };
+  $self->{data} = $xml->XMLin($xmlString, SuppressEmpty => undef, ForceArray=>['dataset', 'prop'], KeyAttr=>{prop=>'name'});
 
 #  print STDOUT Dumper $self->{data};
   die "$@\nerror processing XML file $datasetsFile\n" if($@);
