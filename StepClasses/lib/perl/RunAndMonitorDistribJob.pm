@@ -32,6 +32,7 @@ sub run {
   if($undo){
       my ($relativeTaskInputDir, $relativeDir) = fileparse($taskInputDir);
       $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/master");
+      $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
   }else{
       my $expectedTime = 0;  # don't provide any
       my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode);
