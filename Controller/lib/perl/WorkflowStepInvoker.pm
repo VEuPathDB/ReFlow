@@ -29,7 +29,7 @@ sub getBooleanParamValue {
   my ($self, $name) = @_;
   my $val = $self->getParamValue($name);
   $self->error("Param $name must be either 'true' or 'false'") unless $val eq 'true' || $val eq 'false';
-  return $val;
+  return $val eq 'true';
 }
 
 
