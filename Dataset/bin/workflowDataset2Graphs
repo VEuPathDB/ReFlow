@@ -138,6 +138,11 @@ sub expandPatterns {
       push(@{$outputHash->{$dependsPatternValue}},
 	   "    <depends name=\"$matchingStepName\"/>");
     }
+
+    # if none matched, then replace dependsPattern with a blank
+    if (!$outputHash->{$dependsPatternValue}) {
+      $outputHash->{$dependsPatternValue} = [""];
+    }
   }
 }
 

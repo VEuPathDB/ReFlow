@@ -283,7 +283,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	      String err = "Step '" + step.getFullName()
 		  + "' has a dependsExternal '" + extDepStr
 		  + "' for which no referent step can be found";
-	      if (externalName2Step == null) Utilities.error(err);
+	      if (externalStep == null) Utilities.error(err);
 	      makeParentChildLink(externalStep, step, true);
 	  }
       }
