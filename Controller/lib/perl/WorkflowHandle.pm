@@ -34,36 +34,50 @@ sub getStepNamesFromPattern {
     my ($self, $stepNamePattern) = @_;
 
     $self->getId();
-    my $result = [];
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $sql = 
 "SELECT name, state, undo_state
 FROM $workflowStepTable
-WHERE name like '$stepNamePattern'
+WHERE name like '$stepNamePattern' ESCAPE '!'
 AND workflow_id = $self->{workflow_id}
 order by depth_first_order";
+  return $self->getStepNamesWithSql($sql);
+}
 
+sub getStepNamesFromFile {
+  my ($self, $file) = @_;
+
+  my @names;
+  $self->getId();
+  my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+  open(F, $file) || die "Cannot open steps file '$file'";
+  while(<F>) {
+    next if /^\#/;
+    chomp;
+    push(@names, "'$_'");
+  }
+  my $namesList = join(",", @names);
+  my $sql = 
+"SELECT name, state, undo_state
+FROM $workflowStepTable
+WHERE name in ($namesList)
+AND workflow_id = $self->{workflow_id}
+order by depth_first_order";
+  return $self->getStepNamesWithSql($sql);
+}
+
+sub getStepNamesWithSql {
+    my ($self, $sql) = @_;
+
+    $self->getId();
+    my $result = [];
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $stmt = $self->getDbh()->prepare($sql);
     $stmt->execute();
     while (my ($name, $status, $undo_status) = $stmt->fetchrow_array()) {
 	push(@$result, [$name, $status, $undo_status]);
     }
     return $result;
-}
-
-sub getStepNamesFromFile {
-  my ($self, $file) = @_;
-
-  my $homeDir = $self->getWorkflowHomeDir();
-
-  my $names = [];
-  open(F, $file) || die "Cannot open steps file '$file'";
-  while(<F>) {
-    next if /^\#/;
-    chomp;
-    push(@$names, $_);
-  }
-  return $names;
 }
 
 sub getId {

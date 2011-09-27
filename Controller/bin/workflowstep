@@ -107,9 +107,11 @@ Usage: workflowstep -h workflow_home_dir [ -p stepname_pattern | -f file_of_step
 
 Where:
   -h                   - workflow home dir
-  -p stepname_pattern  - name or pattern (using '%' as a wildcard) that
-                         specifies  one or more steps to change.
-                         EG, %.runBlast
+  -p stepname_pattern  - name or pattern (using '%' as a wildcard and '_' as
+                         a single character wildcard) that
+                         specifies  one or more steps to change.  Use '!' as
+                         an escape
+                         Examples: %.runBlast %!_LoadGenome
   -f file_of_steps     - a file containing a list of step names.
   -l                   - list mode: don't change any steps, just list the
                          names that match the pattern (and their state)
