@@ -170,9 +170,8 @@ sub getDataSource {
   return $self->{dataSources}->getDataSource($dataSourceName);
 }
 
-
 sub runCmd {
-    my ($self, $test, $cmd) = @_;
+    my ($self, $test, $cmd, $optionalMsgForErr) = @_;
 
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
@@ -186,7 +185,8 @@ sub runCmd {
     } else {
       $output = `$cmd 2>> $err`;
       my $status = $? >> 8;
-      $self->error("Failed with status $status running: \n$cmd") if ($status);
+      my $errMsg = $optionalMsgForErr? "\n\n$optionalMsgForErr" : "";
+      $self->error("\nFailed with status $status running: \n\n$cmd$errMsg") if ($status);
     }
     return $output;
 }
