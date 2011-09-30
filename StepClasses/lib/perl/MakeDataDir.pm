@@ -16,11 +16,12 @@ sub run {
 
   if($undo){
 
-      $self->runCmd(0, "rm -fr $workflowDataDir/$dataDir");
+      # should be emtpy
+      $self->runCmd(0, "rmdir $workflowDataDir/$dataDir");
 
   }else{
-
-      $self->runCmd(0, "mkdir -p $workflowDataDir/$dataDir");
+      # don't use -p.  parents should be made already
+      $self->runCmd(0, "mkdir $workflowDataDir/$dataDir");
 
   }
 
