@@ -206,12 +206,6 @@ sub buildIndex { # one arg: output directory
     generateMenu($outputDir);
     printf("done.\n");
 
-    # copy javascript/css libs into output directory
-    system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
-
-    # copy favicon into output directory
-    system("cp $PROJECT_HOME/ReFlow/AuthoringGui/lib/images/favicon.ico $outputDir");
-
     # generate index.html
     printf("Generating $outputDir/index.html...");
     open(INDEX, ">$outputDir/index.html");
@@ -230,6 +224,18 @@ sub buildIndex { # one arg: output directory
     printf INDEX "</p></body></html>\n";
     close(INDEX);
     printf("done.\n");
+
+    # copy additional resources into output dir
+    printf("Copying javascript, css, and image resources to $outputDir...");
+
+    # copy javascript/css libs into output directory
+    system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
+
+    # copy favicon into output directory
+    system("cp $PROJECT_HOME/ReFlow/AuthoringGui/lib/images/favicon.ico $outputDir");
+
+    printf("done.\n");
+
 }
 
 sub generateMenu { # one arg: output directory

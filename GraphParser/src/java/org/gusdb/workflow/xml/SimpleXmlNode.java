@@ -13,6 +13,7 @@ public class SimpleXmlNode implements WorkflowNode {
   private String _subgraphXmlFileName;
   private List<NamedValue> _paramValues = new ArrayList<NamedValue>();
   private List<Name> _dependsNames = new ArrayList<Name>();
+  private String _groupName;
   
   //TODO Java6 @Override
   public String getBaseName() {
@@ -61,11 +62,11 @@ public class SimpleXmlNode implements WorkflowNode {
   
   //TODO Java6 @Override
   public void addDependsGlobalName(Name dependsName) {
-    // don't differentiate between global and local steps
+    // don't differentiate between global, local, and external steps
     // TODO is this correct?
     addDependsName(dependsName);
   }
-
+  
   //TODO Java6 @Override
   public void addDependsExternalName(Name dependsName) {
     // don't differentiate between global and local steps
@@ -74,6 +75,16 @@ public class SimpleXmlNode implements WorkflowNode {
   }
   
   //TODO Java6 @Override
+  public String getGroupName() {
+    return _groupName;
+  }
+
+  //TODO Java6 @Override
+  public void setGroupName(String groupName) {
+    _groupName = groupName;
+  }
+
+//TODO Java6 @Override
   public String toString() {
     return _baseName + " " + _dependsNames;
   }

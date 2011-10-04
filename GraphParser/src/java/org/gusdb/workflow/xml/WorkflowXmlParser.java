@@ -100,7 +100,7 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         digester.addCallMethod("workflowGraph/globalConstant", "setValue", 0);
 
         configureNode(digester, "workflowGraph/step", stepClass, "addStep");
-
+        
         configureNode(digester, "workflowGraph/step/depends", Name.class, "addDependsName");
 
         configureNode(digester, "workflowGraph/step/dependsGlobal", Name.class, "addDependsGlobalName");

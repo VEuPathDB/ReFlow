@@ -628,4 +628,19 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
       return baseName.compareTo(s.getBaseName());
     }
 
+    public void setGroupName(Name groupName) {
+    	// value is not needed in this implementation;
+    	// added for interface compliance only
+    }
+
+    // TODO Java6 @Override
+    public String getGroupName() {
+      throw new UnsupportedOperationException(
+          "This implementation does not support this method.");
+    }
+    // TODO Java6 @Override
+    public void setGroupName(String arg0) {
+      // value is not needed in this implementation;
+      // added for interface compliance only
+    }
 }

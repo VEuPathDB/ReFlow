@@ -46,6 +46,9 @@
 	      <attribute name="externalName" />
             </optional>
             <optional>
+	      <attribute name="groupName" />
+            </optional>
+            <optional>
               <choice>
                 <attribute name="includeIf"/>
                 <attribute name="excludeIf"/>
@@ -84,6 +87,9 @@
             <attribute name="xmlFile"/>
             <optional>
 	      <attribute name="externalName" />
+            </optional>
+            <optional>
+	      <attribute name="groupName" />
             </optional>
             <optional>
               <choice>

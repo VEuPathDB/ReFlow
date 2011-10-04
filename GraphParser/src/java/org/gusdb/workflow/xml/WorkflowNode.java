@@ -21,5 +21,9 @@ public interface WorkflowNode {
   public void addParamValue(NamedValue namedValue);
   public void addDependsName(Name dependsName);
   public void addDependsGlobalName(Name dependsName);
-
+  public void addDependsExternalName(Name extDependsName);
+  
+  public String getGroupName();
+  public void setGroupName(String groupName);
+  
 }
