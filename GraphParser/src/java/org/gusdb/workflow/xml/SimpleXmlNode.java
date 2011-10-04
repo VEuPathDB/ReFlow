@@ -65,6 +65,13 @@ public class SimpleXmlNode implements WorkflowNode {
     // TODO is this correct?
     addDependsName(dependsName);
   }
+
+  //TODO Java6 @Override
+  public void addDependsExternalName(Name dependsName) {
+    // don't differentiate between global and local steps
+    // TODO is this correct?
+    addDependsName(dependsName);
+  }
   
   //TODO Java6 @Override
   public String toString() {
