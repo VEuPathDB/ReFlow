@@ -176,7 +176,7 @@ sub buildHtml { # three args: XML file, output directory, additional java option
     open(HTML_FILE, ">$outputDir/$htmlName");
     printf HTML_FILE "<html><body><div>";
     printf HTML_FILE "  <div style=\"position:fixed; left:30px; margin-top:10px; margin-bottom:10px; font-weight:bold; font-size:12pt\">\n";
-    printf HTML_FILE "    <span><a href=\"$XML_DIR/$fileName\">$fileName</a><span>\n";
+    printf HTML_FILE "    <span><a href=\"$XML_DIR/$fileName\" target=\"_blank\">$fileName</a><span>\n";
     printf HTML_FILE "  </div>\n";
     printf HTML_FILE "  <img style=\"border:0px; padding-top:45px\" src=\"$IMAGES_DIR/$imageName\" usemap=\"#name\"/>\n";
 
