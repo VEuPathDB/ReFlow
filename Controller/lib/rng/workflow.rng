@@ -126,7 +126,7 @@
             </zeroOrMore>       
           </element>
         </choice>
-      </oneOrMore>    
+      </zeroOrMore>    
     </element>
   </start>
 </grammar>
