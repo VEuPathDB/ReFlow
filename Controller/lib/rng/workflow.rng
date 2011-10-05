@@ -37,7 +37,7 @@
           </zeroOrMore>       
         </element>
       </optional>    
-      <oneOrMore>
+      <zeroOrMore>
         <choice>
           <element name="step">
             <attribute name="name" />
