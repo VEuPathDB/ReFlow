@@ -180,13 +180,23 @@ sub runCmd {
 
     my $output;
 
+    my $errMsg =
+"
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+This step has failed.  Be sure to clean up any output files created so far
+before setting this step to ready.  If you don't then the next run might
+produce bogus output, or if you run an UNDO it might fail.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+";
+
+    $errMsg = "$optionalMsgForErr" if $optionalMsgForErr;
+
     if ($test) {
       $output = `echo just testing 2>> $err`;
     } else {
       $output = `$cmd 2>> $err`;
       my $status = $? >> 8;
-      my $errMsg = $optionalMsgForErr? "\n\n$optionalMsgForErr" : "";
-      $self->error("\nFailed with status $status running: \n\n$cmd$errMsg") if ($status);
+      $self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status);
     }
     return $output;
 }
