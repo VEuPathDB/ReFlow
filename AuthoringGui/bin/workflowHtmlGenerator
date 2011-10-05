@@ -191,7 +191,7 @@ sub buildHtml { # three args: XML file, output directory, additional java option
     open(HTML_FILE, ">$outputDir/$htmlName");
     printf HTML_FILE "<html><body><div>";
     printf HTML_FILE "  <div style=\"position:fixed; left:30px; margin-top:10px; margin-bottom:10px; font-weight:bold; font-size:12pt\">\n";
-    printf HTML_FILE "    <span><a href=\"$XML_DIR/$fileName\" target=\"_blank\">$fileName</a><span>\n";
+    printf HTML_FILE "    <span><a href=\"$XML_DIR/$fileName\" target=\"_blank\">$fileToParse</a><span>\n";
     printf HTML_FILE "  </div>\n";
     printf HTML_FILE "  <img style=\"border:0px; padding-top:45px\" src=\"$IMAGES_DIR/$imageName\" usemap=\"#name\"/>\n";
 
@@ -245,7 +245,7 @@ sub buildIndex { # one arg: output directory
     printf("Copying javascript, css, and image resources to $outputDir...");
 
     # copy javascript/css libs into output directory
-    copy("$PROJECT_HOME/ReFlow/AuthoringGui/lib/js", "$outputDir");
+    system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
 
     # copy favicon into output directory
     copy("$PROJECT_HOME/ReFlow/AuthoringGui/lib/images/favicon.ico", "$outputDir");
