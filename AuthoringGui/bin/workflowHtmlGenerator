@@ -214,8 +214,8 @@ sub buildIndex { # one arg: output directory
     my $outputDir = $_[0];
 
     # remove old html files so they're not placed in the index
-    rmdir("$outputDir/js");
-    unlink("$outputDir/index.html", "$outputDir/menu.html", "$outputDir/welcome.html");
+    system("rm -rf $outputDir/js");
+    unlink("$outputDir/index.html", "$outputDir/menu.html", "$outputDir/welcome.html", "$outputDir/favicon.ico");
 
     # generate menu.html
     printf("Generating $outputDir/menu.html...");
@@ -245,7 +245,9 @@ sub buildIndex { # one arg: output directory
     printf("Copying javascript, css, and image resources to $outputDir...");
 
     # copy javascript/css libs into output directory
+    #  TODO: takes a long time because of .svn directories; fix to not copy those
     system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
+    system("chmod -R 744 $outputDir/js");
 
     # copy favicon into output directory
     copy("$PROJECT_HOME/ReFlow/AuthoringGui/lib/images/favicon.ico", "$outputDir");
@@ -270,7 +272,7 @@ sub generateMenu { # one arg: output directory
     foreach $name(@names) {
         chomp($name);
         $name =~ s/^\.\///;
-        if ($name eq "") {
+        if ($name eq "" || $name eq ".:") {
             $reset = 1;
 	}
 	elsif ($reset == 1) {
