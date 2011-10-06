@@ -13,7 +13,7 @@ import java.util.Formatter;
 public class RunnableWorkflowStep extends WorkflowStep {
     
     boolean isInvoked;
-    boolean invokedButNotRunningCount;
+    int invokedButNotRunningCount;
 
     int handleChangesSinceLastSnapshot(Workflow<RunnableWorkflowStep> workflow) throws SQLException, IOException, InterruptedException  {
         if (workflow_step_id == null) 
@@ -172,9 +172,9 @@ public class RunnableWorkflowStep extends WorkflowStep {
 		// so it survives a kill of the controller
 		String[] cmd3 = {"sh", "-c", sb.toString() + " &"};
 		if (isInvoked) {
-		    invokedButNotRunning++;
-		    steplog("Invoked but not running (" + invokedButNotRunning + ")", "");
-		    if (invokedButNotRunning == 3)
+		    invokedButNotRunningCount++;
+		    steplog("Invoked but not running (" + invokedButNotRunningCount + ")", "");
+		    if (invokedButNotRunningCount == 3)
 			steplog(sb.toString(),"");
 		} else {
 		    steplog("Invoked", "");
