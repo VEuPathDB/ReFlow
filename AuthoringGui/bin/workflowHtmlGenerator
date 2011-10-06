@@ -279,7 +279,7 @@ sub generateMenu { # one arg: output directory
             $reset = 0;
             $currentDir = $name;
             $currentDir =~ s/://g;
-            if ( $currentDir =~ /[$IMAGES_DIR|$XML_DIR]$/ ) {
+            if ( $currentDir =~ /($IMAGES_DIR|$XML_DIR)$/ ) {
 		$isValidDir = 0;
 	    }
 	    else {
@@ -324,7 +324,7 @@ sub generateMenu { # one arg: output directory
 	    printf MENU "<li><a href=\"#\">$dirName</a><ul>\n";
 	}
         # otherwise check to see if subdir of current parent
-        elsif ($dirPath =~ /^$currentParent/) {
+        elsif ($dirPath =~ /^$currentParent\//) {
 	    # dirPath is subdir; nest subdir and make current parent
             push(@stack, $currentParent);
             $currentParent = $dirPath;
@@ -342,7 +342,7 @@ sub generateMenu { # one arg: output directory
 		}
 		printf MENU "</ul></li>\n";
 		$currentParent = pop(@stack);
-	    } until ($dirPath =~ /^$currentParent/ );
+	    } until ($dirPath =~ /^$currentParent\// );
 	    push(@stack, $currentParent);
 	    $currentParent = $dirPath;
 	    printf MENU "<li><a href=\"#\">$dirName</a><ul>\n";
