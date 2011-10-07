@@ -245,9 +245,22 @@ sub buildIndex { # one arg: output directory
     printf("Copying javascript, css, and image resources to $outputDir...");
 
     # copy javascript/css libs into output directory
-    #  TODO: takes a long time because of .svn directories; fix to not copy those
-    system("cp -r $PROJECT_HOME/ReFlow/AuthoringGui/lib/js $outputDir");
-    system("chmod -R 744 $outputDir/js");
+    #   this is essentially a "cp -r" but removing .svn files
+    my $jsParentDir = "$PROJECT_HOME/ReFlow/AuthoringGui/lib/js";
+    my $escapedParentDir = $jsParentDir;
+    $escapedParentDir =~ s/([\(\)\.\/\[\]])/\\\1/g;
+    my @fileNames = `find $jsParentDir | grep -v "\.svn" | sed 's/$escapedParentDir//'`;
+    my $fileName;
+    foreach $fileName(@fileNames) {
+        chomp($fileName);
+	$fileName =~ s/^\///;
+	if (-d "$jsParentDir/$fileName") {
+	    mkdir("$outputDir/js/$fileName");
+	}
+	else {
+	    copy("$jsParentDir/$fileName", "$outputDir/js/$fileName");
+	}
+    }
 
     # copy favicon into output directory
     copy("$PROJECT_HOME/ReFlow/AuthoringGui/lib/images/favicon.ico", "$outputDir");
