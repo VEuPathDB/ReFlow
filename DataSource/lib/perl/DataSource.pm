@@ -4,47 +4,59 @@ use strict;
 use Data::Dumper;
 
 sub new {
-  my ($class, $dataSourceName, $parsedXml, $dataSources) = @_;
+  my ($class, $resourceName, $parsedXml, $dataSources) = @_;
 
-  my $self = {};
-  $self->{parsedXml} = $parsedXml;
-  $self->{dataSourceName} = $dataSourceName;
-  $self->{dataSources} = $dataSources;
+  my $self = {parsedXml => $parsedXml,
+              resourceName => $resourceName,
+              dataSources => $dataSources,
+              version => $parsedXml->{version},
+              plugin =>  $parsedXml->{plugin},
+              wgetArgs => $parsedXml->{wgetArgs}->{content},
+              wgetUrl => $parsedXml->{wgetArgs}->{url},
+              manualGet => $parsedXml->{manualGet},
+              # NOTE: these 2 are initialized to empty arrayrefs if undef
+              unpacks => $parsedXml->{unpack} || [],
+              getAndUnpackOutput => $parsedXml->{getAndUnpackOutput} || [],
+             };
 
   bless($self,$class);
 
   return $self;
 }
 
+
+sub getDataSources {
+  my ($self) = @_;
+
+  return $self->{dataSources};
+}
+
+sub getParsedXml {
+  my ($self) = @_;
+
+  return $self->{parsedXml};
+}
+
+
 sub getName {
     my ($self) = @_;
 
-    return $self->{dataSourceName};
+    return $self->{resourceName};
 }
 
 sub getVersion {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{version};
-}
-
-sub getDisplayName {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{displayName};
-}
-
-sub getOrganisms {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{organisms};
+    return $self->{version};
 }
 
 sub getParentResource {
     my ($self) = @_;
 
+    my $parsedXml = $self->getParsedXml();
+
     my $parentDatasource;
-    my $parentResourceName = $self->{parsedXml}->{parentResource};
+    my $parentResourceName = $parsedXml->{parentResource};
 
     if ($parentResourceName) {
 	$parentDatasource =
@@ -54,89 +66,69 @@ sub getParentResource {
     return $parentDatasource;
 }
 
-sub getProject {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{project};
-}
-
-sub getCategory {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{category};
-}
 
 sub getPlugin {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{plugin};
+    return $self->{plugin};
 }
 
 sub getWgetArgs {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{wgetArgs}->{content};
+    return $self->{wgetArgs};
 }
 
 sub getWgetUrl {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{wgetArgs}->{url};
+    return $self->{wgetUrl};
 }
 
 sub getManualGet {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{manualGet};
+    return $self->{manualGet};
 }
 
 sub getManualFileOrDir {
     my ($self) = @_;
 
-    my $fileOrDir = $self->{parsedXml}->{manualGet}->{fileOrDir};
-    $fileOrDir =~ s/\%RESOURCE_NAME\%/$self->{dataSourceName}/g;
-    $fileOrDir =~ s/\%RESOURCE_VERSION\%/$self->{parsedXml}->{version}/g;
+    my $manualGet = $self->getManualGet();
+    my $version = $self->getVersion();
+    my $resourceName = $self->getName();
+
+    my $fileOrDir = $manualGet->{fileOrDir};
+    $fileOrDir =~ s/\%RESOURCE_NAME\%/$resourceName/g;
+    $fileOrDir =~ s/\%RESOURCE_VERSION\%/$version/g;
     return $fileOrDir;
 }
 
-sub getContact {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{contact};
-}
-
-sub getEmail {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{email};
-}
-
-sub getInstitution {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{institution};
-}
 
 sub getUnpacks {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{unpack} || [];
+    return $self->{unpacks};
 }
 
 sub getGetAndUnpackOutputs {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{getAndUnpackOutput} || [];
+    return $self->{getAndUnpackOutput};
 }
 
 sub getPluginArgs {
     my ($self) = @_;
 
     my $parent = "";
-    my $name = $self->{dataSourceName};
-    my $version =  $self->{parsedXml}->{version};
-    my $pluginArgs = $self->{parsedXml}->{pluginArgs};
-    if ($self->{parsedXml}->{parentResource}) {
+    my $name = $self->getName();
+    my $version =  $self->getVersion();
+
+    my $parsedXml = $self->getParsedXml();
+
+    my $pluginArgs = $parsedXml->{pluginArgs};
+
+    if ($parsedXml->{parentResource}) {
 
       if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
 	my $macro = $1;
@@ -153,37 +145,6 @@ sub getPluginArgs {
     return $pluginArgs;
 }
 
-sub getDescription {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{description};
-}
-
-# returns reference to an array of hash references with keys:
-#   pmid, doi, citation
-sub getPublications {
-    my ($self) = @_;
-
-    if (!$self->{publications}) {
-	foreach my $publication (@{$self->{parsedXml}->{info}->{publication}}) {
-	    my $pubmedId = $publication->{pmid};
-	    if ($pubmedId) {
-		$publication->{citation} = `pubmedIdToCitation $pubmedId`;
-		die "failed calling 'pubmedIdToCitation $pubmedId'" if $? >> 8;
-	    }
-	}
-	$self->{publications} = $self->{parsedXml}->{info}->{publication};
-    }
-    return $self->{publications};
-}
-
-# returns reference to an array of hash references with keys:
-# recordClass, type, name
-sub getWdkReferences {
-    my ($self) = @_;
-
-    return $self->{parsedXml}->{info}->{wdkReference};
-}
 
 
 1;

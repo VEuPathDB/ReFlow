@@ -4,16 +4,38 @@ use strict;
 use Data::Dumper;
 
 sub new {
-  my ($class, $dataSourceName, $parsedXml, $dataSources) = @_;
+  my ($class, $resourceName, $parsedXml, $dataSourceInfos) = @_;
 
-  my $self = {};
-  $self->{parsedXml} = $parsedXml;
-  $self->{dataSourceName} = $dataSourceName;
-  $self->{dataSources} = $dataSources;
+  my $self = {resourceName => $resourceName,
+              displayName => $parsedXml->{displayName},
+              project => $parsedXml->{project},
+              category => $parsedXml->{category},
+              contact => $parsedXml->{contact},
+              email => $parsedXml->{email},
+              institution => $parsedXml->{institution},
+              publicUrl => $parsedXml->{publicUrl},
+              description => $parsedXml->{description},
+              wdkReference => $parsedXml->{wdkReference},
+              parsedXml => $parsedXml,
+              dataSourceInfos => $dataSourceInfos,
+             };
 
   bless($self,$class);
 
   return $self;
+}
+
+
+sub getDataSourceInfos {
+  my ($self) = @_;
+
+  return $self->{dataSourceInfos};
+}
+
+sub getParsedXml {
+  my ($self) = @_;
+
+  return $self->{parsedXml};
 }
 
 sub getName {
@@ -25,49 +47,49 @@ sub getName {
 sub getDisplayName {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{displayName};
+    return $self->{displayName};
 }
 
 sub getProject {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{project};
+    return $self->{project};
 }
 
 sub getCategory {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{category};
+    return $self->{category};
 }
 
 sub getContact {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{contact};
+    return $self->{contact};
 }
 
 sub getEmail {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{email};
+    return $self->{email};
 }
 
 sub getInstitution {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{institution};
+    return $self->{institution};
 }
 
 sub getPublicUrl {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{publicUrl};
+    return $self->{publicUrl};
 }
 
 sub getDescription {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{description};
+    return $self->{description};
 }
 
 # returns reference to an array of hash references with keys:
@@ -75,15 +97,20 @@ sub getDescription {
 sub getPublications {
     my ($self) = @_;
 
+    my $parsedXml = $self->getParsedXml();
+
     if (!$self->{publications}) {
-	foreach my $publication (@{$self->{parsedXml}->{publication}}) {
+
+	my $publications = ref($parsedXml->{publication}) eq 'ARRAY' ? $parsedXml->{publication} : [];
+
+	foreach my $publication (@$publications) {
 	    my $pubmedId = $publication->{pmid};
 	    if ($pubmedId) {
 		$publication->{citation} = `pubmedIdToCitation $pubmedId`;
 		die "failed calling 'pubmedIdToCitation $pubmedId'" if $? >> 8;
 	    }
 	}
-	$self->{publications} = $self->{parsedXml}->{publication};
+	$self->{publications} = $publications;
     }
     return $self->{publications};
 }
@@ -93,7 +120,7 @@ sub getPublications {
 sub getWdkReferences {
     my ($self) = @_;
 
-    return $self->{parsedXml}->{wdkReference};
+    return $self->{wdkReference};
 }
 
 

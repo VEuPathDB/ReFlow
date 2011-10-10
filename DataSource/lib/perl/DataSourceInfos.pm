@@ -8,23 +8,33 @@ use XML::Simple;
 use Data::Dumper;
 
 sub new {
-  my ($class, $resourceInfoXmlFile) = @_;
+  my ($class, $resourceInfoXmlFile, $wdkReferenceCategories) = @_;
 
   my $self = {};
 
   bless($self,$class);
 
   $self->{resourceInfoXmlFile} = $resourceInfoXmlFile;
+  $self->{wdkReferenceCategories} = $wdkReferenceCategories;
 
-  $self->_parseXmlFile($self->{resourceInfoXmlFile});
+  $self->_parseXmlFile();
 
   return $self;
 }
 
-sub getXmlFile {
+# Deprecated
+sub getXmlFile { $_[0]->getResourceInfoXmlFile() }
+
+sub getResourceInfoXmlFile {
   my ($self) = @_;
   return $self->{resourceInfoXmlFile};
 }
+
+sub getWdkReferenceCategories {
+  my ($self) = @_;
+  return $self->{wdkReferenceCategories};
+}
+
 
 sub getDataSourceInfoNames {
   my ($self) = @_;
@@ -44,12 +54,28 @@ sub getDataSourceInfo {
 }
 
 sub _parseXmlFile {
-  my ($self, $resourceInfoXmlFile) = @_;
+  my ($self) = @_;
+
+  my $resourceInfoXmlFile = $self->getResourceInfoXmlFile();
 
   my $xmlString = `cat $resourceInfoXmlFile`;
   my $xml = new XML::Simple();
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>['publication','resourceInfo', 'wdkReference']) };
   die "$@\n$xmlString\nerror processing XML file $resourceInfoXmlFile\n" if($@);
+
+  if(my $wdkReferenceCategories = $self->getWdkReferenceCategories()) {
+
+    foreach my $resourceName (keys %{$self->{data}->{resourceInfo}}) {
+      my $resource = $self->{data}->{resourceInfo}->{$resourceName};
+
+      my $resourceCategory = $resource->{category};
+      my $resourceWdkRefs = $resource->{wdkReference} ? $resource->{wdkReference} : [];
+
+      my $baseWdkRefs = $wdkReferenceCategories->getWdkReferencesByCategoryName($resourceCategory);
+
+      push @$resourceWdkRefs, @$baseWdkRefs;
+    }
+  }
 }
 
 sub validateWdkReference {
@@ -137,6 +163,7 @@ sub getWdkModel {
   }
 }
 
+# JB: WHere is this used??
 sub _substituteConstants {
   my ($self, $xmlFile) = @_;
 
