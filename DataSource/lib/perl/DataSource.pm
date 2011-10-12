@@ -87,6 +87,7 @@ sub getWgetUrl {
 
 sub getManualGet {
     my ($self) = @_;
+    print Dumper $self->{manualGet};
 #    die "Looks like there is more then one <manualGet> in resource $self->{dataSourceName}" if ref($self->{manualGet});
 
     return $self->{manualGet};
@@ -109,7 +110,12 @@ sub getManualFileOrDir {
 sub getUnpacks {
     my ($self) = @_;
 
-    return $self->{unpacks};
+    if (!$self->{fixedUnpacks}) {
+      my $version = $self->getVersion();
+      my @unpacks2 = map { $_ =~ s/\%RESOURCE_VERSION\%/$version/g} @{$self->{unpacks}};
+      $self->{fixedUnpacks} = \@unpacks2;
+    }
+    return $self->{fixedUnpacks};
 }
 
 sub getGetAndUnpackOutputs {
