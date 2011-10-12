@@ -81,12 +81,13 @@ sub getWgetArgs {
 
 sub getWgetUrl {
     my ($self) = @_;
-
+    
     return $self->{wgetUrl};
 }
 
 sub getManualGet {
     my ($self) = @_;
+    die "Looks like there is more then one <manualGet> in resource $self->{dataSourceName}" if REF($self->{manualGet});
 
     return $self->{manualGet};
 }
