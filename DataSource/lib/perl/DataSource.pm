@@ -87,8 +87,8 @@ sub getWgetUrl {
 
 sub getManualGet {
     my ($self) = @_;
-    print Dumper $self->{manualGet};
-#    die "Looks like there is more then one <manualGet> in resource $self->{dataSourceName}" if ref($self->{manualGet});
+    die "
+There is more then one <manualGet> in resource $self->{dataSourceName}" if ref($self->{manualGet}) eq "ARRAY";
 
     return $self->{manualGet};
 }
