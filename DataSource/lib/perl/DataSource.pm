@@ -112,9 +112,14 @@ sub getUnpacks {
 
     if (!$self->{fixedUnpacks}) {
       my $version = $self->getVersion();
-      my @unpacks2 = map { $_ =~ s/\%RESOURCE_VERSION\%/$version/g} @{$self->{unpacks}};
+      my @unpacks2;
+      foreach my $unpacker (@{$self->{unpacks}}) {
+	$unpacker =~ s/\%RESOURCE_VERSION\%/$version/g;
+	push(@unpacks2, $unpacker);
+      }
       $self->{fixedUnpacks} = \@unpacks2;
     }
+
     return $self->{fixedUnpacks};
 }
 
