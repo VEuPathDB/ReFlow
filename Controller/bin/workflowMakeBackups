@@ -12,13 +12,28 @@ die "workflow home dir '$workflow_home' does not exist" unless -d $workflow_home
 
 die "workflow backup dir '$backupDir' does not exist" unless -d "$backupDir";
 
-  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-  $year += 1900;
-  my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
+if (! -e "$backupDir/README") {
+  open(F, ">$backupDir/README");
+  print F "
+This directory contains backups automatically created each time the workflow
+runs.  The *_config.tar.gz files are a backup of workflow_home_dir/config.  The
+*_graph.tar.gz files are a backup of the graph xml files in \$GUS_HOME/lib/xml/workflow.
+
+These backups become very useful if you are attempting to upgrade the graph or
+config and are getting errors that the graph has changed illegally.  In that
+case, restore from these backups, UNDO the steps that are causing difficulty,
+and unrestore.
+";
+  close(F);
+}
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year += 1900;
+my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
 
 
 # backup home_dir/config and $GUS_HOME/lib/xml/workflow
-backup('xml', "$ENV{GUS_HOME}/lib/xml/workflow", $time);
+backup('graph', "$ENV{GUS_HOME}/lib/xml/workflow", $time);
 backup('config', "$workflow_home/config", $time);
 
 
