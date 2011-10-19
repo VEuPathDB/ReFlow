@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($dontcare, $workflow_home) = @ARGV;
+
+usage() unless $workflow_home;
+
+my $backupDir = "$workflow_home/backups";
+
+die "workflow home dir '$workflow_home' does not exist" unless -d $workflow_home;
+
+die "workflow backup dir '$backupDir' does not exist" unless -d "$backupDir";
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+  $year += 1900;
+  my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
+
+
+# backup home_dir/config and $GUS_HOME/lib/xml/workflow
+backup('xml', "$ENV{GUS_HOME}/lib/xml/workflow", $time);
+backup('config', "$workflow_home/config", $time);
+
+
+
+sub backup {
+  my ($targetSuffix, $source, $time) = @_;
+
+  my $basename = "${time}_$targetSuffix";
+  my $cmd = "cp -r $source $backupDir/$basename";
+  system($cmd) and die "Failed running $cmd:\n $?";
+  chdir("$backupDir");
+  my $cmd = "tar czf $basename.tar.gz $basename";
+  system($cmd) and die "Failed running $cmd:\n $?";
+  my $cmd = "rm -r $basename";
+  system($cmd) and die "Failed running $cmd:\n $?";
+
+}
+
+sub usage {
+  print STDERR "
+
+Make a backup of critical workflow running dirs:
+   workflow_home/config
+   \$GUS_HOME/lib/xml/workflow
+
+usage:  workflowMakeBackups -h workflow_home_dir
+
+";
+
+exit(1);
+}

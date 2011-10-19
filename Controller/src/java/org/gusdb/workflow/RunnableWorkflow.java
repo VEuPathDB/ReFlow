@@ -64,6 +64,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
     // run the controller
     void run(boolean testOnly) throws Exception {
 
+	makeBackups();             // backup config/ and gus_home/lib/xml/workflow
+
         initDb(true, testOnly);    // write workflow to db, if not already there
 
         getDbSnapshot();           // read state of Workflow and WorkflowSteps
@@ -87,6 +89,16 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	}
     }
     
+    // backup the config/ dir and $GUS_HOME/lib/xml/workflow
+    private void makeBackups() throws IOException, java.lang.InterruptedException {
+	String[] cmd = {"workflowMakeBackups", "-h", getHomeDir()};
+	Process process = Runtime.getRuntime().exec(cmd);
+	process.waitFor();
+	if (process.exitValue() == 1)
+	    error("Failed making backups: " + cmd);
+	process.destroy();	
+    }
+
     // write the workflow and steps to the db
     protected void initDb(boolean updateXmlFileDigest, boolean testmode) throws SQLException, IOException, Exception, NoSuchAlgorithmException {
 

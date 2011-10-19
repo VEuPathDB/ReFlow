@@ -51,7 +51,7 @@ public class Workflow <T extends WorkflowStep> {
     private Properties workflowProps;   // from workflow config file
     private Properties gusProps;        // from gus.config (db stuff)
     private Properties loadBalancingConfig;    
-    private String[] homeDirSubDirs = {"logs", "steps", "data"};    
+    private String[] homeDirSubDirs = {"logs", "steps", "data", "backups"};    
     protected String name;
     protected String version;
     protected String workflowTable;
