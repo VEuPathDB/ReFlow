@@ -73,6 +73,20 @@ sub getPlugin {
     return $self->{plugin};
 }
 
+sub getScope {
+    my ($self) = @_;
+    my $l = $self->{scope};
+    die "Invalid scope '$l' in $self->{dataSourceName}.  Must be global, species or organism\n"
+	unless $l eq 'global' || $l eq 'species' || $l eq 'organism';
+    return $self->{scope};
+}
+
+sub getOrganismAbbrev {
+    my ($self) = @_;
+    die "Must provide an organismAbbrev=\n" unless $self->{scope} eq 'global';
+    return $self->{organismAbbrev};
+}
+
 sub getWgetArgs {
     my ($self) = @_;
 
