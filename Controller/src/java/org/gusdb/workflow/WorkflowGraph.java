@@ -548,7 +548,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
       if (errors.length() != 0) {
         workflow.log(errors.toString());
         Utilities
-            .error("The XML graph has changed illegally.  See log for details");
+            .error("The XML graph has changed illegally.  See controller.log for details");
       }
       return diffs.length() == 0;
     } finally {
