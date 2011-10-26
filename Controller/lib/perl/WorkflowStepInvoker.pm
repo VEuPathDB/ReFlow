@@ -163,7 +163,7 @@ sub getDataSource {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
-    print STDERR "Parsing resource file: $dataSourcesXmlFile\n";
+    print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasources/$dataSourcesXmlFile\n";
     $self->{dataSources} =
       ReFlow::DataSource::DataSources->new($dataSourcesXmlFile, $globalProperties);  }
     print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
