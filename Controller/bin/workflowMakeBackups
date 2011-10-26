@@ -29,7 +29,7 @@ and unrestore.
 
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year += 1900;
-$month += 1;
+$mon += 1;
 my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
 
 

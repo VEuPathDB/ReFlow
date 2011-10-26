@@ -94,8 +94,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	String[] cmd = {"workflowMakeBackups", "-h", getHomeDir()};
 	Process process = Runtime.getRuntime().exec(cmd);
 	process.waitFor();
-	if (process.exitValue() == 1)
-	    error("Failed making backups: " + cmd);
+	if (process.exitValue() != 0)
+	    error("Failed making backups: " + "workflowMakeBackups -h " + getHomeDir());
 	process.destroy();	
     }
 
