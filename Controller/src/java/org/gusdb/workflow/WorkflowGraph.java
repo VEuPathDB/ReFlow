@@ -578,7 +578,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
         || !step.getDependsString().equals(dbDependsString);
 
     if (mismatch) {
-      String s = "Step '" + dbName + "' has changed in the XML file";
+      String s = "Step '" + dbName + "' has changed in XML file "
+	  + step.getSourceXmlFileName();
       String diff = "old name:              " + dbName + nl
           + "old params digest:     " + dbParamsDigest + nl
           + "old depends string:    " + dbDependsString + nl
