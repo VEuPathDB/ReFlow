@@ -11,6 +11,8 @@ sub new {
               dataSources => $dataSources,
               version => $parsedXml->{version},
               plugin =>  $parsedXml->{plugin},
+              scope =>  $parsedXml->{scope},
+              organismAbbrev =>  $parsedXml->{organismAbbrev},
               wgetArgs => $parsedXml->{wgetArgs}->{content},
               wgetUrl => $parsedXml->{wgetArgs}->{url},
               manualGet => $parsedXml->{manualGet},
@@ -61,7 +63,7 @@ sub getParentResource {
     if ($parentResourceName) {
 	$parentDatasource =
 	    $self->{dataSources}->getDataSource($parentResourceName);
-	die "Error: can't find parent resource '$parentResourceName' mentioned in $self->{dataSourceName}\n" unless $parentDatasource;
+	die "Error: can't find parent resource '$parentResourceName' mentioned in $self->{resourceName}\n" unless $parentDatasource;
     } 
     return $parentDatasource;
 }
@@ -76,14 +78,14 @@ sub getPlugin {
 sub getScope {
     my ($self) = @_;
     my $l = $self->{scope};
-    die "Invalid scope '$l' in $self->{dataSourceName}.  Must be global, species or organism\n"
+    die "Invalid scope '$l' in $self->{resourceName}.  Must be global, species or organism\n"
 	unless $l eq 'global' || $l eq 'species' || $l eq 'organism';
     return $self->{scope};
 }
 
 sub getOrganismAbbrev {
     my ($self) = @_;
-    die "Must provide an organismAbbrev=\n" unless $self->{scope} eq 'global';
+    die "Must provide an organismAbbrev= in $self->{resourceName} (scope = '$self->{scope}')\n" unless ($self->{organismAbbrev} || $self->{scope} eq 'global');
     return $self->{organismAbbrev};
 }
 
@@ -102,7 +104,7 @@ sub getWgetUrl {
 sub getManualGet {
     my ($self) = @_;
     die "
-There is more then one <manualGet> in resource $self->{dataSourceName}" if ref($self->{manualGet}) eq "ARRAY";
+There is more then one <manualGet> in resource $self->{resourceName}" if ref($self->{manualGet}) eq "ARRAY";
 
     return $self->{manualGet};
 }
@@ -159,7 +161,7 @@ sub getPluginArgs {
       if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
 	my $macro = $1;
 	my $xmlFile = $self->{dataSources}->getXmlFile();
-	die "Resource $self->{dataSourceName} in file $xmlFile has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead\n";
+	die "Resource $self->{resourceName} in file $xmlFile has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead\n";
       }
       $parent = 'PARENT_';
       $name = $self->getParentResource()->getName();
