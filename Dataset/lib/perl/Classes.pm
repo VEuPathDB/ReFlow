@@ -33,13 +33,17 @@ sub getClassesFile {
 
 # get list of plans used
 sub getPlan2Classes {
-    my ($self, $classNamesUsed) = @_;
-    my %plan2classes;
-    foreach my $className (@$classNamesUsed) {
-      my $planFile = $self->{data}->{datasetClass}->{$className}->{graphFile}->{planFile};
-      push(@{$plan2classes{$planFile}}, $className) if $planFile;
+  my ($self, $classNamesUsed) = @_;
+  my %plan2classes;
+  foreach my $className (@$classNamesUsed) {
+    my $graphPlanFiles = $self->{data}->{datasetClass}->{$className}->{graphPlanFile};
+    print STDERR Dumper $graphPlanFiles;
+    foreach my $graphPlanFile (@{$graphPlanFiles}) {
+      my $planFileName = $graphPlanFile->{name};
+      push(@{$plan2classes{$planFileName}}, $className);
     }
-    return \%plan2classes;
+  }
+  return \%plan2classes;
 }
 
 sub getClass {
@@ -107,7 +111,7 @@ sub _parseXmlFile {
   # need to force all elements to be an array so that when we 
   # use XMLout to print xml text, they stay as elements
   my $fa = ReFlow::DataSource::DataSources::getForceArray();
-  my $forceArray = ['prop','datasetClass','pluginArgs','manualGet', @$fa];
+  my $forceArray = ['graphPlanFile', 'prop','datasetClass','pluginArgs','manualGet', @$fa];
 
   $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
 
