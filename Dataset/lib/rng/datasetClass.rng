@@ -67,5 +67,6 @@
 	  </optional>
 	</element>
       </oneOrMore>
+    </element>	
   </start>
 </grammar>
