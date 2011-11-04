@@ -35,8 +35,12 @@
               <attribute name="resource"/>
               <attribute name="version"/>
               <attribute name="plugin"/>
+              <attribute name="scope"/>
               <optional>
 		<attribute name="parentResource"/>
+              </optional>
+              <optional>
+		<attribute name="organismAbbrev"/>
               </optional>
               <choice>
 		<element name="wgetArgs">
