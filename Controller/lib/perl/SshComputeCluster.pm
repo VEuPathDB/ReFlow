@@ -37,7 +37,7 @@ sub copyTo {
     my $user = "$self->{user}\@" if $self->{user};
     my $ssh_to = "$user$self->{server}";
 
-    print STDERR "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -' \n" . __FILE__ . " line " . __LINE__ . "\n\n";
+    print STDERR "tar cfh - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -' \n" . __FILE__ . " line " . __LINE__ . "\n\n";
 
     # workaround scp problems
     $self->{mgr}->runCmd(0, "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
