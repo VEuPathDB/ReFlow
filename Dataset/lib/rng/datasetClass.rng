@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="datasetClasses">
+      <optional>
+        <element name="defaultPropertyDescriptions">
+          <element name="prop">
+            <attribute name="name" />
+            <text/>
+          </element>
+        </element>
+      </optional>
+      <oneOrMore>
+        <element name="datasetClass">
+          <attribute name="class" />
+	  <optional>
+            <element name="purpose">
+              <text/>
+            </element>
+	  </optional>
+	  <zeroOrMore>
+            <element name="prop">
+              <attribute name="name" />
+              <text/>
+            </element>
+	  </zeroOrMore>
+	  <zeroOrMore>
+            <element name="graphPlanFile">
+              <attribute name="name" />
+            </element>
+	  </zeroOrMore>
+	  <optional>
+            <element name="resource">
+              <attribute name="resource"/>
+              <attribute name="version"/>
+              <attribute name="plugin"/>
+              <optional>
+		<attribute name="parentResource"/>
+              </optional>
+              <choice>
+		<element name="wgetArgs">
+		  <attribute name="url"/>
+		  <text/>
+		</element>
+		<element name="manualGet">
+		  <attribute name="fileOrDir"/>
+		</element>
+              </choice>
+              <zeroOrMore>
+		<element name="unpack">
+		  <text/>
+		</element>
+              </zeroOrMore>
+              <zeroOrMore>
+		<element name="getAndUnpackOutput">
+		  <choice>
+                    <attribute name="dir"/>
+                    <attribute name="file"/>
+		  </choice>
+		</element>
+              </zeroOrMore>
+              <element name="pluginArgs">
+		<text/>
+              </element>
+	    </element>
+	  </optional>
+	</element>
+      </oneOrMore>
+  </start>
+</grammar>
