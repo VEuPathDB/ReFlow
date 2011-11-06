@@ -5,15 +5,18 @@
     <element name="datasetClasses">
       <optional>
         <element name="defaultPropertyDescriptions">
-          <element name="prop">
-            <attribute name="name" />
-            <text/>
-          </element>
+          <oneOrMore>
+            <element name="prop">
+              <attribute name="name" />
+              <text/>
+            </element>
+          </oneOrMore>
         </element>
       </optional>
       <oneOrMore>
         <element name="datasetClass">
           <attribute name="class" />
+          <attribute name="category" />
 	  <optional>
             <element name="purpose">
               <text/>
