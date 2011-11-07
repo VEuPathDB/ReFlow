@@ -16,14 +16,15 @@ sub getDbState {
   if (!$self->{workflow_id}) {
     $self->{name} = $self->getWorkflowConfig('name');
     $self->{version} = $self->getWorkflowConfig('version');
-    my $workflowTable = $self->getWorkflowConfig('workflowTable');
+    $self->{workflowTable} = $self->getWorkflowConfig('workflowTable');
+    $self->{workflowStepTable} = $self->getWorkflowConfig('workflowStepTable');
     my $sql = "
-select workflow_id, state, process_id, initializing_step_table, undo_step_id
-from $workflowTable
+select workflow_id, state, host_machine, process_id, initializing_step_table, undo_step_id, test_mode
+from $self->{workflowTable}
 where name = '$self->{name}'
 and version = '$self->{version}'
 ";
-    ($self->{workflow_id}, $self->{state}, $self->{process_id},$self->{initializing_step_table}, $self->{undo_step_id})
+    ($self->{workflow_id}, $self->{state}, $self->{host_machine},$self->{process_id},$self->{initializing_step_table}, $self->{undo_step_id},$self->{test_mode})
       = $self->runSqlQuery_single_array($sql);
     $self->error("workflow '$self->{name}' version '$self->{version}' not in database")
       unless $self->{workflow_id};
