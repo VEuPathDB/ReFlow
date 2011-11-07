@@ -3,8 +3,7 @@
 use lib "$ENV{GUS_HOME}/lib/perl";
 
 use strict;
-use ReFlow::Controller::Base;
-use ReFlow::Controller::WorkflowStepPilot;
+use ReFlow::Controller::WorkflowHandle;
 
 # these should be imported from someplace, not duplicated here
 my $READY = 'READY';      # my parents are not done yet  -- default state
@@ -16,98 +15,94 @@ my $RUNNING = 'RUNNING';
 &usage unless (scalar(@ARGV) == 2 && $ARGV[0] eq '-h');
 
 my $homeDir = $ARGV[1];
-&usage unless ($inputType eq '-p' || $inputType eq '-f')
-    && ($list || $offline || $stopafter || ($state eq 'kill' || $state eq 'ready'))
-    && (!$undo || $undo eq '-u');
-
+&usage unless $homeDir;
 my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 
 $workflow->getDbState();
 $workflow->error("Workflow is currently initializing step table.  Try again when it is done.") if $workflow->{initializing_step_table};
 
-my $mode = $self->{test_mode}? "test" : "real";
-my $db = $self->getGusConfig('dbiDsn');
+my $mode = $workflow->{test_mode}? "test" : "real";
+my $db = $workflow->getGusConfig('dbiDsn');
 my $undoStepName = 'no';
 my $sql;
 
-if ($self->{undo_step_id}) {
+if ($workflow->{undo_step_id}) {
     $sql = "
 select name
-from $self->{workflowStepTable}
-where workflow_step_id = $self->{undo_step_id}";
-    ($undoStepName) = $self->runSqlQuery_single_array($sql); 
+from $workflow->{workflowStepTable}
+where workflow_step_id = $workflow->{undo_step_id}";
+    ($undoStepName) = $workflow->runSqlQuery_single_array($sql); 
 }
 
 my $sharedSql = "
 select count(*)
-from $self->{workflowStepTable}
-where workflow_id = $self->{workflow_id}
-";
+from $workflow->{workflowStepTable}
+where workflow_id = $workflow->{workflow_id}";
 
 # total steps count
-my ($totalCount) = $self->runSqlQuery_single_array($sharedSql);
+my ($totalCount) = $workflow->runSqlQuery_single_array($sharedSql);
 
 # offline steps count
     $sql = "$sharedSql
-and offline = 1;
+and off_line = 1
 ";
-my ($offlineCount) = $self->runSqlQuery_single_array($sql);
+my ($offlineCount) = $workflow->runSqlQuery_single_array($sql);
 
 # ready steps count
     $sql = "$sharedSql
-and state = '$READY';
+and state = '$READY'
 ";
-my ($readyCount) = $self->runSqlQuery_single_array($sql);
+my ($readyCount) = $workflow->runSqlQuery_single_array($sql);
 
 # on deck steps count
     $sql = "$sharedSql
-and state = '$ON_DECK';
+and state = '$ON_DECK'
 ";
-my ($ondeckCount) = $self->runSqlQuery_single_array($sql);
+my ($ondeckCount) = $workflow->runSqlQuery_single_array($sql);
 
 # running steps count
     $sql = "$sharedSql
-and state = '$RUNNING';
+and state = '$RUNNING'
 ";
-my ($runningCount) = $self->runSqlQuery_single_array($sql);
+my ($runningCount) = $workflow->runSqlQuery_single_array($sql);
 
 # done steps count
     $sql = "$sharedSql
-and state = '$DONE';
+and state = '$DONE'
 ";
-my ($doneCount) = $self->runSqlQuery_single_array($sql);
+my ($doneCount) = $workflow->runSqlQuery_single_array($sql);
 
 # failed steps count
     $sql = "$sharedSql
-and state = '$FAILED';
+and state = '$FAILED'
 ";
-my ($failedCount) = $self->runSqlQuery_single_array($sql);
+my ($failedCount) = $workflow->runSqlQuery_single_array($sql);
 
 # stop afters steps count
     $sql = "$sharedSql
-and stop_after = 1;
+and stop_after = 1
 ";
-my ($stopAftersCount) = $self->runSqlQuery_single_array($sql);
+my ($stopAftersCount) = $workflow->runSqlQuery_single_array($sql);
 
 # stopped count
     $sql = "$sharedSql
-and stop_after = 1;
+and stop_after = 1
 and state = '$DONE'
 ";
-my ($stoppedCount) = $self->runSqlQuery_single_array($sql);
+my ($stoppedCount) = $workflow->runSqlQuery_single_array($sql);
 
 
 
 print "
 
-    Workflow: $self->{name} $self->{version}
+    Workflow: $workflow->{name} $workflow->{version}
     Database: $db
-          ID: $self->{workflow_id}
-       State: $self->{state}
+          ID: $workflow->{workflow_id}
+       State: $workflow->{state}
         Mode: $mode
         Undo: $undoStepName
-Host machine: $self->{host_machine}
-  Process ID: $self->{process_id}
+Host machine: $workflow->{host_machine}
+  Process ID: $workflow->{process_id}
 
  Total steps: $totalCount
     OFF-LINE: $offlineCount
@@ -131,45 +126,10 @@ Host machine: $self->{host_machine}
 sub usage {
     print "
 
-Change the state and/or offline status of the workflow steps whose name match the provided pattern.
+Get a brief summary of the state of a workflow.
 
-Usage: workflowstep -h workflow_home_dir [ -p stepname_pattern | -f file_of_steps ] [-l | [[offline|online|stopafter|resume] [ready|kill]] [-u]
+Usage: workflowSummary -h workflow_home_dir
 
-Where:
-  -h                   - workflow home dir
-  -p stepname_pattern  - name or pattern (using '%' as a wildcard and '_' as
-                         a single character wildcard) that
-                         specifies  one or more steps to change.  Use '!' as
-                         an escape
-                         Examples: %.runBlast %!_LoadGenome
-  -f file_of_steps     - a file containing a list of step names.
-  -l                   - list mode: don't change any steps, just list the
-                         names that match the pattern (and their state)
-  -u                   - if and only if workflow is running in undo mode
-
-Allowed state changes are:
-  $FAILED  --> ready
-  $RUNNING --> kill
-
-An offline step may be changed to online, and vice versa.
-
-A stopafter step may be changed to resume, and vice versa.
-
-Offline status may not be changed when the step is $RUNNING
-Stopafter status may not be changed when the step is $DONE
-
-Examples
-  % workflowstep -h workflow_dir -p stepname_pattern -l
-
-  % workflowstep -h workflow_dir -p stepname_pattern ready
-
-  % workflowstep -h workflow_dir -p stepname_pattern ready -u
-
-  % workflowstep -h workflow_dir -p stepname_pattern kill
-
-  % workflowstep -h workflow_dir -f file_of_steps online
-
-  % workflowstep -h workflow_dir -p stepname_pattern offline ready
 ";
     exit(1);
 }
