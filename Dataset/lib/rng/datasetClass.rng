@@ -2,6 +2,7 @@
 <grammar xmlns="http://relaxng.org/ns/structure/1.0"
          datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
   <start>
+
     <element name="datasetClasses">
       <optional>
         <element name="defaultPropertyDescriptions">
@@ -17,14 +18,16 @@
         <element name="datasetClass">
           <attribute name="class" />
           <attribute name="category" />
-	  <optional>
-            <element name="purpose">
-              <text/>
-            </element>
-	  </optional>
+          <attribute name="datasetFileHint" />
+          <element name="purpose">
+            <text/>
+          </element>
 	  <zeroOrMore>
             <element name="prop">
               <attribute name="name" />
+              <optional>
+                <attribute name="override"/>
+              </optional>
               <text/>
             </element>
 	  </zeroOrMore>
@@ -52,6 +55,7 @@
 		</element>
 		<element name="manualGet">
 		  <attribute name="fileOrDir"/>
+                  <ref name="Dir"/>
 		</element>
               </choice>
               <zeroOrMore>
@@ -76,4 +80,26 @@
       </oneOrMore>
     </element>	
   </start>
+
+    <define name="Dir">
+      <element name="dir">
+        <attribute name="name"/>
+        <text/>
+        <zeroOrMore>
+          <ref name="Dir"/>
+        </zeroOrMore>
+        <optional>
+          <element name="descrip">
+            <text/>
+          </element>
+         </optional>
+        <zeroOrMore>
+          <element name="file">
+            <attribute name="name"/>
+            <text/>
+          </element>
+        </zeroOrMore>
+      </element>
+    </define>
+
 </grammar>
