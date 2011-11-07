@@ -84,15 +84,14 @@
     <define name="Dir">
       <element name="dir">
         <attribute name="name"/>
-        <text/>
-        <zeroOrMore>
-          <ref name="Dir"/>
-        </zeroOrMore>
         <optional>
           <element name="descrip">
             <text/>
           </element>
          </optional>
+        <zeroOrMore>
+          <ref name="Dir"/>
+        </zeroOrMore>
         <zeroOrMore>
           <element name="file">
             <attribute name="name"/>
