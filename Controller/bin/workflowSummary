@@ -42,20 +42,38 @@ where workflow_id = $workflow->{workflow_id}";
 # total steps count
 my ($totalCount) = $workflow->runSqlQuery_single_array($sharedSql);
 
+# total undo steps count
+$sql = "$sharedSql
+and undo_state is not null
+";
+my ($totalCountU) = $workflow->runSqlQuery_single_array($sharedSql);
+
 my ($readyCount, $ondeckCount, $runningCount, $doneCount, $failedCount, $lastDoneName, $lastDoneTime) = getValues('state');
-}
+
 
 # offline steps count
-    $sql = "$sharedSql
+$sql = "$sharedSql
 and off_line = 1
 ";
 my ($offlineCount) = $workflow->runSqlQuery_single_array($sql);
+
+# undo offline steps count
+$sql = "$sharedSql
+and undo_off_line = 1
+";
+my ($offlineCountU) = $workflow->runSqlQuery_single_array($sql);
 
 # stop afters steps count
     $sql = "$sharedSql
 and stop_after = 1
 ";
 my ($stopAftersCount) = $workflow->runSqlQuery_single_array($sql);
+
+# undo stop afters steps count
+    $sql = "$sharedSql
+and undo_stop_after = 1
+";
+my ($stopAftersCountU) = $workflow->runSqlQuery_single_array($sql);
 
 # stopped count
     $sql = "$sharedSql
@@ -64,40 +82,56 @@ and state = '$DONE'
 ";
 my ($stoppedCount) = $workflow->runSqlQuery_single_array($sql);
 
+# undo stopped count
+    $sql = "$sharedSql
+and undo_stop_after = 1
+and undo_state = '$DONE'
+";
+my ($stoppedCountU) = $workflow->runSqlQuery_single_array($sql);
 
 
 
-if ($undoStepName ne 'no') {}
+my $undoReport = "";
+if ($undoStepName ne 'no') {
+  my ($readyCountU, $ondeckCountU, $runningCountU, $doneCountU, $failedCountU, $lastDoneNameU, $lastDoneTimeU) = getValues('undo_state');
+
+  $undoReport = "
+     UNDO steps:
+       OFF-LINE: $offlineCountU
+          READY: $readyCountU
+        ON_DECK: $ondeckCountU
+        RUNNING: $runningCountU
+           DONE: $doneCountU
+         FAILED: $failedCountU
+    STOP AFTERS: $stopAftersCountU
+        STOPPED: $stoppedCountU
+ Last DONE step: $lastDoneNameU
+        done at: $lastDoneTimeU
+";
+}
 
 print "
+       Workflow: $workflow->{name} $workflow->{version}
+       Database: $db
+             ID: $workflow->{workflow_id}
+          State: $workflow->{state}
+           Mode: $mode
+           Undo: $undoStepName
+   Host machine: $workflow->{host_machine}
+     Process ID: $workflow->{process_id}
 
-    Workflow: $workflow->{name} $workflow->{version}
-    Database: $db
-          ID: $workflow->{workflow_id}
-       State: $workflow->{state}
-        Mode: $mode
-        Undo: $undoStepName
-Host machine: $workflow->{host_machine}
-  Process ID: $workflow->{process_id}
-
- Total steps: $totalCount
-    OFF-LINE: $offlineCount
-       READY: $readyCount
-     ON_DECK: $ondeckCount
-     RUNNING: $runningCount
-        DONE: $doneCount
-      FAILED: $failedCount
- STOP AFTERS: $stopAftersCount
-     STOPPED: $stoppedCount
-   Last Done: $name $time
-
-  Undo steps:
-       READY:
-     ON_DECK:
-     RUNNING:
-        DONE:
-      FAILED:
-     
+    Total steps: $totalCount
+       OFF-LINE: $offlineCount
+          READY: $readyCount
+        ON_DECK: $ondeckCount
+        RUNNING: $runningCount
+           DONE: $doneCount
+         FAILED: $failedCount
+    STOP AFTERS: $stopAftersCount
+        STOPPED: $stoppedCount
+ Last DONE step: $lastDoneName
+        done at: $lastDoneTime
+$undoReport
 ";
 
 sub getValues {
@@ -134,10 +168,11 @@ and $stateCol = '$FAILED'
     my ($failedCount) = $workflow->runSqlQuery_single_array($sql);
 
 # last done step (just get the first row returned)
-    $sql = "select name, end_time
+    $sql = "select name, TO_CHAR(end_time,'DD/MM/YYYY HH24:MI:SS')
 from $workflow->{workflowStepTable}
 where workflow_id = $workflow->{workflow_id}
-and state = '$DONE'
+and $stateCol = '$DONE'
+and end_time is not null
 order by end_time desc
 ";
     my ($lastDoneName, $lastDoneTime) = $workflow->runSqlQuery_single_array($sql);
