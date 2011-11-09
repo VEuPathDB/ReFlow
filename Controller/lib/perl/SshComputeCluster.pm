@@ -40,7 +40,7 @@ sub copyTo {
     print STDERR "tar cfh - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -' \n" . __FILE__ . " line " . __LINE__ . "\n\n";
 
     # workaround scp problems
-    $self->{mgr}->runCmd(0, "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
+    $self->{mgr}->runCmd(0, "tar cfh - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
 
     # ensure it got there
     my $cmd = qq{ssh -2 $ssh_to '/bin/bash -login -c "ls $toDir"'};
