@@ -96,13 +96,14 @@ if ($undoStepName ne 'no') {
   my ($readyCountU, $ondeckCountU, $runningCountU, $doneCountU, $failedCountU, $lastDoneNameU, $lastDoneTimeU) = getValues('undo_state');
 
   $undoReport = "
-     UNDO steps:
-       OFF-LINE: $offlineCountU
-          READY: $readyCountU
-        ON_DECK: $ondeckCountU
-        RUNNING: $runningCountU
+           UNDO:
+    Total steps: $totalCountU
            DONE: $doneCountU
          FAILED: $failedCountU
+        RUNNING: $runningCountU
+        ON_DECK: $ondeckCountU
+       OFF-LINE: $offlineCountU
+          READY: $readyCountU
     STOP AFTERS: $stopAftersCountU
         STOPPED: $stoppedCountU
  Last DONE step: $lastDoneNameU
@@ -121,12 +122,12 @@ print "
      Process ID: $workflow->{process_id}
 
     Total steps: $totalCount
-       OFF-LINE: $offlineCount
-          READY: $readyCount
-        ON_DECK: $ondeckCount
-        RUNNING: $runningCount
            DONE: $doneCount
          FAILED: $failedCount
+        RUNNING: $runningCount
+        ON_DECK: $ondeckCount
+       OFF-LINE: $offlineCount
+          READY: $readyCount
     STOP AFTERS: $stopAftersCount
         STOPPED: $stoppedCount
  Last DONE step: $lastDoneName
