@@ -37,7 +37,7 @@ sub getPlan2Classes {
   my %plan2classes;
   foreach my $className (@$classNamesUsed) {
     my $graphPlanFiles = $self->{data}->{datasetClass}->{$className}->{graphPlanFile};
-    print STDERR Dumper $graphPlanFiles;
+#    print STDERR Dumper $graphPlanFiles;
     foreach my $graphPlanFile (@{$graphPlanFiles}) {
       my $planFileName = $graphPlanFile->{name};
       push(@{$plan2classes{$planFileName}}, $className);
