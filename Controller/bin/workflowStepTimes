@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+
+use strict;
+use ReFlow::Controller::WorkflowHandle;
+
+
+&usage unless (scalar(@ARGV) == 2 && $ARGV[0] eq '-h');
+
+my $homeDir = $ARGV[1];
+&usage unless $homeDir;
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
+
+$workflow->getDbState();
+$workflow->error("Workflow is currently initializing step table.  Try again when it is done.") if $workflow->{initializing_step_table};
+
+my $sql = "select name, round((end_time - start_time) * 24,1) as hours
+from apidb.workflowstep
+where workflow_id = $workflow->{workflow_id}
+and end_time is not null
+order by hours desc
+";
+
+my $stmt = $self->runSql($sql);
+while (my ($name, $hours) = $stmt->fetchrow_array()) {
+    print "$hours\t$name\n";
+}
+
+sub usage {
+    print "
+
+Get a brief summary of the state of a workflow.
+
+Usage: workflowSummary -h workflow_home_dir
+
+";
+    exit(1);
+}
+
+
+
+
