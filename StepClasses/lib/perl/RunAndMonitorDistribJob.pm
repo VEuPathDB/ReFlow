@@ -51,7 +51,6 @@ Otherwise, to diagnose the problem, look in the logs of the individual failed su
 (where XXXX is a failed subtask number)");
       }
   }
-failures/subtask_1/result/slot/
 }
 
 sub getConfigDeclaration {
