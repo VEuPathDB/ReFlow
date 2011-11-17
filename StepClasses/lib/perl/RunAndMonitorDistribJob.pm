@@ -37,10 +37,12 @@ sub run {
       my $expectedTime = 0;  # don't provide any
       my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode);
       my $masterDir = $propFile;
-      $masterDir =~ s|/input/.*|/master/|;  # remove all of the path after input/ and change it to master
+      $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){
 	  $self->error (
-"The cluster task did not successfully run. Check the log file on the cluster: 
+"
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The cluster task did not successfully run. Check the log file on the cluster: 
   $logFile
 
 If the log file ends in a perl error, that suggests an unusual distribjob controller failure.  Often those are recoverable by setting the step to ready and trying again.
@@ -48,7 +50,9 @@ If the log file ends in a perl error, that suggests an unusual distribjob contro
 Otherwise, to diagnose the problem, look in the logs of the individual failed subtasks.  Find those logs at
   $masterDir/failures/subtask_XXXX/result/slot/
 
-(where XXXX is a failed subtask number)");
+(where XXXX is a failed subtask number)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+");
       }
   }
 }
