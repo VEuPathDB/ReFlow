@@ -48,7 +48,7 @@ order by depth_first_order";
 sub getStepNamesFromFile {
   my ($self, $file) = @_;
 
-  my @names;
+  my @names = ('A_RIDICULOUS_FAKE_NAME'); # to prevent an empty IN ()
   $self->getId();
   my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
   open(F, $file) || die "Cannot open steps file '$file'";
