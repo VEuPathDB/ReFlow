@@ -110,6 +110,7 @@ sub _parseXmlFile {
 
   my $xml = new XML::Simple();
   my $firstParse = eval{ $xml->XMLin($datasetsFile, SuppressEmpty => undef, ForceArray=>['constant', 'prop'])};
+  die "$@\n" if $@;
 
   my $constants = $firstParse->{constant};
 
@@ -132,7 +133,7 @@ sub _substituteConstants {
     my @constantKeys = /\$\$([\w.]+)\$\$/g;   # allow keys of the form nrdb.release
     foreach my $constantKey (@constantKeys) {
       my $val = $constants->{$constantKey}->{value};
-      die "Invalid constant '\$\$$constantKey\$\$' in xml file $xmlFile\n" unless defined $val;
+      die "Invalid constant '\$\$$constantKey\$\$' on line $. of xml file $xmlFile\n" unless defined $val;
       $line =~ s/\$\$$constantKey\$\$/$val/g;
     }
     $xmlString .= $line;
