@@ -86,6 +86,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	    fillOpenSlots(testOnly);
 	    Thread.sleep(2000);
 	    cleanProcesses();
+	    checkForKillSignal();  // if a kill file exists in wf home.
 	}
     }
     
@@ -408,6 +409,24 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
         p.getInputStream().read(bo);	
 	p.destroy();
         return new String(bo).trim();
+    }
+    
+    private String checkForKillSignal() throws IOException, InterruptedException {
+        File killFile = new File(getHomeDir() + "/kill");
+	if (killFile.exists()) {
+	    byte[] bo = new byte[100];
+	    String[] cmd = {"ls", "-l", getHomeDir() + "/kill"};
+	    Process p = Runtime.getRuntime().exec(cmd);
+	    p.waitFor();
+	    p.getInputStream().read(bo);	
+	    p.destroy();
+	    String details  = String(bo).trim();
+	    log("Found kill file:");
+	    log(details);
+	    log("Controller is exiting");
+	    File.delete();
+	    System.exit(0);
+	}
     }
     
     private boolean checkForRunningOrFailedSteps() throws SQLException, IOException {
