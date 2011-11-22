@@ -411,7 +411,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
         return new String(bo).trim();
     }
     
-    private String checkForKillSignal() throws IOException, InterruptedException {
+    private void checkForKillSignal() throws IOException, InterruptedException {
         File killFile = new File(getHomeDir() + "/kill");
 	if (killFile.exists()) {
 	    byte[] bo = new byte[100];
@@ -420,11 +420,11 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep>{
 	    p.waitFor();
 	    p.getInputStream().read(bo);	
 	    p.destroy();
-	    String details  = String(bo).trim();
+	    String details  = new String(bo).trim();
 	    log("Found kill file:");
 	    log(details);
 	    log("Controller is exiting");
-	    File.delete();
+	    killFile.delete();
 	    System.exit(0);
 	}
     }
