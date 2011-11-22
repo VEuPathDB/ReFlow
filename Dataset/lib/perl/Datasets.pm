@@ -133,6 +133,7 @@ sub _substituteConstants {
     my @constantKeys = /\$\$([\w.]+)\$\$/g;   # allow keys of the form nrdb.release
     foreach my $constantKey (@constantKeys) {
       my $val = $constants->{$constantKey}->{value};
+
       die "Invalid constant '\$\$$constantKey\$\$' on line $. of xml file $xmlFile\n" unless defined $val;
       $line =~ s/\$\$$constantKey\$\$/$val/g;
     }
