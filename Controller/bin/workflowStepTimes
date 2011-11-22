@@ -30,9 +30,9 @@ while (my ($name, $hours) = $stmt->fetchrow_array()) {
 sub usage {
     print "
 
-Get a brief summary of the state of a workflow.
+Get a report of the running times of completed steps, sorted by time.
 
-Usage: workflowSummary -h workflow_home_dir
+Usage: workflowStepTimes -h workflow_home_dir
 
 ";
     exit(1);
