@@ -27,6 +27,8 @@ BEGIN {
 sub new {
   my ($class, $homeDir) = @_;
 
+  die "Workflow home dir '$homeDir' does not exist\n" unless -d $homeDir;
+
   my $self = {
       homeDir => $homeDir,
       gusHome => $ENV{GUS_HOME},
