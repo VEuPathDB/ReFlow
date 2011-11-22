@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+
+use strict;
+use ReFlow::Controller::WorkflowHandle;
+use Sys::Hostname;
+
+&usage unless (scalar(@ARGV) == 2 && $ARGV[0] eq '-h');
+
+my $homeDir = $ARGV[1];
+&usage unless $homeDir;
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
+
+$workflow->getDbState();
+
+die "Error: You can only run this command from $workflow->{host_machine}\n" unless $workflow->{host_machine} eq hostname;
+
+#-- check if process  is running (stolen from sample code on web)
+$process_exists = kill(0, $workflow->{process_id});
+die "Error: workflow controller with process id $workflow->{process_id} already stopped\n" unless $process_exists; 
+
+print "\nYou are about to STOP the workflow controller for $workflow->(name}/$workflow->{version}. \nType the name/version to confirm: ";
+my $confirm = <STDIN>;
+chomp $confirm;
+die "You did not correctly confirm the name/version\n"
+    unless "$workflow->(name}/$workflow->{version}" eq $confirm;
+
+system("touch $homeDir/kill") || die "Error: could not touch file $homeDir/kill\n";
+print STDERR "Done\n";
+
+sub usage {
+    print "
+
+Gracefully stop the workflow controller.  This does not stop running workflow steps.  They will continue until complete, or until you kill them individually (use unix kill to kill the workflowstepwrap process).  You will be able to restart a stopped controller.
+
+Requires a confirm before executing the stop (eg FungiDB/2.1)
+
+Usage: workflowStopController -h workflow_home_dir
+
+";
+    exit(1);
+}
+
+
+
+
