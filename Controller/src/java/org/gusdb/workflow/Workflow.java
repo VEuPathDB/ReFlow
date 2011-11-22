@@ -431,7 +431,7 @@ public class Workflow <T extends WorkflowStep> {
     // cleans out Workflow and WorkflowStep tables and the home dir, except config/
      void reset() throws SQLException, FileNotFoundException, IOException {
          getDbState();
-	 //         if (!test_mode) error("Cannot reset a workflow unless it was run in test mode (-t)");
+	 if (!test_mode) error("Cannot reset a workflow unless it was run in test mode (-t)");
          
          for (String dirName : homeDirSubDirs) {
              File dir = new File(getHomeDir() + "/" + dirName);
