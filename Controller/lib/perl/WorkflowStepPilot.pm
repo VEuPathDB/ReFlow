@@ -59,7 +59,7 @@ SET
   process_id = NULL,
   $self->{undo}state_handled = 0
 WHERE workflow_step_id = $self->{workflow_step_id}
-AND $self->{undo}state IN ('$FAILED', 'RUNNING');
+AND $self->{undo}state IN ('$FAILED', 'RUNNING')
 ";
     $self->runSql($sql);
     $self->pilotLog("Step '$self->{name}' set to $READY");
