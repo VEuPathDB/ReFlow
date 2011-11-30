@@ -44,18 +44,22 @@ sub pilotSetReady {
 
     my ($state) = $self->getDbState();
 
-    if ($state ne $FAILED) {
-      return "Warning: Can't change $self->{name} from '$state' to '$READY'";
+    my $isFailed = $state eq $FAILED;
+    if (!$isFailed && $state eq $RUNNING) {
+	$isFailed = !$self->{process_id}
+	|| !kill(0, $self->{process_id}); # check if process is still running
     }
+    return 0 unless $isFailed;
 
     my $workflowStepTable = $self->{workflow}->getWorkflowConfig('workflowStepTable');
     my $sql = "
 UPDATE $workflowStepTable
 SET 
   $self->{undo}state = '$READY',
+  process_id = NULL,
   $self->{undo}state_handled = 0
 WHERE workflow_step_id = $self->{workflow_step_id}
-AND $self->{undo}state = '$FAILED'
+AND $self->{undo}state IN ('$FAILED', 'RUNNING');
 ";
     $self->runSql($sql);
     $self->pilotLog("Step '$self->{name}' set to $READY");
