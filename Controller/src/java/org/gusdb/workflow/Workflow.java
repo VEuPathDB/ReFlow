@@ -56,7 +56,7 @@ public class Workflow <T extends WorkflowStep> {
     protected String version;
     protected String workflowTable;
     protected String workflowStepTable;
-    protected String workflowStepUndoTable;
+    protected String workflowStepTrackingTable;
 
     // persistent state
     protected Integer workflow_id;

@@ -603,26 +603,31 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
     String workflowStepTrackingTable = getWorkflow().getWorkflowStepTrackingTable();
     String sql = "select s.name"
 	+ " from " + workflowStepTable + " s, "
-	+ workflowStepTrackingTable + "t"
+	+ workflowStepTrackingTable + " t"
         + " where s.workflow_id = " + workflow.getId()
         + " and s.workflow_step_id = t.workflow_step_id and s.state = 'READY'";
 
-    Set<String> stepNamesInDb = workflowGraph.getStepNamesInDb(sql);
+    Set<String> stepNamesInDb = getStepNamesInDb(sql);
     if (stepNamesInDb.size() != 0) {
-	String msg = "The following steps are READY but have rows in "
+	String msg = nl + "Error. The following steps are READY but have rows in "
 	    + workflowStepTrackingTable
-	    + ". This means that they ran, failed and were set to ready witout being cleaned up in the database.  Refer to each step's step.err file for instructions on how to clean it up in the database. ";
+	    + ":" + nl;
 	for(String s : stepNamesInDb) msg += ("  " + s + nl);
+	msg +=  nl + "These steps ran, failed and were set to ready without being cleaned up in the database.  Refer to each step's step.err file for instructions on how to clean it up in the database. When they are all clean, try running again."  + nl;
+
 	Utilities.error(msg);
     }
 
-    String sql = "delete from " + workflowStepTable + " where workflow_id = "
+    sql = "delete from " + workflowStepTable + " where workflow_id = "
         + workflow.getId() + " and (state = 'READY' or state = 'ON_DECK')";
     workflow.executeSqlUpdate(sql);
   }
 
   Set<String> getStepNamesInDb() throws SQLException, FileNotFoundException,
       IOException {
+
+    String workflowStepTable = getWorkflow().getWorkflowStepTable();
+
     String sql = "select name" + " from " + workflowStepTable
         + " where workflow_id = " + workflow.getId()
         + " order by depth_first_order";
