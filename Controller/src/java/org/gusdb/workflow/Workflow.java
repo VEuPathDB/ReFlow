@@ -56,6 +56,7 @@ public class Workflow <T extends WorkflowStep> {
     protected String version;
     protected String workflowTable;
     protected String workflowStepTable;
+    protected String workflowStepTrackingTable;
 
     // persistent state
     protected Integer workflow_id;
@@ -80,6 +81,7 @@ public class Workflow <T extends WorkflowStep> {
 	version = getWorkflowConfig("version");
 	workflowTable = getWorkflowConfig("workflowTable");
 	workflowStepTable = getWorkflowConfig("workflowStepTable");
+	workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
     }
     
     /////////////////////////////////////////////////////////////////////////
@@ -107,6 +109,10 @@ public class Workflow <T extends WorkflowStep> {
 
     String getWorkflowStepTable() {
 	return workflowStepTable;
+    }
+
+    String getWorkflowStepTrackingTable() {
+	return workflowStepTrackingTable;
     }
 
     String getName() {
