@@ -119,6 +119,7 @@ Where:
 
 Allowed state changes are:
   $FAILED  --> ready
+  $RUNNING --> ready (only if the step process is not running)
   $RUNNING --> kill
 
 An offline step may be changed to online, and vice versa.
