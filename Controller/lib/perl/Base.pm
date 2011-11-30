@@ -100,6 +100,7 @@ sub getWorkflowConfig {
 	 ['workflowXmlFile', "", ""],
 	 ['workflowTable', "", ""],
 	 ['workflowStepTable', "", ""],
+	 ['workflowStepTrackingTable', "", ""],
 	);
 
     if (!$self->{workflowConfig}) {
