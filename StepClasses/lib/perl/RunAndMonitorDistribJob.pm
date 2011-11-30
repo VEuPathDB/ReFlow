@@ -16,6 +16,8 @@ sub run {
   my $numNodes = $self->getParamValue("numNodes");
   my $processorsPerNode = $self->getParamValue("processorsPerNode");
 
+  $processorsPerNode = 1 unless $processorsPerNode;
+
   # get global properties
   my $clusterQueue = $self->getSharedConfig("$clusterServer.clusterQueue");
 
