@@ -315,7 +315,7 @@ sub runAndMonitorDistribJob {
 
     # if not already started, start it up (otherwise the local process was restarted)
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
-	my $cmd = "workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn";
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn";
 	$self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'&");
     }
 
