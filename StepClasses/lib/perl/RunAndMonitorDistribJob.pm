@@ -44,12 +44,12 @@ sub run {
 	  $self->error (
 "
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-The cluster task did not successfully run. Check the log file on the cluster: 
+The cluster task did not successfully run. Check the task log file on the cluster: 
   $logFile
 
-If the log file ends in a perl error, that suggests an unusual distribjob controller failure.  Often those are recoverable by setting the step to ready and trying again.
+If the task log file ends in a perl error, that suggests an unusual distribjob controller failure.  Often those are recoverable by setting the step to ready and trying again.
 
-Otherwise, to diagnose the problem, look in the logs of the individual failed subtasks.  Find those logs at
+Otherwise, to diagnose the problem, look in the task log to see what command is executed on the nodes, and also see the logs of the individual failed subtasks.  Find those logs at
   $masterDir/failures/subtask_XXXX/result/slot/
 
 (where XXXX is a failed subtask number)

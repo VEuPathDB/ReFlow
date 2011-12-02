@@ -48,20 +48,21 @@ order by depth_first_order";
 sub getStepNamesFromFile {
   my ($self, $file) = @_;
 
-  my @names = ("'A_RIDICULOUS_FAKE_NAME'"); # to prevent an empty IN ()
+  my @names;
   $self->getId();
   my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
   open(F, $file) || die "Cannot open steps file '$file'";
   while(<F>) {
     next if /^\#/;
     chomp;
-    push(@names, "'$_'");
+    push(@names, "name like '$_'");
   }
-  my $namesList = join(",", @names);
+  my $namesList = join("\nor ", @names);
+  return [] if !scalar(@names);
   my $sql = 
 "SELECT name, state, undo_state
 FROM $workflowStepTable
-WHERE name in ($namesList)
+WHERE ($namesList)
 AND workflow_id = $self->{workflow_id}
 order by depth_first_order";
   return $self->getStepNamesWithSql($sql);
