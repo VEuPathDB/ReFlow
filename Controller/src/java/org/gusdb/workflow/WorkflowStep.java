@@ -10,8 +10,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,7 +56,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // static
     private static final String nl = System.getProperty("line.separator");
-    private static final String defaultLoadType = "total";
+    static final String defaultLoadType = "total";
 
         // from construction and configuration
     protected String subgraphXmlFileName; // file referenced as subgraph in this step
@@ -71,7 +74,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public WorkflowStep subgraphReturnStep;  // if this step is a caller, its associated return step.
     private String paramsDigest;
     private int depthFirstOrder;
-    private String[] loadTypes = {defaultLoadType};
+    private Set<String> loadTypes;
     private String includeIf_string;
     private String excludeIf_string;
     private String excludeIfNoXml_string;
@@ -101,6 +104,11 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     protected String prevState;
     protected boolean prevOffline;
     protected boolean prevStopAfter;
+    
+    public WorkflowStep() {
+        loadTypes = new LinkedHashSet<String>();
+        loadTypes.add(defaultLoadType);
+    }
 
     public void setName(String name) {
         this.baseName = name;
@@ -120,13 +128,23 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     
     public void setStepLoadTypes(String loadTypes) {
 	String[] tmp = loadTypes.split(",\\s*");
-	this.loadTypes = new String[tmp.length+1];
-	this.loadTypes[0] = defaultLoadType;
-	for (int i=0; i<tmp.length; i++) this.loadTypes[i+1] = tmp[i];
+	this.loadTypes = new LinkedHashSet<String>();
+	this.loadTypes.add(defaultLoadType);
+	this.loadTypes.addAll(Arrays.asList(tmp));
     }
     
+    public void addLoadType(String loadType) {
+        loadTypes.add(loadType.trim());
+    }
+    
+    /**
+     * the load types are used to flag the type of a step; sometimes there are 
+     * constraints that allows only a certain number of steps of a given type 
+     * to be run at the same time.
+     * @return
+     */
     public String[] getLoadTypes() {
-        return loadTypes;
+        return loadTypes.toArray(new String[0]);
     }
     
     public void setUndoRoot(String undoRoot) {

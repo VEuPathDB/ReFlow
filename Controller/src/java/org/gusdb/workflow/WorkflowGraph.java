@@ -44,6 +44,9 @@ import org.xml.sax.SAXException;
  */
 
 public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<T> {
+    
+    public static final Character FLAG_DIVIDER = ':';
+    public static final Character PATH_DIVIDER = '.';
   
   private List<String> paramDeclarations = new ArrayList<String>();
   private Map<String, String> constants = new LinkedHashMap<String, String>();
@@ -738,7 +741,56 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	  }
 	  
 	  void setCallingStep(T callingStep) {
-		  for (T step : getSteps()) step.setCallingStep(callingStep);
+	      // since calling step is always the entry point of a sub-graph, tags 
+	      // assigned to calling step has to have path in it.
+	      String[] loadTypes = callingStep.getLoadTypes();
+	      for (String loadType : loadTypes) {
+	          // skip the default type
+	          if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+	          
+	          if (loadType.indexOf(FLAG_DIVIDER) < 0) 
+	              throw new RuntimeException("The Load type of step [" 
+	                      + callingStep.getFullName()
+	                      + "] doesn't have a path in it: '" + loadType + "'");
+	      }
+	      
+		  for (T step : getSteps()) {
+		      // check if a tag should be applied to this step. if so, remove 
+		      // the step name from the path, and add the remaining tag to the 
+		      // step.
+              String name = step.getBaseName() + PATH_DIVIDER;
+		      for (String loadType : loadTypes) {
+	              // skip the default type
+	              if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+
+                  String[] parts = loadType.split("\\" + FLAG_DIVIDER, 2);
+	              if (step.getIsSubgraphCall()) { // a sub-graph node;
+	                  if (parts[0].equals(step.getBaseName())) {
+	                      throw new RuntimeException("The path points to " 
+	                              + "sub-graph [" + step.getFullName() + "], " 
+	                              + "but no step specified: " + loadType);
+	                  } else if (loadType.startsWith(name)) {
+		                  // remove the name from path, and attach
+	                      // the rest to the step.
+		                  String type = loadType.substring(name.length());
+		                  step.addLoadType(type);
+		              }
+		          } else { // a normal step, 
+	                  // the path has to match the exact name
+	                  if (parts[0].equals(step.getBaseName())) {
+	                      step.addLoadType(parts[1]);
+	                  } else if (loadType.startsWith(name)) {
+	                      // a normal step cannot have children, the path is bad
+	                      throw new RuntimeException("The step [" 
+	                              + step.getFullName() + "] is not a sub-graph,"
+	                              + " the path in load type is wrong: '"
+	                              + loadType + "'");
+	                  }
+		          }
+		      }
+		      
+		      step.setCallingStep(callingStep);
+		  }
 	  }
 	    
 	  // attach the roots of this graph to a step in a parent graph that is
