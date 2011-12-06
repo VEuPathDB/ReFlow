@@ -222,6 +222,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }   
     
     void checkLoadTypes() throws FileNotFoundException, IOException {
+	if (isSubgraphCall) return; 
         for (String loadType : loadTypes) {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(loadType);
 	    if (val == null) {
@@ -572,6 +573,12 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         if (excludeIf_string != null) 
             excludeIf_string = processIfString("excludeIf", 
                                                excludeIf_string,
+                                               variables,
+                                               check);
+        
+        if (externalName != null) 
+            externalName = processIfString("externalName", 
+                                               externalName,
                                                variables,
                                                check);
         
