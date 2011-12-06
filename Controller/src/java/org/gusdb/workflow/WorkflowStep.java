@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +52,8 @@ import org.gusdb.workflow.xml.WorkflowNode;
 */
 
 public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
+    
+    public static final Character PATH_DIVIDER = '.';
 
     // static
     private static final String nl = System.getProperty("line.separator");
@@ -131,6 +132,42 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	this.loadTypes = new LinkedHashSet<String>();
 	this.loadTypes.add(defaultLoadType);
 	this.loadTypes.addAll(Arrays.asList(tmp));
+    }
+    
+    public void addLoadTypes(String[] loadTypes) {
+        // check if a tag should be applied to this step. if so, remove 
+        // the step name from the path, and add the remaining tag to the 
+        // step.
+        String name = baseName + PATH_DIVIDER;
+        for (String loadType : loadTypes) {
+            // skip the default type
+            if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+
+            String[] parts = loadType.split("\\" + WorkflowGraph.FLAG_DIVIDER, 2);
+            if (getIsSubgraphCall()) { // a sub-graph node;
+                if (parts[0].equals(getBaseName())) {
+                    throw new RuntimeException("The path points to " 
+                            + "sub-graph [" + getFullName() + "], " 
+                            + "but no step specified: " + loadType);
+                } else if (loadType.startsWith(name)) {
+                    // remove the name from path, and attach
+                    // the rest to the step.
+                    String type = loadType.substring(name.length());
+                    addLoadType(type);
+                }
+            } else { // a normal step, 
+                // the path has to match the exact name
+                if (parts[0].equals(getBaseName())) {
+                    addLoadType(parts[1]);
+                } else if (loadType.startsWith(name)) {
+                    // a normal step cannot have children, the path is bad
+                    throw new RuntimeException("The step [" 
+                            + getFullName() + "] is not a sub-graph,"
+                            + " the path in load type is wrong: '"
+                            + loadType + "'");
+                }
+            }
+        }
     }
     
     public void addLoadType(String loadType) {
