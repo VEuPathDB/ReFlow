@@ -268,8 +268,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
       for (T step: getSortedSteps()) {
 	  if (step.getExternalName() != null) {
 	      if (externalName2Step.containsKey(step.getExternalName()))
-		  Utilities.error("Step " + step.getFullName()
-				  + " has a non-unique externalName");
+		  Utilities.error("Step " + step.getBaseName() 
+				  + " in graph " + step.getSourceXmlFileName()
+				  + " has a non-unique externalName '"
+				  + step.getExternalName() + "'");
 	      externalName2Step.put(step.getExternalName(), step);
 	  }
 	  if (step.getDependsExternalNames() != null
@@ -751,9 +753,11 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 		if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
     	          
 		if (loadType.indexOf(FLAG_DIVIDER) < 0) 
-		    throw new RuntimeException("The Load type of step [" 
-					       + callingStep.getFullName() + "] doesn't have a " 
-					       + "path in it: '" + loadType + "'");
+		    Utilities.error("Error: <subgraph name=\"" 
+				    + callingStep.getBaseName() + "\">"
+				    + " in file " + callingStep.getSourceXmlFileName()
+				    + " has a stepLoadTypes=\"" + loadType + "\"."
+				    + " The stepLoadType of a <subgraph> must have a path that leads to a <step>.  For example, stepLoadType=\"genome.blast.runOnCluster:" + loadType + "\" where runOnCluster is a <step> in a nested subgraph.");
 	    }
 	}
 	      
