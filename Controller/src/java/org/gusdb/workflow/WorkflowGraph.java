@@ -741,6 +741,11 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	  }
 	  
 	  void setCallingStep(T callingStep) {
+	      if (callingStep == null) {
+	          for (T step : getSteps()) step.setCallingStep(callingStep);
+	          return;
+	      }
+	      
 	      // since calling step is always the entry point of a sub-graph, tags 
 	      // assigned to calling step has to have path in it.
 	      String[] loadTypes = callingStep.getLoadTypes();
