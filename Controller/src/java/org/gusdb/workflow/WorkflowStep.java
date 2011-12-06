@@ -550,6 +550,9 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         if (subgraphXmlFileName != null) {
             subgraphXmlFileName = Utilities.substituteVariablesIntoString(subgraphXmlFileName, variables);
         }
+        if (externalName != null) {
+            externalName = Utilities.substituteVariablesIntoString(externalName, variables);
+        }
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
             String newParamValue = 
@@ -573,12 +576,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         if (excludeIf_string != null) 
             excludeIf_string = processIfString("excludeIf", 
                                                excludeIf_string,
-                                               variables,
-                                               check);
-        
-        if (externalName != null) 
-            externalName = processIfString("externalName", 
-                                               externalName,
                                                variables,
                                                check);
         
