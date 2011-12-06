@@ -733,43 +733,44 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
       }
   }
   
-	  void setPath(String path) {
-		  for (T step : getSteps()) {
-			  step.setPath(path);
-		  }
-	  }
+    void setPath(String path) {
+	for (T step : getSteps()) {
+	    step.setPath(path);
+	}
+    }
 	  
-	  void setCallingStep(T callingStep) {
-	      String[] loadTypes = null;
-	      if (callingStep != null) {
-    	      // since calling step is always the entry point of a sub-graph, 
-    	      // tags assigned to calling step has to have path in it.
-    	      loadTypes = callingStep.getLoadTypes();
-    	      for (String loadType : loadTypes) {
-    	          // skip the default type
-    	          if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+    void setCallingStep(T callingStep) {
+	String[] loadTypes = null;
+
+	// validate that since calling step is always the entry point of a sub-graph, 
+        // tags assigned to calling step has to have path in it.
+	if (callingStep != null) {
+	    loadTypes = callingStep.getLoadTypes();
+	    for (String loadType : loadTypes) {
+		// skip the default type
+		if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
     	          
-    	          if (loadType.indexOf(FLAG_DIVIDER) < 0) 
-    	              throw new RuntimeException("The Load type of step [" 
-    	                      + callingStep.getFullName() + "] doesn't have a " 
-    	                      + "path in it: '" + loadType + "'");
-    	      }
-	      }
+		if (loadType.indexOf(FLAG_DIVIDER) < 0) 
+		    throw new RuntimeException("The Load type of step [" 
+					       + callingStep.getFullName() + "] doesn't have a " 
+					       + "path in it: '" + loadType + "'");
+	    }
+	}
 	      
-		  for (T step : getSteps()) {
-		      if (callingStep!= null) step.addLoadTypes(loadTypes);
-		      step.setCallingStep(callingStep);
-		  }
-	  }
+	for (T step : getSteps()) {
+	    if (callingStep!= null) step.addLoadTypes(loadTypes);
+	    step.setCallingStep(callingStep);
+	}
+    }
 	    
-	  // attach the roots of this graph to a step in a parent graph that is
-	  // calling it
-	  void attachToCallingStep(WorkflowStep callingStep) {
-		  for (T rootStep : rootSteps) {
-			  callingStep.addChild(rootStep);
-			  rootStep.addParent(callingStep);
-		  }
-	  }
+    // attach the roots of this graph to a step in a parent graph that is
+    // calling it
+    void attachToCallingStep(WorkflowStep callingStep) {
+	for (T rootStep : rootSteps) {
+	    callingStep.addChild(rootStep);
+	    rootStep.addParent(callingStep);
+	}
+    }
     
     // attach the leafs of this graph to a step in a parent graph that is
     // the return from this graph
