@@ -169,7 +169,7 @@ and $stateCol = '$FAILED'
     my ($failedCount) = $workflow->runSqlQuery_single_array($sql);
 
 # last done step (just get the first row returned)
-    $sql = "select name, TO_CHAR(end_time,'DD/MM/YYYY HH24:MI:SS')
+    $sql = "select name, TO_CHAR(end_time,'MM/DD/YYYY HH24:MI:SS')
 from $workflow->{workflowStepTable}
 where workflow_id = $workflow->{workflow_id}
 and $stateCol = '$DONE'
