@@ -76,26 +76,26 @@ public class LoadTypeTest {
         Assert.assertEquals(DEFAULT_LOAD_TYPE, loadTypes[0]);
         Assert.assertEquals(type2, loadTypes[1]);
     }
-    
-    @Test(expected=RuntimeException.class)
+
+    @Test(expected = RuntimeException.class)
     public void testInvalidLoadTypeWithInvalidPath() {
         // create a calling step for the graph, and declare labels
         WorkflowStep callingStep = new WorkflowStep();
         callingStep.setName("calling-step");
         callingStep.setXmlFile("");
         callingStep.setStepLoadTypes("label-step.label-step:Type");
-        
+
         graph.setCallingStep(callingStep);
     }
-    
-    @Test(expected=RuntimeException.class)
+
+    @Test(expected = RuntimeException.class)
     public void testInvalidLoadTypeWithoutPath() {
         // create a calling step for the graph, and declare labels
         WorkflowStep callingStep = new WorkflowStep();
         callingStep.setName("calling-step");
         callingStep.setXmlFile("");
         callingStep.setStepLoadTypes("label-sub:Type");
-        
+
         graph.setCallingStep(callingStep);
     }
 }
