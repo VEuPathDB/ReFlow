@@ -84,19 +84,16 @@ public class RunnableWorkflowStep extends WorkflowStep {
             rs.next();
             String stateNow = rs.getString(1);
             if (stateNow.equals(Workflow.RUNNING)) {
-                sql = "UPDATE "
-                        + workflowStepTable
-                        + " SET "
-                        + (getUndoing() ? "undo_state" : "state")
-                        + " = '"
-                        + Workflow.FAILED
-                        + "', "
-                        + (getUndoing() ? "undo_state_handled"
-                                : "state_handled") + "= 1" + ","
-                        + "process_id = null" + " WHERE workflow_step_id = "
-                        + workflow_step_id + " AND "
-                        + (getUndoing() ? "undo_state" : "state") + "= '"
-                        + Workflow.RUNNING + "'";
+                String handleColumn = getUndoing() ? "undo_state_handled"
+                        : "state_handled";
+                String stateColumn = getUndoing() ? "undo_state" : "state";
+                sql = "UPDATE " + workflowStepTable + " SET " + stateColumn
+                        + " = '" + Workflow.FAILED + "', " + handleColumn
+                        + "= 1" + "," + "process_id = null, "
+                        + "end_time = nvl(end_time, SYSDATE) "
+                        + " WHERE workflow_step_id = " + workflow_step_id
+                        + " AND " + (getUndoing() ? "undo_state" : "state")
+                        + "= '" + Workflow.RUNNING + "'";
                 executeSqlUpdate(sql);
                 steplog(Workflow.FAILED, "***");
             }
