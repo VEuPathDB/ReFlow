@@ -398,7 +398,7 @@ public class Workflow<T extends WorkflowStep> {
         String state_str = undo_step_id == null ? "state" : "undo_state";
         String sql = "select name, workflow_step_id," + state_str
                 + ", CASE WHEN start_time IS NULL THEN -1 "
-                + "  ELSE round((nvl(end_time, SYSDATE) - start_time) * 24,2) "
+                + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
                 + "  END AS hours " + " from " + workflowStepTable
                 + " where workflow_id = '" + workflow_id + "'" + " and "
                 + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
@@ -420,15 +420,17 @@ public class Workflow<T extends WorkflowStep> {
                 String nm = rs.getString("name");
                 Integer ws_id = rs.getInt("workflow_step_id");
                 String stat = rs.getString(state_str);
-                float hours = rs.getFloat("hours");
+                float spent = rs.getFloat("hours");
 
                 if (oneColumnOutput) System.out.println(nm);
                 else {
                     sb = new StringBuilder();
                     formatter = new Formatter(sb);
-                    if (hours != -1) {
-                        formatter.format("%1$6.2f %2$-8s %3$-12s  %4$s", hours,
-                                stat, ws_id, nm);
+                    if (spent != -1) {
+                        int hour = (int) Math.floor(spent);
+                        int minute = Math.round((spent - hour) * 60);
+                        formatter.format("%1$03d:%2$02d, %3$-8s %4$-12s  %5$s",
+                                hour, minute, stat, ws_id, nm);
                     } else {
                         formatter.format("%1$6s %2$-8s %3$-12s  %4$s", " ",
                                 stat, ws_id, nm);
