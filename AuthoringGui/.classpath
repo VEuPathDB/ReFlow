@@ -2,13 +2,13 @@
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-        <classpathentry kind="var" path="GUS_HOME/lib/java/FgpUtil-Util.jar"/>
-        <classpathentry kind="var" path="GUS_HOME/lib/java/FgpUtil-Xml.jar"/>
-        <classpathentry kind="var" path="GUS_HOME/lib/java/ReFlow-GraphParser.jar"/>
 	<classpathentry kind="lib" path="lib/java/jing-20030619.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-digester-1.7.jar"/>
 	<classpathentry kind="lib" path="lib/java/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-logging-1.0.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/FGP Utilities"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/FGP XML Utilities"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ReFlow Graph Parser"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

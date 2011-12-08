@@ -26,6 +26,7 @@
   </step>
 
   <subgraph name="whateverStep" xmlFile="anotherTestGraph.xml" groupName="Step Group 2">
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
   </subgraph>
 
 </workflowGraph>

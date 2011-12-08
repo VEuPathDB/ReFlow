@@ -44,6 +44,8 @@ import org.xml.sax.SAXException;
  */
 
 public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<T> {
+    
+    public static final Character FLAG_DIVIDER = ':';
   
   private List<String> paramDeclarations = new ArrayList<String>();
   private Map<String, String> constants = new LinkedHashMap<String, String>();
@@ -266,8 +268,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
       for (T step: getSortedSteps()) {
 	  if (step.getExternalName() != null) {
 	      if (externalName2Step.containsKey(step.getExternalName()))
-		  Utilities.error("Step " + step.getFullName()
-				  + " has a non-unique externalName");
+		  Utilities.error("Step " + step.getBaseName() 
+				  + " in graph " + step.getSourceXmlFileName()
+				  + " has a non-unique externalName '"
+				  + step.getExternalName() + "'");
 	      externalName2Step.put(step.getExternalName(), step);
 	  }
 	  if (step.getDependsExternalNames() != null
@@ -282,7 +286,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
 	      if (externalStep == step) continue;
 	      String err = "Step '" + step.getFullName()
 		  + "' has a dependsExternal '" + extDepStr
-		  + "' for which no referent step can be found";
+		  + "' for which no referent step can be found.  (Perhaps the step with externalName=\""  + extDepStr + "\" has an includeIf or an excludeIf)";
 	      if (externalStep == null) Utilities.error(err);
 	      makeParentChildLink(externalStep, step, true);
 	  }
@@ -731,24 +735,46 @@ public class WorkflowGraph<T extends WorkflowStep> extends WorkflowXmlContainer<
       }
   }
   
-	  void setPath(String path) {
-		  for (T step : getSteps()) {
-			  step.setPath(path);
-		  }
-	  }
+    void setPath(String path) {
+	for (T step : getSteps()) {
+	    step.setPath(path);
+	}
+    }
 	  
-	  void setCallingStep(T callingStep) {
-		  for (T step : getSteps()) step.setCallingStep(callingStep);
-	  }
+    void setCallingStep(T callingStep) {
+	String[] loadTypes = null;
+
+	// validate that since calling step is always the entry point of a sub-graph, 
+        // tags assigned to calling step has to have path in it.
+	if (callingStep != null) {
+	    loadTypes = callingStep.getLoadTypes();
+	    for (String loadType : loadTypes) {
+		// skip the default type
+		if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+    	          
+		if (loadType.indexOf(FLAG_DIVIDER) < 0) 
+		    Utilities.error("Error: <subgraph name=\"" 
+				    + callingStep.getBaseName() + "\">"
+				    + " in file " + callingStep.getSourceXmlFileName()
+				    + " has a stepLoadTypes=\"" + loadType + "\"."
+				    + " The stepLoadType of a <subgraph> must have a path that leads to a <step>.  For example, stepLoadType=\"genome.blast.runOnCluster:" + loadType + "\" where runOnCluster is a <step> in a nested subgraph.");
+	    }
+	}
+	      
+	for (T step : getSteps()) {
+	    if (callingStep!= null) step.addLoadTypes(loadTypes);
+	    step.setCallingStep(callingStep);
+	}
+    }
 	    
-	  // attach the roots of this graph to a step in a parent graph that is
-	  // calling it
-	  void attachToCallingStep(WorkflowStep callingStep) {
-		  for (T rootStep : rootSteps) {
-			  callingStep.addChild(rootStep);
-			  rootStep.addParent(callingStep);
-		  }
-	  }
+    // attach the roots of this graph to a step in a parent graph that is
+    // calling it
+    void attachToCallingStep(WorkflowStep callingStep) {
+	for (T rootStep : rootSteps) {
+	    callingStep.addChild(rootStep);
+	    rootStep.addParent(callingStep);
+	}
+    }
     
     // attach the leafs of this graph to a step in a parent graph that is
     // the return from this graph

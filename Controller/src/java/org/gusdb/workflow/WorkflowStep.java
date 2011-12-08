@@ -10,8 +10,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,10 +52,12 @@ import org.gusdb.workflow.xml.WorkflowNode;
 */
 
 public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
+    
+    public static final Character PATH_DIVIDER = '.';
 
     // static
     private static final String nl = System.getProperty("line.separator");
-    private static final String defaultLoadType = "total";
+    static final String defaultLoadType = "total";
 
         // from construction and configuration
     protected String subgraphXmlFileName; // file referenced as subgraph in this step
@@ -71,7 +75,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public WorkflowStep subgraphReturnStep;  // if this step is a caller, its associated return step.
     private String paramsDigest;
     private int depthFirstOrder;
-    private String[] loadTypes = {defaultLoadType};
+    private Set<String> loadTypes;
     private String includeIf_string;
     private String excludeIf_string;
     private String excludeIfNoXml_string;
@@ -101,6 +105,11 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     protected String prevState;
     protected boolean prevOffline;
     protected boolean prevStopAfter;
+    
+    public WorkflowStep() {
+        loadTypes = new LinkedHashSet<String>();
+        loadTypes.add(defaultLoadType);
+    }
 
     public void setName(String name) {
         this.baseName = name;
@@ -120,13 +129,59 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     
     public void setStepLoadTypes(String loadTypes) {
 	String[] tmp = loadTypes.split(",\\s*");
-	this.loadTypes = new String[tmp.length+1];
-	this.loadTypes[0] = defaultLoadType;
-	for (int i=0; i<tmp.length; i++) this.loadTypes[i+1] = tmp[i];
+	this.loadTypes = new LinkedHashSet<String>();
+	this.loadTypes.add(defaultLoadType);
+	this.loadTypes.addAll(Arrays.asList(tmp));
     }
     
+    public void addLoadTypes(String[] loadTypes) {
+        // check if a tag should be applied to this step. if so, remove 
+        // the step name from the path, and add the remaining tag to the 
+        // step.
+        String name = baseName + PATH_DIVIDER;
+        for (String loadType : loadTypes) {
+            // skip the default type
+            if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+
+            String[] parts = loadType.split("\\" + WorkflowGraph.FLAG_DIVIDER, 2);
+            if (getIsSubgraphCall()) { // a sub-graph node;
+                if (parts[0].equals(getBaseName())) {
+                    throw new RuntimeException("The path points to " 
+                            + "sub-graph [" + getFullName() + "], " 
+                            + "but no step specified: " + loadType);
+                } else if (loadType.startsWith(name)) {
+                    // remove the name from path, and attach
+                    // the rest to the step.
+                    String type = loadType.substring(name.length());
+                    addLoadType(type);
+                }
+            } else { // a normal step, 
+                // the path has to match the exact name
+                if (parts[0].equals(getBaseName())) {
+                    addLoadType(parts[1]);
+                } else if (loadType.startsWith(name)) {
+                    // a normal step cannot have children, the path is bad
+                    throw new RuntimeException("The step [" 
+                            + getFullName() + "] is not a sub-graph,"
+                            + " the path in load type is wrong: '"
+                            + loadType + "'");
+                }
+            }
+        }
+    }
+    
+    public void addLoadType(String loadType) {
+        loadTypes.add(loadType.trim());
+    }
+    
+    /**
+     * the load types are used to flag the type of a step; sometimes there are 
+     * constraints that allows only a certain number of steps of a given type 
+     * to be run at the same time.
+     * @return
+     */
     public String[] getLoadTypes() {
-        return loadTypes;
+        return loadTypes.toArray(new String[0]);
     }
     
     public void setUndoRoot(String undoRoot) {
@@ -167,6 +222,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }   
     
     void checkLoadTypes() throws FileNotFoundException, IOException {
+	if (isSubgraphCall) return; 
         for (String loadType : loadTypes) {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(loadType);
 	    if (val == null) {
@@ -493,6 +549,9 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         
         if (subgraphXmlFileName != null) {
             subgraphXmlFileName = Utilities.substituteVariablesIntoString(subgraphXmlFileName, variables);
+        }
+        if (externalName != null) {
+            externalName = Utilities.substituteVariablesIntoString(externalName, variables);
         }
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
