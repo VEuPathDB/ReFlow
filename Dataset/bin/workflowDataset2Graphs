@@ -24,7 +24,7 @@ my $classNamesUsed = $datasets->getClassNamesUsed();
 
 # make graph files target dir
 my $datasetsFullName = $datasets->getFullName();
-my $graphFilePath = "$ENV{GUS_HOME}/lib/xml/workflow/generated/$datasetsFullName";
+my $graphFilePath = "$ENV{GUS_HOME}/lib/xml/workflow/$datasetsFullName";
 mkpath($graphFilePath);
 unlink(glob("$graphFilePath/*.xml")); # clean out old xml files
 
