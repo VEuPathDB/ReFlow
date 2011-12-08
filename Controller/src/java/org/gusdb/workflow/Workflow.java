@@ -394,12 +394,15 @@ public class Workflow<T extends WorkflowStep> {
         StringBuffer buf = new StringBuffer();
         for (String ds : desiredStates)
             buf.append("'" + ds + "',");
+
         String state_str = undo_step_id == null ? "state" : "undo_state";
-        String sql = "select name, workflow_step_id," + state_str + " from "
-                + workflowStepTable + " where workflow_id = '" + workflow_id
-                + "'" + " and " + state_str + " in("
-                + buf.substring(0, buf.length() - 1) + ")"
-                + " order by depth_first_order";
+        String sql = "select name, workflow_step_id," + state_str
+                + ", CASE WHEN start_time IS NULL THEN -1 "
+                + "  ELSE round((nvl(end_time, SYSDATE) - start_time) * 24,2) "
+                + "  END AS hours " + " from " + workflowStepTable
+                + " where workflow_id = '" + workflow_id + "'" + " and "
+                + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
+                + " order by start_time ASC";
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -409,20 +412,27 @@ public class Workflow<T extends WorkflowStep> {
             StringBuilder sb = new StringBuilder();
             Formatter formatter = new Formatter(sb);
             if (!oneColumnOutput) {
-                formatter.format("%1$-8s %2$-12s  %3$s ", "STATUS", "STEP ID",
-                        "NAME");
+                formatter.format("%1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
+                        "STATUS", "STEP ID", "NAME");
                 System.out.println(sb.toString());
             }
             while (rs.next()) {
-                String nm = rs.getString(1);
-                Integer ws_id = rs.getInt(2);
-                String stat = rs.getString(3);
+                String nm = rs.getString("name");
+                Integer ws_id = rs.getInt("workflow_step_id");
+                String stat = rs.getString(state_str);
+                float hours = rs.getFloat("hours");
 
                 if (oneColumnOutput) System.out.println(nm);
                 else {
                     sb = new StringBuilder();
                     formatter = new Formatter(sb);
-                    formatter.format("%1$-8s %2$-12s  %3$s", stat, ws_id, nm);
+                    if (hours != -1) {
+                        formatter.format("%1$6.2f %2$-8s %3$-12s  %4$s", hours,
+                                stat, ws_id, nm);
+                    } else {
+                        formatter.format("%1$6s %2$-8s %3$-12s  %4$s", " ",
+                                stat, ws_id, nm);
+                    }
                     System.out.println(sb.toString());
                 }
             }
