@@ -429,7 +429,7 @@ public class Workflow<T extends WorkflowStep> {
                     if (spent != -1) {
                         int hour = (int) Math.floor(spent);
                         int minute = Math.round((spent - hour) * 60);
-                        formatter.format("%1$03d:%2$02d, %3$-8s %4$-12s  %5$s",
+                        formatter.format("%1$03d:%2$02d %3$-8s %4$-12s  %5$s",
                                 hour, minute, stat, ws_id, nm);
                     } else {
                         formatter.format("%1$6s %2$-8s %3$-12s  %4$s", " ",
