@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
@@ -397,12 +398,13 @@ public class Workflow<T extends WorkflowStep> {
 
         String state_str = undo_step_id == null ? "state" : "undo_state";
         String sql = "select name, workflow_step_id," + state_str
-                + ", CASE WHEN start_time IS NULL THEN -1 "
+                + ", nvl(end_time, SYSDATE) AS endtime, "
+                + "CASE WHEN start_time IS NULL THEN -1 "
                 + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
                 + "  END AS hours " + " from " + workflowStepTable
                 + " where workflow_id = '" + workflow_id + "'" + " and "
                 + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
-                + " order by start_time ASC";
+                + " order by endtime ASC, start_time ASC";
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -412,14 +414,15 @@ public class Workflow<T extends WorkflowStep> {
             StringBuilder sb = new StringBuilder();
             Formatter formatter = new Formatter(sb);
             if (!oneColumnOutput) {
-                formatter.format("%1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
-                        "STATUS", "STEP ID", "NAME");
+                formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
+                        "STATUS", "STEP ID", "NAME", "END AT");
                 System.out.println(sb.toString());
             }
             while (rs.next()) {
                 String nm = rs.getString("name");
                 Integer ws_id = rs.getInt("workflow_step_id");
                 String stat = rs.getString(state_str);
+                Date endTime = rs.getTimestamp("endtime");
                 float spent = rs.getFloat("hours");
 
                 if (oneColumnOutput) System.out.println(nm);
@@ -429,11 +432,11 @@ public class Workflow<T extends WorkflowStep> {
                     if (spent != -1) {
                         int hour = (int) Math.floor(spent);
                         int minute = Math.round((spent - hour) * 60);
-                        formatter.format("%1$03d:%2$02d %3$-8s %4$-12s  %5$s",
-                                hour, minute, stat, ws_id, nm);
+                        formatter.format("%6$tm/%6$td/%6$ty %6$tH-%6$tM-%6$tS %1$03d:%2$02d %3$-8s %4$-12s  %5$s",
+                                hour, minute, stat, ws_id, nm, endTime);
                     } else {
-                        formatter.format("%1$6s %2$-8s %3$-12s  %4$s", " ",
-                                stat, ws_id, nm);
+                        formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s", " ",
+                                stat, ws_id, nm, " ");
                     }
                     System.out.println(sb.toString());
                 }
