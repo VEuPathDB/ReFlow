@@ -25,13 +25,33 @@ BEGIN {
 # methods shared by the perl controller and perl step wrapper.
 # any other language implementation would presumably need equivalent code
 sub new {
-  my ($class, $homeDir) = @_;
+  my ($class, $homeDir, $dbName) = @_;
 
   die "Workflow home dir '$homeDir' does not exist\n" unless -d $homeDir;
+
+  my $login = '';
+  my $password = '';
+
+  if ($dbName) {
+    my $pos = index($dbName, '@');
+    if ($pos != -1) {
+      ($login, $dbName) = split('@', $dbName);
+      $pos = index($login, '/');
+      if ($pos != -1) {
+        ($login, $password) = split('/', $login);
+      }
+    }
+    $dbName = "dbi:Oracle:$dbName";
+  } else {
+    $dbName = '';
+  }
 
   my $self = {
       homeDir => $homeDir,
       gusHome => $ENV{GUS_HOME},
+      dbName => $dbName,
+      login => $login,
+      password => $password,
   };
 
   bless($self,$class);
@@ -41,10 +61,13 @@ sub new {
 
 sub getDbh {
     my ($self) = @_;
+
+    my $dbName   = ($self->{dbName}   eq '') ? $self->getGusConfig('dbiDsn') : $self->{dbName};
+    my $login    = ($self->{login}    eq '') ? $self->getGusConfig('databaseLogin') : $self->{login};
+    my $password = ($self->{password} eq '') ? $self->getGusConfig('databasePassword') : $self->{password};
+
     if (!$self->{dbh}) {
-	$self->{dbh} = DBI->connect($self->getGusConfig('dbiDsn'),
-				    $self->getGusConfig('databaseLogin'),
-				    $self->getGusConfig('databasePassword'))
+	$self->{dbh} = DBI->connect($dbName, $login, $password)
 	  or $self->error(DBI::errstr);
     }
     return $self->{dbh};

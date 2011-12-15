@@ -12,11 +12,18 @@ my $FAILED = 'FAILED';
 my $DONE = 'DONE';
 my $RUNNING = 'RUNNING';
 
-&usage unless (scalar(@ARGV) == 2 && $ARGV[0] eq '-h');
+&usage unless ((scalar(@ARGV) == 2 || scalar(@ARGV) == 4) && $ARGV[0] eq '-h');
+
+my $dbName;
+if (scalar(@ARGV) == 4) {
+  &usage unless ($ARGV[2] eq '-db');
+
+  $dbName = $ARGV[3];
+}
 
 my $homeDir = $ARGV[1];
 &usage unless $homeDir;
-my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir, $dbName);
 
 $workflow->getDbState();
 $workflow->error("Workflow is currently initializing step table.  Try again when it is done.") if $workflow->{initializing_step_table};
@@ -186,7 +193,7 @@ sub usage {
 
 Get a brief summary of the state of a workflow.
 
-Usage: workflowSummary -h workflow_home_dir
+Usage: workflowSummary -h workflow_home_dir [-db [login[/pass]@]instance]
 
 ";
     exit(1);

@@ -54,7 +54,6 @@ public class Workflow<T extends WorkflowStep> {
     private Connection dbConnection;
     private String homeDir;
     private Properties workflowProps; // from workflow config file
-    private Properties gusProps; // from gus.config (db stuff)
     private Properties loadBalancingConfig;
     private String[] homeDirSubDirs = { "logs", "steps", "data", "backups" };
     protected String name;
@@ -273,12 +272,12 @@ public class Workflow<T extends WorkflowStep> {
     Connection getDbConnection() throws SQLException, FileNotFoundException,
             IOException {
         if (dbConnection == null) {
-            String dsn = getGusConfig("jdbcDsn");
-            String login = getGusConfig("databaseLogin");
+            String dsn = Utilities.getGusConfig("jdbcDsn");
+            String login = Utilities.getGusConfig("databaseLogin");
             log("Connecting to " + dsn + " (" + login + ")");
             DriverManager.registerDriver(new OracleDriver());
             dbConnection = DriverManager.getConnection(dsn, login,
-                    getGusConfig("databasePassword"));
+                    Utilities.getGusConfig("databasePassword"));
             log("Connected");
         }
         return dbConnection;
@@ -307,20 +306,6 @@ public class Workflow<T extends WorkflowStep> {
             error("Required property " + key
                     + " not found in workflow properties file: "
                     + configFileName);
-        return value;
-    }
-
-    String getGusConfig(String key) throws FileNotFoundException, IOException {
-        String gusHome = System.getProperty("GUS_HOME");
-        String configFileName = gusHome + "/config/gus.config";
-        if (gusProps == null) {
-            gusProps = new Properties();
-            gusProps.load(new FileInputStream(configFileName));
-        }
-        String value = gusProps.getProperty(key);
-        if (value == null)
-            error("Required property " + key
-                    + " not found in gus.config file: " + configFileName);
         return value;
     }
 
@@ -398,13 +383,12 @@ public class Workflow<T extends WorkflowStep> {
 
         String state_str = undo_step_id == null ? "state" : "undo_state";
         String sql = "select name, workflow_step_id," + state_str
-                + ", nvl(end_time, SYSDATE) AS endtime, "
-                + "CASE WHEN start_time IS NULL THEN -1 "
+                + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
                 + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
                 + "  END AS hours " + " from " + workflowStepTable
                 + " where workflow_id = '" + workflow_id + "'" + " and "
                 + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
-                + " order by endtime ASC, start_time ASC";
+                + " order by end_time ASC, start_time ASC";
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -415,14 +399,14 @@ public class Workflow<T extends WorkflowStep> {
             Formatter formatter = new Formatter(sb);
             if (!oneColumnOutput) {
                 formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
-                        "STATUS", "STEP ID", "NAME", "END AT");
+                        "STATUS", "STEP_ID", "NAME", "END_AT");
                 System.out.println(sb.toString());
             }
             while (rs.next()) {
                 String nm = rs.getString("name");
                 Integer ws_id = rs.getInt("workflow_step_id");
                 String stat = rs.getString(state_str);
-                Date endTime = rs.getTimestamp("endtime");
+                Date endTime = rs.getTimestamp("end_time");
                 float spent = rs.getFloat("hours");
 
                 if (oneColumnOutput) System.out.println(nm);
@@ -432,10 +416,15 @@ public class Workflow<T extends WorkflowStep> {
                     if (spent != -1) {
                         int hour = (int) Math.floor(spent);
                         int minute = Math.round((spent - hour) * 60);
-                        formatter.format("%6$tm/%6$td/%6$ty %6$tH-%6$tM-%6$tS %1$03d:%2$02d %3$-8s %4$-12s  %5$s",
+                        if (endTime != null) {
+                            formatter.format("%6$tm/%6$td/%6$ty %6$tH:%6$tM:%6$tS %1$03d:%2$02d %3$-8s %4$-12s  %5$s",
                                 hour, minute, stat, ws_id, nm, endTime);
+                        } else {
+                            formatter.format("%6$-17s %1$03d:%2$02d %3$-8s %4$-12s  %5$s",
+                                hour, minute, stat, ws_id, nm, "--");
+                        }
                     } else {
-                        formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s", " ",
+                        formatter.format("%5$-17s %1$6s %2$-8s %3$-12s  %4$s", " ",
                                 stat, ws_id, nm, " ");
                     }
                     System.out.println(sb.toString());
@@ -537,7 +526,7 @@ public class Workflow<T extends WorkflowStep> {
         // parse command line
         Options options = declareOptions();
         String cmdlineSyntax = cmdName
-                + " -h workflow_home_dir <-r | -t | -m | -q | -s <states>| -d <states>> <-u step_name>";
+                + " -h workflow_home_dir <-r | -t | -m | -q | -s <states>| -d <states>> <-u step_name> <-db [login[/pass]@]instance>";
         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
                 getUsageNotes(), options, args);
@@ -546,7 +535,9 @@ public class Workflow<T extends WorkflowStep> {
 
         boolean oops = false;
 
-        // branch based on provided options
+        // use alternative database
+        if (cmdLine.hasOption("db")) 
+            Utilities.setDatabase(cmdLine.getOptionValue("db"));
 
         // runnable workflow, either test or run mode
         if (cmdLine.hasOption("r") || cmdLine.hasOption("t")) {
@@ -783,6 +774,10 @@ public class Workflow<T extends WorkflowStep> {
         options.addOptionGroup(actions);
 
         CliUtil.addOption(options, "u", "Undo the specified step", false);
+
+        CliUtil.addOption(options, "db", "Use alternative database "
+                + "(and login, password, optional). "
+                + "Example: user/pass@instance", false, true);
 
         return options;
     }
