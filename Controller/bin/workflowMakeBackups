@@ -46,7 +46,7 @@ sub backup {
   my $cmd = "cp -r $source $backupDir/$basename";
   system($cmd) and die "Failed running $cmd:\n $?";
   chdir("$backupDir");
-  my $cmd = "tar czf $basename.tar.gz $basename";
+  my $cmd = "tar czfh $basename.tar.gz $basename";
   system($cmd) and die "Failed running $cmd:\n $?";
   my $cmd = "rm -r $basename";
   system($cmd) and die "Failed running $cmd:\n $?";
