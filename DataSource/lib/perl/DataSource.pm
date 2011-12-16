@@ -49,6 +49,11 @@ sub getName {
 sub getVersion {
     my ($self) = @_;
 
+    if ($self->{version} eq 'TODAY') {
+      my @a = localtime(time); $a[5]+=1900; $a[4]++;
+      $self->{version} = sprintf("%4d-%2.2d-%2.2d", $a[5],$a[4],$a[3]);
+    }
+
     return $self->{version};
 }
 
