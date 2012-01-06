@@ -8,6 +8,7 @@ use File::Basename;
 use File::stat;
 use File::Spec;
 use File::Copy;
+use File::Path qw(mkpath);
 
 use Cwd;
 
@@ -65,7 +66,7 @@ sub mainRecurse { # takes two args: input file/directory, output directory
     
     if (!(-e $outputLoc)) {
         printf("Generating $outputLoc/...");
-	mkdir("$outputLoc");
+	mkpath("$outputLoc");
         printf("done.\n");
     }
 
@@ -89,7 +90,7 @@ sub mainRecurse { # takes two args: input file/directory, output directory
 	    #printf("Will now work with $currentDir\n");
 	}
 	elsif ($name =~ /.xml$/) {
-	    #printf("Found XML file in $currentDir: $name\n");
+	    #printf("Found XML file in $currentDir: $name ; processing\n");
 	    $results{'TRY'}++;
 	    $results{buildHtml("$currentDir/$name", "$outputLoc/$currentDir", "--backtrack $currentDir")}++;
 	}
@@ -130,17 +131,17 @@ sub buildHtml { # three args: XML file, output directory, additional java option
 
     if (!(-e $outputDir)) {
         printf("Generating $outputDir/...");
-	mkdir("$outputDir");
+	mkpath("$outputDir");
         printf("done.\n");
     }
     if (!(-e "$outputDir/$IMAGES_DIR")) {
 	printf("Generating $outputDir/$IMAGES_DIR/...");
-        mkdir("$outputDir/$IMAGES_DIR");
+        mkpath("$outputDir/$IMAGES_DIR");
 	printf("done.\n");
     }
     if (!(-e "$outputDir/$XML_DIR")) {
 	printf("Generating $outputDir/$XML_DIR/...");
-        mkdir("$outputDir/$XML_DIR");
+        mkpath("$outputDir/$XML_DIR");
 	printf("done.\n");
     }
 
@@ -255,7 +256,7 @@ sub buildIndex { # one arg: output directory
         chomp($fileName);
 	$fileName =~ s/^\///;
 	if (-d "$jsParentDir/$fileName") {
-	    mkdir("$outputDir/js/$fileName");
+	    mkpath("$outputDir/js/$fileName");
 	}
 	else {
 	    copy("$jsParentDir/$fileName", "$outputDir/js/$fileName");

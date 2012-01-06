@@ -66,7 +66,7 @@ public class DotFileBuilder {
       for (String groupName : groupingMap.keySet()) {
 	  String clusterName = "cluster" + clusterNum; // this name MUST have "cluster" as a prefix!
 	  output.append("subgraph ").append(clusterName).append(" {").append(NL)
-	      .append("  label = \"").append(groupName).append("\"").append(NL);
+	      .append("  label = \"").append(getValidGroupName(groupName)).append("\"").append(NL);
 	  dumpVertexInfo(output, groupingMap.get(groupName));
 	  output.append("}").append(NL);
 	  clusterNum++;
@@ -102,7 +102,7 @@ public class DotFileBuilder {
 	    .append(nodeLabel)
 	    .append(" [ shape=rectangle");
         if (vertex.getGroupName() != null && vertex.getGroupName().length() > 0) {
-	    output.append(", group=").append(vertex.getGroupName());
+	    output.append(", group=").append(getValidGroupName(vertex.getGroupName()));
         }
         if (vertex.getSubgraphXmlFileName() != null) {
 	    if (vertex.getSubgraphXmlFileName().startsWith("$$")) {
@@ -132,6 +132,9 @@ public class DotFileBuilder {
     }
   }
 
+  private static String getValidGroupName(String rawName) {
+    return rawName.replaceAll("-","_");
+  }
 
   /**
    * Base name passed in is a camel-case string representing a name; it may
