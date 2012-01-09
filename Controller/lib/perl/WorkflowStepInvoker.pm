@@ -301,7 +301,7 @@ nodeclass=$nodeClass
 restart=no
 ";
 
-  $controllerPropFileContent .= "keepNodeForPostProcessing=yes\n" if $keepNode;
+  $controllerPropFileContent .= "keepNodeForPostProcessing=$keepNode\n" if $keepNode;
 
   open(F, ">$controllerPropFile")
       || $self->error("Can't open controller prop file '$controllerPropFile' for writing");
