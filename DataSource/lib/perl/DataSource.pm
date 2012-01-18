@@ -12,6 +12,7 @@ sub new {
               version => $parsedXml->{version},
               plugin =>  $parsedXml->{plugin},
               scope =>  $parsedXml->{scope},
+              externalDbIdType =>  $parsedXml->{externalDbIdType},
               organismAbbrev =>  $parsedXml->{organismAbbrev},
               wgetArgs => $parsedXml->{wgetArgs}->{content},
               wgetUrl => $parsedXml->{wgetArgs}->{url},
@@ -78,6 +79,12 @@ sub getPlugin {
     my ($self) = @_;
 
     return $self->{plugin};
+}
+
+sub getExternalDbIdType {
+    my ($self) = @_;
+
+    return $self->{externalDbIdType};
 }
 
 sub getScope {

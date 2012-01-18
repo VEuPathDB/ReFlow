@@ -12,6 +12,9 @@
             <attribute name="parentResource"/>
           </optional>
           <optional>
+            <attribute name="externalDbIdType"/>
+          </optional>
+          <optional>
             <attribute name="publicUrl"/>
           </optional>
           <choice>
