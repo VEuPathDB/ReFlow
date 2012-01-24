@@ -48,6 +48,9 @@
               <optional>
 		<attribute name="organismAbbrev"/>
               </optional>
+              <optional>
+		<attribute name="externalDbIdType"/>
+              </optional>
               <choice>
 		<element name="wgetArgs">
 		  <attribute name="url"/>
