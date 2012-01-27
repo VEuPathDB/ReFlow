@@ -15,6 +15,13 @@
             <attribute name="externalDbIdType"/>
           </optional>
           <optional>
+            <attribute name="externalDbIdIsAnAlias"/>
+          </optional>
+          <optional>
+            <attribute name="externalDbIdUrl"/>
+            <attribute name="externalDbIdUrlUseSecondaryId"/>
+          </optional>
+          <optional>
             <attribute name="publicUrl"/>
           </optional>
           <choice>

@@ -13,6 +13,9 @@ sub new {
               plugin =>  $parsedXml->{plugin},
               scope =>  $parsedXml->{scope},
               externalDbIdType =>  $parsedXml->{externalDbIdType},
+              externalDbIdUrl =>  $parsedXml->{externalDbIdUrl},
+              externalDbIdUrlUseSecondaryId =>  $parsedXml->{externalDbIdUrlUseSecondaryId},
+              externalDbIdIsAnAlias =>  $parsedXml->{externalDbIdIsAnAlias},
               organismAbbrev =>  $parsedXml->{organismAbbrev},
               wgetArgs => $parsedXml->{wgetArgs}->{content},
               wgetUrl => $parsedXml->{wgetArgs}->{url},
@@ -85,6 +88,35 @@ sub getExternalDbIdType {
     my ($self) = @_;
 
     return $self->{externalDbIdType};
+}
+
+sub getExternalDbIdUrl {
+    my ($self) = @_;
+
+    my $url = $self->{externalDbIdUrl};
+    if ($url) {
+	die "Error:  externalDbIdUrl must start with http://" unless $url =~ |http://|;
+	die "Error:  externalDbIdUrl must contain the macro EXTERNAL_ID_HERE" unless $url =~ |EXTERNAL_ID_HERE|;
+    }
+    return $url;
+}
+
+sub getExternalDbIdUrlUseSecondaryId {
+    my ($self) = @_;
+
+    die "Error:  externalDbIdUrlUseSecondaryId must be set to either true or false" unless
+	!$self->{externalDbIdUrlUseSecondaryId}
+    || $self->{externalDbIdUrlUseSecondaryId} =~ /true|false/;
+    return $self->{externalDbIdUrlUseSecondaryId};
+}
+
+sub getExternalDbIdIsAlias {
+    my ($self) = @_;
+
+    die "Error:  externalDbIdUrlIsAlias must be set to either true or false" unless
+	!$self->{externalDbIdIsAlias}
+    || $self->{externalDbIdIsAlias} =~ /true|false/;
+    return $self->{externalDbIdIsAlias};
 }
 
 sub getScope {
