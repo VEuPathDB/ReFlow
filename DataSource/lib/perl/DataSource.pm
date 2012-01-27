@@ -95,8 +95,8 @@ sub getExternalDbIdUrl {
 
     my $url = $self->{externalDbIdUrl};
     if ($url) {
-	die "Error:  externalDbIdUrl must start with http://" unless $url =~ |http://|;
-	die "Error:  externalDbIdUrl must contain the macro EXTERNAL_ID_HERE" unless $url =~ |EXTERNAL_ID_HERE|;
+	die "Error:  externalDbIdUrl must start with http://" unless $url =~ m|http://|;
+	die "Error:  externalDbIdUrl must contain the macro EXTERNAL_ID_HERE" unless $url =~ /EXTERNAL_ID_HERE/;
     }
     return $url;
 }
