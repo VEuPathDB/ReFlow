@@ -55,7 +55,7 @@
 		<attribute name="externalDbDataType"/>
               </optional>
               <optional>
-		<attribute name="externalDbDataSubType"/>
+		<attribute name="externalDbDataSubtype"/>
               </optional>
               <choice>
 		<element name="wgetArgs">
