@@ -51,6 +51,12 @@
               <optional>
 		<attribute name="externalDbIdType"/>
               </optional>
+              <optional>
+		<attribute name="externalDbDataType"/>
+              </optional>
+              <optional>
+		<attribute name="externalDbDataSubType"/>
+              </optional>
               <choice>
 		<element name="wgetArgs">
 		  <attribute name="url"/>
