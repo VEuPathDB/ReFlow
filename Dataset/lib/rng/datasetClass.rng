@@ -67,10 +67,7 @@
 		<attribute name="subType"/>
               </optional>
               <optional>
-		<attribute name="allowedCategories"/>
-              </optional>
-              <optional>
-		<attribute name="allowedSubCategories"/>
+		<attribute name="allowedSubTypes"/>
               </optional>
               <choice>
 		<element name="wgetArgs">
