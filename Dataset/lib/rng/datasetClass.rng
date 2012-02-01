@@ -52,10 +52,25 @@
 		<attribute name="externalDbIdType"/>
               </optional>
               <optional>
-		<attribute name="externalDbDataType"/>
+		<attribute name="externalDbIdUrl"/>
               </optional>
               <optional>
-		<attribute name="externalDbDataSubtype"/>
+		<attribute name="externalDbIdUrlUseSecondaryId"/>
+              </optional>
+              <optional>
+		<attribute name="externalDbIdIsAnAlias"/>
+              </optional>
+              <optional>
+		<attribute name="type"/>
+              </optional>
+              <optional>
+		<attribute name="subType"/>
+              </optional>
+              <optional>
+		<attribute name="allowedCategories"/>
+              </optional>
+              <optional>
+		<attribute name="allowedSubCategories"/>
               </optional>
               <choice>
 		<element name="wgetArgs">
