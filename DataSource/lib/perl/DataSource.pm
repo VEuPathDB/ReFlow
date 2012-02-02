@@ -12,6 +12,9 @@ sub new {
               version => $parsedXml->{version},
               plugin =>  $parsedXml->{plugin},
               scope =>  $parsedXml->{scope},
+              type =>  $parsedXml->{type},
+              subType =>  $parsedXml->{subType},
+              allowedSubTypes =>  $parsedXml->{allowedSubTypes},
               externalDbIdType =>  $parsedXml->{externalDbIdType},
               externalDbIdUrl =>  $parsedXml->{externalDbIdUrl},
               externalDbIdUrlUseSecondaryId =>  $parsedXml->{externalDbIdUrlUseSecondaryId},
@@ -72,7 +75,7 @@ sub getParentResource {
     if ($parentResourceName) {
 	$parentDatasource =
 	    $self->{dataSources}->getDataSource($parentResourceName);
-	die "Error: can't find parent resource '$parentResourceName' mentioned in $self->{resourceName}\n" unless $parentDatasource;
+	$self->error("Can't find parent resource '$parentResourceName'")unless $parentDatasource;
     } 
     return $parentDatasource;
 }
@@ -82,6 +85,34 @@ sub getPlugin {
     my ($self) = @_;
 
     return $self->{plugin};
+}
+
+sub getType {
+    my ($self) = @_;
+
+    return $self->{type};
+}
+
+sub getSubType {
+    my ($self) = @_;
+
+    my $allowed = $self->getAllowedSubTypes();
+    if ($allowed && $self->{subType}) {
+	$self->error("subType in not found in the allowedSubTypes list ($self->{allowedSubTypes})")
+	    unless grep(/$self->{subType}/, @$allowed);
+    }
+    return $self->{subType};
+}
+
+sub getAllowedSubTypes {
+    my ($self) = @_;
+    
+    if (!$self->{allowedST} && $self->{allowedSubTypes}) {
+	my @a = split(/,/, $self->{allowedSubTypes});
+	$self->{allowedST} = \@a;
+    }
+
+    return $self->{allowedST};
 }
 
 sub getExternalDbIdType {
@@ -95,8 +126,8 @@ sub getExternalDbIdUrl {
 
     my $url = $self->{externalDbIdUrl};
     if ($url) {
-	die "Error:  externalDbIdUrl must start with http://" unless $url =~ m|http://|;
-	die "Error:  externalDbIdUrl must contain the macro EXTERNAL_ID_HERE" unless $url =~ /EXTERNAL_ID_HERE/;
+	$self->error("externalDbIdUrl must start with http://") unless $url =~ m|http://|;
+	$self->error("externalDbIdUrl must contain the macro EXTERNAL_ID_HERE") unless $url =~ /EXTERNAL_ID_HERE/;
     }
     return $url;
 }
@@ -104,7 +135,7 @@ sub getExternalDbIdUrl {
 sub getExternalDbIdUrlUseSecondaryId {
     my ($self) = @_;
 
-    die "Error:  externalDbIdUrlUseSecondaryId must be set to either true or false" unless
+    $self->error("externalDbIdUrlUseSecondaryId must be set to either true or false") unless
 	!$self->{externalDbIdUrlUseSecondaryId}
     || $self->{externalDbIdUrlUseSecondaryId} =~ /true|false/;
     return $self->{externalDbIdUrlUseSecondaryId};
@@ -113,7 +144,7 @@ sub getExternalDbIdUrlUseSecondaryId {
 sub getExternalDbIdIsAlias {
     my ($self) = @_;
 
-    die "Error:  externalDbIdUrlIsAlias must be set to either true or false" unless
+    $self->error("externalDbIdUrlIsAlias must be set to either true or false") unless
 	!$self->{externalDbIdIsAlias}
     || $self->{externalDbIdIsAlias} =~ /true|false/;
     return $self->{externalDbIdIsAlias};
@@ -122,14 +153,15 @@ sub getExternalDbIdIsAlias {
 sub getScope {
     my ($self) = @_;
     my $l = $self->{scope};
-    die "Invalid scope '$l' in $self->{resourceName}.  Must be global, species or organism\n"
+    $self->error("Invalid scope '$l'.  Must be global, species or organism")
 	unless $l eq 'global' || $l eq 'species' || $l eq 'organism';
     return $self->{scope};
 }
 
 sub getOrganismAbbrev {
     my ($self) = @_;
-    die "Must provide an organismAbbrev= in $self->{resourceName} (scope = '$self->{scope}')\n" unless ($self->{organismAbbrev} || $self->{scope} eq 'global');
+    $self->error("Must provide an organismAbbrev= (because scope = '$self->{scope}'")
+	unless ($self->{organismAbbrev} || $self->{scope} eq 'global');
     return $self->{organismAbbrev};
 }
 
@@ -147,8 +179,7 @@ sub getWgetUrl {
 
 sub getManualGet {
     my ($self) = @_;
-    die "
-There is more then one <manualGet> in resource $self->{resourceName}" if ref($self->{manualGet}) eq "ARRAY";
+    $self->error("There is more then one <manualGet>") if ref($self->{manualGet}) eq "ARRAY";
 
     return $self->{manualGet};
 }
@@ -204,8 +235,7 @@ sub getPluginArgs {
 
       if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
 	my $macro = $1;
-	my $xmlFile = $self->{dataSources}->getXmlFile();
-	die "Resource $self->{resourceName} in file $xmlFile has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead\n";
+	$self->error("Has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead)";
       }
       $parent = 'PARENT_';
       $name = $self->getParentResource()->getName();
@@ -217,6 +247,10 @@ sub getPluginArgs {
     return $pluginArgs;
 }
 
-
+sub error {
+    my ($self, $msg) = @_;
+    my $xmlFile = $self->{dataSources}->getXmlFile();
+    die "Error in Resource $self->{resourceName} in file $xmlFile:\n$msg";
+}
 
 1;
