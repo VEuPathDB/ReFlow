@@ -235,7 +235,7 @@ sub getPluginArgs {
 
       if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
 	my $macro = $1;
-	$self->error("Has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead)";
+	$self->error("Has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead");
       }
       $parent = 'PARENT_';
       $name = $self->getParentResource()->getName();
