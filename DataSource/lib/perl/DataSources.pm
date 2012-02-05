@@ -48,7 +48,7 @@ sub getDataSource {
 # static method to publicize elements that need forceArray.  this is used
 # by Dataset/Classes.pm in its code generating of resource files
 sub getForceArray {
-  return ['unpack', 'getAndUnpackOutput', 'resource'];
+  return ['unpack', 'getAndUnpackOutput', 'resource', 'pluginArgs','manualGet', 'externalDbIdUrl'];
 }
 
 sub _parseXmlFile {

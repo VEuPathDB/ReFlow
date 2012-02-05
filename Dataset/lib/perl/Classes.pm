@@ -111,7 +111,7 @@ sub _parseXmlFile {
   # need to force all elements to be an array so that when we 
   # use XMLout to print xml text, they stay as elements
   my $fa = ReFlow::DataSource::DataSources::getForceArray();
-  my $forceArray = ['graphPlanFile', 'prop','datasetClass','pluginArgs','manualGet', @$fa];
+  my $forceArray = ['graphPlanFile', 'prop','datasetClass', @$fa];
 
   $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
 
