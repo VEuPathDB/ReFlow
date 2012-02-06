@@ -70,12 +70,19 @@ sub getResourceText {
 
     # jump through some hoops to lose weird lines out put by XMLout
     # probably a better way to do this
+    # also, add CDATA to URL
+#    <externalDbIdUrl>http://www.pberghei.eu/index.php?cat=geneid&q=EXTERNAL_ID_HERE</externalDbIdUrl>
     my @lines = split(/\n/,$rawResourceText);
     my @lines2;
+    my $cdatastart = '<![CDATA[';
+    my $cdataend = ']]';
     foreach my $line (@lines) {
       next if $line =~ /^\<opt/;
       next if $line =~ /^\<\/opt/;
       next if $line =~ /^$/;
+      if ($line =~ m|<externalDbIdUrl>(.*)</externalDbIdUrl>| && $line !~ /CDATA/) {
+	$line = "     <externalDbIdUrl><![CDATA[$1]]></externalDbIdUrl>";
+      }
       push(@lines2,$line);
     }
     my $rawResourceText2 = join("\n", @lines2);
