@@ -334,6 +334,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends
                 rootSteps.add(step);
                 sortedSteps = null; // force re-creation of this list
             }
+            if (step.getChildren().size() == 0 && !leafSteps.contains(step)) {
+                leafSteps.add(step);
+                sortedSteps = null; // force re-creation of this list
+            }
         }
     }
 
