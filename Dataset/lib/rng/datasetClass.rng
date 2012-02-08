@@ -32,7 +32,7 @@
             </element>
 	  </zeroOrMore>
 	  <zeroOrMore>
-            <element name="graphPlanFile">
+            <element name="graphTemplateFile">
               <attribute name="name" />
             </element>
 	  </zeroOrMore>

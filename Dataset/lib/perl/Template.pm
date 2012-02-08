@@ -6,20 +6,20 @@ use XML::Twig;
 use Data::Dumper;
 
 my $templates;
-my $planFileName;
+my $templateFileName;
 
 # static method
 sub getTemplates {
-  my ($planFileNm) = @_;
+  my ($templateFileNm) = @_;
 
   $templates = [];
-  $planFileName = $planFileNm;
+  $templateFileName = $templateFileNm;
   my $twig= new XML::Twig(TwigRoots => {datasetTemplate => 1},
 			  twig_handlers =>
                           { datasetTemplate => \&datasetTemplateElementHandler,
                           },
 			  pretty_print => 'indented');
-  $twig->parsefile("$ENV{GUS_HOME}/lib/xml/workflowPlans/$planFileNm");
+  $twig->parsefile("$ENV{GUS_HOME}/lib/xml/workflowTemplates/$templateFileNm");
 
   return $templates;
 
@@ -29,14 +29,14 @@ sub datasetTemplateElementHandler {
   my ($twig, $datasetTemplate) = @_;
 
   my $datasetTemplateAsText = $datasetTemplate->sprint();
-  my $template = ReFlow::Dataset::Template->new($planFileName,
+  my $template = ReFlow::Dataset::Template->new($templateFileName,
 						$datasetTemplateAsText,
 						$datasetTemplate->{att}->{class});
   push(@$templates, $template);
 }
 
 sub new {
-  my ($class, $planFileNm, $datasetTemplateText, $datasetClassName) = @_;
+  my ($class, $templateFileNm, $datasetTemplateText, $datasetClassName) = @_;
 
   my $self = {};
 
@@ -44,7 +44,7 @@ sub new {
 
   $self->{text} = $datasetTemplateText;
   $self->{class} = $datasetClassName;
-  $self->{planFile} = $planFileNm;
+  $self->{templateFile} = $templateFileNm;
 
   return $self;
 }
@@ -79,22 +79,22 @@ sub addInstance {
 	ReFlow::Dataset::Classes::substitutePropsIntoXmlText($graphText, $dataset);
 
     if ($err) {
-      die "\nError: <datasetTemplate class=\"$self->{class}\"> in plan file $self->{planFile} has an invalid property macro: $err\n";
+      die "\nError: <datasetTemplate class=\"$self->{class}\"> in template file $self->{templateFile} has an invalid property macro: $err\n";
     }
     push(@{$self->{instances}}, $instantiatedGraphText);
 }
 
 # this is an inefficient implementation, but beats trying to learn
 # how to do it efficiently with xml::twig.
-sub substituteInstancesIntoPlanText {
-    my ($self, $planText) = @_;
+sub substituteInstancesIntoTemplateText {
+    my ($self, $templateText) = @_;
 
-    # scan plan, finding our template
+    # scan template file, finding our template
     # excise it and replace it with our instances
 
-    my @t = split(/\n/, $planText);
+    my @t = split(/\n/, $templateText);
 
-    my @newPlanText;
+    my @newTemplateText;
     my $foundThisTemplate;
     foreach my $line (@t) {
       if ($line =~/\<datasetTemplate/) {
@@ -104,22 +104,22 @@ sub substituteInstancesIntoPlanText {
 	    $foundThisTemplate = 1;
 	  }
 	} else {
-	  die "\nError: Plan file $self->{planFile} includes a <datasetTemplate> element that does not have class= on the same line\n";
+	  die "\nError: Template file $self->{templateFile} includes a <datasetTemplate> element that does not have class= on the same line\n";
 	}
       }
       if ($foundThisTemplate) {
 	if ($line =~ /\<\/datasetTemplate/) {
 	  $foundThisTemplate = 0;
 	  if ($self->{instances}) {
-	    push(@newPlanText, join("\n", @{$self->{instances}}));
+	    push(@newTemplateText, join("\n", @{$self->{instances}}));
 	  }
 	}
       } else {
-	push(@newPlanText, $line);
+	push(@newTemplateText, $line);
       }
     }
 
-    return join("\n", @newPlanText);
+    return join("\n", @newTemplateText);
 }
 
 

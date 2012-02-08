@@ -31,19 +31,19 @@ sub getClassesFile {
     return $self->{classesFile};
 }
 
-# get list of plans used
-sub getPlan2Classes {
+# get list of templates used
+sub getTemplate2Classes {
   my ($self, $classNamesUsed) = @_;
-  my %plan2classes;
+  my %template2classes;
   foreach my $className (@$classNamesUsed) {
-    my $graphPlanFiles = $self->{data}->{datasetClass}->{$className}->{graphPlanFile};
-#    print STDERR Dumper $graphPlanFiles;
-    foreach my $graphPlanFile (@{$graphPlanFiles}) {
-      my $planFileName = $graphPlanFile->{name};
-      push(@{$plan2classes{$planFileName}}, $className);
+    my $graphTemplateFiles = $self->{data}->{datasetClass}->{$className}->{graphTemplateFile};
+#    print STDERR Dumper $graphTemplateFiles;
+    foreach my $graphTemplateFile (@{$graphTemplateFiles}) {
+      my $templateFileName = $graphTemplateFile->{name};
+      push(@{$template2classes{$templateFileName}}, $className);
     }
   }
-  return \%plan2classes;
+  return \%template2classes;
 }
 
 sub getClass {
@@ -118,7 +118,7 @@ sub _parseXmlFile {
   # need to force all elements to be an array so that when we 
   # use XMLout to print xml text, they stay as elements
   my $fa = ReFlow::DataSource::DataSources::getForceArray();
-  my $forceArray = ['graphPlanFile', 'prop','datasetClass', ,'manualGet', 'pluginArgs', 'externalDbIdUrl', @$fa];
+  my $forceArray = ['graphTemplateFile', 'prop','datasetClass', ,'manualGet', 'pluginArgs', 'externalDbIdUrl', @$fa];
 
   $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
 
