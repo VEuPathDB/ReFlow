@@ -141,13 +141,13 @@ sub getExternalDbIdUrlUseSecondaryId {
     return $self->{externalDbIdUrlUseSecondaryId};
 }
 
-sub getExternalDbIdIsAlias {
+sub getExternalDbIdIsAnAlias {
     my ($self) = @_;
 
-    $self->error("externalDbIdUrlIsAlias must be set to either true or false") unless
-	!$self->{externalDbIdIsAlias}
-    || $self->{externalDbIdIsAlias} =~ /true|false/;
-    return $self->{externalDbIdIsAlias};
+    $self->error("externalDbIdUrlIsAnAlias must be set to either true or false") unless
+	!$self->{externalDbIdIsAnAlias}
+    || $self->{externalDbIdIsAnAlias} =~ /true|false/;
+    return $self->{externalDbIdIsAnAlias};
 }
 
 sub getScope {
