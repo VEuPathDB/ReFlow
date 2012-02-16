@@ -14,6 +14,7 @@ sub run {
   # get parameters
   my $taskInputDir = $self->getParamValue("taskInputDir");
   my $numNodes = $self->getParamValue("numNodes");
+  my $maxMemoryGigs = $self->getParamValue("maxMemoryGigs");
   my $processorsPerNode = $self->getParamValue("processorsPerNode");
 
   $processorsPerNode = 1 unless $processorsPerNode;
@@ -37,7 +38,7 @@ sub run {
       $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
   }else{
       my $expectedTime = 0;  # don't provide any
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
       $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){
