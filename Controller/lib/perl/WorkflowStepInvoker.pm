@@ -172,12 +172,12 @@ sub getDataSource {
 
 sub runCmd {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($self, $test, $cmd, $optionalMsgForErr, 0);
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0);
 }
 
 sub runCmdInBackground {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($self, $test, $cmd, $optionalMsgForErr, 1);
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1);
 }
 
 sub runCmdSub {
