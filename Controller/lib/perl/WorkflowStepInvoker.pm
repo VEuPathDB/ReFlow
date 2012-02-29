@@ -172,6 +172,16 @@ sub getDataSource {
 
 sub runCmd {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0);
+}
+
+sub runCmdInBackground {
+    my ($self, $test, $cmd, $optionalMsgForErr) = @_;
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1);
+}
+
+sub runCmdSub {
+    my ($self, $test, $cmd, $optionalMsgForErr, $runInBgd) = @_;
 
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
@@ -192,14 +202,19 @@ produce bogus output, or if you run an UNDO it might fail.
     $errMsg = "$optionalMsgForErr" if $optionalMsgForErr;
 
     if ($test) {
-      $output = `echo just testing 2>> $err`;
+	$output = `echo just testing 2>> $err`;
     } else {
-      $output = `$cmd 2>> $err`;
-      my $status = $? >> 8;
-      $self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status);
+	if ($runInBgd) {
+	    system("$cmd 2>> $err &");   # will probably always return status 0
+	} else {
+	    $output = `$cmd 2>> $err`;
+	}
+	my $status = $? >> 8;
+	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status);
     }
     return $output;
 }
+
 
 sub log {
   my ($self, $msg) = @_;
@@ -311,18 +326,18 @@ restart=no
 }
 
 sub runAndMonitorDistribJob {
-    my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn) = @_;
+    my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
 
     # if not already started, start it up (otherwise the local process was restarted)
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
-	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn";
-	$self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'&");
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn $maxMemoryGigs";
+	$self->runCmdInBackground($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
 
     return 1 if ($test);
 
     while (1) {
-	sleep(5);
+	sleep(10);
 	last if !$self->_distribJobRunning($processIdFile,$user, $server);
     }
 

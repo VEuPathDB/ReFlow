@@ -32,56 +32,56 @@ unlink(glob("$graphFilePath/*.xml")); # clean out old xml files
 
 # NEED TO VALIDATE TEMPLATES AGAINST CLASSES
 
-# hash of plan->classes_that_use_the_plan
-my $graphPlan2classes = $classes->getPlan2Classes($classNamesUsed);
+# hash of template->classes_that_use_the_template
+my $graphTemplate2classes = $classes->getTemplate2Classes($classNamesUsed);
 
 
-# process each plan that is refered to by any class
-foreach my $planFileName (keys(%$graphPlan2classes)) {
-  my $fullPlanFileName = "$ENV{GUS_HOME}/lib/xml/workflowPlans/$planFileName";
-  die "\nError: Classes file $classesFile references plan '$planFileName' which is not found in $ENV{GUS_HOME}/lib/xml/workflowPlans/" unless -e $fullPlanFileName;
-  my $planFileAsText = parseAndWritePlanFile($fullPlanFileName);
-  my $templates = ReFlow::Dataset::Template::getTemplates($planFileName);
+# process each template that is refered to by any class
+foreach my $templateFileName (keys(%$graphTemplate2classes)) {
+  my $fullTemplateFileName = "$ENV{GUS_HOME}/lib/xml/workflowTemplates/$templateFileName";
+  die "\nError: Classes file $classesFile references template '$templateFileName' which is not found in $ENV{GUS_HOME}/lib/xml/workflowTemplates/" unless -e $fullTemplateFileName;
+  my $templateFileAsText = parseAndWriteTemplateFile($fullTemplateFileName);
+  my $templates = ReFlow::Dataset::Template::getTemplates($templateFileName);
   foreach my $template (@$templates) {
     $classes->validateClassName($template->getClassName());
     my $templateDatasets = $datasets->getDatasetsByClass($template->getClassName());
     foreach my $dataset (@$templateDatasets) {
       $template->addInstance($dataset);
     }
-    $planFileAsText = $template->substituteInstancesIntoPlanText($planFileAsText);
+    $templateFileAsText = $template->substituteInstancesIntoTemplateText($templateFileAsText);
   }
 
   # subsitute in <depends> elements for <dependsPattern>
-  $planFileAsText = resolveDependsPatterns($planFileAsText, $planFileName);
+  $templateFileAsText = resolveDependsPatterns($templateFileAsText, $templateFileName);
 
-  my ($planFileBasename,$path,$suffix) = fileparse($planFileName, '.xml');
-  my $graphFile = "$graphFilePath/${planFileBasename}.xml";
+  my ($templateFileBasename,$path,$suffix) = fileparse($templateFileName, '.xml');
+  my $graphFile = "$graphFilePath/${templateFileBasename}.xml";
   open(GRAPH, ">$graphFile") || die "Can't open graph file '$graphFile' for writing\n";
-  print GRAPH $planFileAsText;
+  print GRAPH $templateFileAsText;
 }
 
 
 ##########################################################################
 
-sub parseAndWritePlanFile {
-  my ($fullPlanFileName) = @_;
+sub parseAndWriteTemplateFile {
+  my ($fullTemplateFileName) = @_;
   my $twig;
   eval {
     $twig= new XML::Twig(pretty_print => 'indented');
-    $twig->parsefile($fullPlanFileName);
+    $twig->parsefile($fullTemplateFileName);
   };
 
-  die "Error parsing plan file $fullPlanFileName:$@\n" if $@;
+  die "Error parsing template file $fullTemplateFileName:$@\n" if $@;
 
   return $twig->sprint();
 }
 
 sub resolveDependsPatterns {
-  my ($instantiatedPlanText, $planFileName) = @_;
+  my ($instantiatedTemplateText, $templateFileName) = @_;
 
   # parse the text (again!) but this time with the datasets instantiated
   my $xml = new XML::Simple();
-  my $data = eval{ $xml->XMLin($instantiatedPlanText, SuppressEmpty => undef, ForceArray=>['step', 'subgraph', 'depends', 'dependsPattern'])};
+  my $data = eval{ $xml->XMLin($instantiatedTemplateText, SuppressEmpty => undef, ForceArray=>['step', 'subgraph', 'depends', 'dependsPattern'])};
 
 #  print Dumper $data;
 
@@ -111,10 +111,10 @@ sub resolveDependsPatterns {
     my $newDepends = join("\n", @{$expandedPatterns->{$expandedPattern}});
     $newDepends = "\n$newDepends\n";
     $expandedPattern =~ s/\*/\\*/g;
-    $instantiatedPlanText =~ s|\s+<dependsPattern name=\"$expandedPattern\"/>\s*|$newDepends|g;
-#    $instantiatedPlanText =~ s|\s+<dependsPattern name=\"$expandedPattern|$newDepends|g;
+    $instantiatedTemplateText =~ s|\s+<dependsPattern name=\"$expandedPattern\"/>\s*|$newDepends|g;
+#    $instantiatedTemplateText =~ s|\s+<dependsPattern name=\"$expandedPattern|$newDepends|g;
   }
-  return $instantiatedPlanText;
+  return $instantiatedTemplateText;
 }
 
 # find any step or subgraph that has one or more dependsPattern element
@@ -149,7 +149,7 @@ sub expandPatterns {
 sub usage {
 
   print "
-Create graph files for a dataset, from graph plan files (in \$GUS_HOME)
+Create graph files for a dataset, from graph template files (in \$GUS_HOME)
 
 Usage:  workflowDataset2Graphs datasets_file classes_file
 
@@ -157,8 +157,8 @@ Where:
   datasets_file:    an xml file containing a set of datasets.  Must be in a file
                     path including lib/xml/datasets/XXX/YYY.xml where XXX is one
                     or more optional subirs, and YYY is the name of the dataset.
-                    Files generated from plans will be named like this:
-                    XXX/YYY/planFileName.xml
+                    Files generated from templates will be named like this:
+                    XXX/YYY/templateFileName.xml
 
   classes_file:     an xml file containing a set of dataset classes.
 
