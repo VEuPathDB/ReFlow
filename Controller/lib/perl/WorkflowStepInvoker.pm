@@ -327,7 +327,7 @@ sub runAndMonitorDistribJob {
     # if not already started, start it up (otherwise the local process was restarted)
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
 	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; nohup workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn $maxMemoryGigs &> /dev/null < /dev/null";
-	$self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
+	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
 
