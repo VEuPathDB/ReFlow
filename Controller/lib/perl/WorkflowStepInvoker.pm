@@ -388,6 +388,7 @@ SET
   process_id = $process_id,
   host_machine = '$hostname',
   start_time = SYSDATE
+  end_time = NULL
 WHERE name = '$stepName'
 AND workflow_id = $workflowId
 ";
