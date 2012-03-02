@@ -175,13 +175,13 @@ sub runCmd {
     return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0);
 }
 
-sub runCmdInBackground {
+sub runCmdNoError {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
     return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1);
 }
 
 sub runCmdSub {
-    my ($self, $test, $cmd, $optionalMsgForErr, $runInBgd) = @_;
+    my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure) = @_;
 
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
@@ -204,13 +204,9 @@ produce bogus output, or if you run an UNDO it might fail.
     if ($test) {
 	$output = `echo just testing 2>> $err`;
     } else {
-	if ($runInBgd) {
-	    system("$cmd 2>> $err &");   # will probably always return status 0
-	} else {
-	    $output = `$cmd 2>> $err`;
-	}
+	$output = `$cmd 2>> $err`;
 	my $status = $? >> 8;
-	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status);
+	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status && !$allowFailure);
     }
     return $output;
 }
