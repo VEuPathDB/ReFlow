@@ -29,7 +29,7 @@ sub run {
 
 
   my $propFile = "$clusterDataDir/$taskInputDir/controller.prop";
-  my $processIdFile = "$clusterDataDir/$taskInputDir/task.id";
+  my $processIdFile = "$clusterDataDir/$taskInputDir/../master/distribjobProcessId";
   my $logFile = "$clusterTaskLogsDir/" . $self->getName() . ".log";
 
   if($undo){
