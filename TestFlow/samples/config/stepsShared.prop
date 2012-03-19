@@ -2,12 +2,12 @@ mood=happy
 
 # replace XXXXXXXX with your login on the cluster
 
-#clusterServer=beta.genomics.upenn.edu
-beta.genomics.upenn.edu.clusterLogin=XXXXXXXX
-beta.genomics.upenn.edu.clusterBaseDir=/gpfs/fs121/eupath/workflows
-beta.genomics.upenn.edu.clusterQueue=apidb
-beta.genomics.upenn.edu.nodeClass=DJob::DistribJob::SgeNode
-beta.genomics.upenn.edu.nodePath=/scratch/user/XXXXXXXXX
+#clusterServer=delta.genomics.upenn.edu
+delta.genomics.upenn.edu.clusterLogin=XXXXXXXX
+delta.genomics.upenn.edu.clusterBaseDir=/gpfs/fs121/eupath/workflows
+delta.genomics.upenn.edu.clusterQueue=apidb
+delta.genomics.upenn.edu.nodeClass=DJob::DistribJob::SgeNode
+delta.genomics.upenn.edu.nodePath=/scratch/user/XXXXXXXXX
 
 clusterServer=rcluster.rcc.uga.edu
 rcluster.rcc.uga.edu.clusterLogin=XXXXXXXXXX
