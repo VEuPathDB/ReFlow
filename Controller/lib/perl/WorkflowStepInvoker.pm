@@ -388,7 +388,7 @@ SET
   ${undoStr}state_handled = 0,
   process_id = $process_id,
   host_machine = '$hostname',
-  start_time = SYSDATE
+  start_time = SYSDATE,
   end_time = NULL
 WHERE name = '$stepName'
 AND workflow_id = $workflowId
