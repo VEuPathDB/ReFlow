@@ -2,24 +2,14 @@ mood=happy
 
 #clusterServer=beta.genomics.upenn.edu
 beta.genomics.upenn.edu.clusterLogin=XXXXXXXX
-beta.genomics.upenn.edu.clusterBaseDir=/genomics/binf/scratch
+beta.genomics.upenn.edu.clusterBaseDir=/gpfs/fs121/eupath/workflows
 beta.genomics.upenn.edu.clusterQueue=apidb
 beta.genomics.upenn.edu.nodeClass=DJob::DistribJob::SgeNode
 beta.genomics.upenn.edu.nodePath=/scratch/user/XXXXXXXXX
 
 clusterServer=rcluster.rcc.uga.edu
 rcluster.rcc.uga.edu.clusterLogin=XXXXXXXXXX
-rcluster.rcc.uga.edu.clusterBaseDir=/iob_scratch/XXXXXXXXXX
+rcluster.rcc.uga.edu.clusterBaseDir=/scratch/jcklab/eupath/workflows
 rcluster.rcc.uga.edu.clusterQueue=rcc-q8-24h
-rcluster.rcc.uga.edu.nodeClass=DJob::DistribJob::LsfNode
+rcluster.rcc.uga.edu.nodeClass=DJob::DistribJob::SgeNode
 rcluster.rcc.uga.edu.nodePath=/lscratch/XXXXXXXXXX
-
-
-
-mood=happy
-
-clusterBaseDir=/genomics/binf/scratch
-clusterServer=beta.genomics.upenn.edu
-clusterQueue=apidb
-nodeClass=DJob::DistribJob::SgeNode
-nodePath=/scratch/user/$ENV{USER}
