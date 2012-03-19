@@ -31,7 +31,8 @@ public class WorkflowGraphUtil {
             Workflow<S> workflow,
             Map<String, Map<String, List<String>>> paramErrorsMap,
             Map<String, S> globalSteps, Map<String, String> globalConstants,
-            String xmlFileName, String callerXmlFileName, boolean isGlobal,
+            String xmlFileName, String callerXmlFileName, 
+            String forceDoneFileName, boolean isGlobal,
             String path, String baseName, Map<String, String> paramValuesMap,
             Map<String, String> macroValuesMap, S subgraphCallerStep,
             List<String> xmlFileNamesStack) throws FileNotFoundException,
@@ -67,6 +68,9 @@ public class WorkflowGraphUtil {
         // set the caller step of its unexpanded steps, since we now know it now
         graph.setCallingStep(subgraphCallerStep);
 
+	// must happen before instantiation.  
+	graph.setStepsForceDoneFileName(forceDoneFileName);
+
         // instantiate global and local param values before expanding subgraphs
         graph.instantiateValues(baseName, callerXmlFileName, globalConstants,
                 paramValuesMap, paramErrorsMap);
@@ -89,12 +93,6 @@ public class WorkflowGraphUtil {
         // delete excluded steps
         graph.deleteExcludedSteps();
 
-	// must happen after instantiation.  at instantiation, the subgraph element
-	// and step elements have their values set from their own attributes.
-	// now we set the steps using the subgraph's value.  (it is an error if they
-	// get both their own and one from the subgraph.)
-	graph.setStepsForceDoneFileName();
-
         return graph;
     }
 
@@ -114,7 +112,7 @@ public class WorkflowGraphUtil {
 
         WorkflowGraph<S> graph = createExpandedGraph(stepClass, containerClass,
                 workflow, paramErrorsMap, globalSteps, globalConstants,
-                workflow.getWorkflowXmlFileName(), "rootParams.prop", false,
+		workflow.getWorkflowXmlFileName(), "rootParams.prop", "", false,
                 "", "root", getRootGraphParamValues(workflow),
                 getGlobalPropValues(workflow), null, xmlFileNamesStack);
 

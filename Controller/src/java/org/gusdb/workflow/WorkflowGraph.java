@@ -57,7 +57,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     private String xmlFileName;
     private boolean isGlobal = false;
     private String forceDoneFileName;   // a file produced at run time that, if present and containing 'true', forces all steps in graph to 'DONE'
-    private String forceDoneFileNameInstantiated;   // after variable instantiation
 
     private List<T> subgraphCallerSteps = new ArrayList<T>();
     private List<T> rootSteps = new ArrayList<T>();
@@ -124,14 +123,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
     public String getXmlFileName() {
         return xmlFileName;
-    }
-
-    public void setForceDoneFileName(String forceDoneFileName) {
-        this.forceDoneFileName = forceDoneFileName;
-    }
-
-    public String getForceDoneFileName() {
-        return forceDoneFileName;
     }
 
     public void setGlobalConstants(Map<String, String> globalConstants) {
@@ -213,8 +204,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
             // validate loadType
             step.checkLoadTypes();
-
-	    step.setForceDoneFileName(getForceDoneFileName());
         }
     }
 
@@ -353,10 +342,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         }
     }
 
-    void setStepsForceDoneFileName () {
-	if (forceDoneFileNameInstantiated == null) return;
+    void setStepsForceDoneFileName (String forceDoneFileName) {
+	if (forceDoneFileName == null) return;
         for (T step : getSteps()) {
-	    step.setForceDoneFileNameInstantiated(forceDoneFileNameInstantiated, true);
+	    step.setForceDoneFileName(forceDoneFileName);
 	}
     }
 
@@ -431,25 +420,13 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         substituteIntoConstants(new HashMap<String, String>(), constants, true,
                 true);
 
-        // substitute them all into step param values, xmlFileName, forceDoneFileName,
+        // substitute them all into step param values, xmlFileName,
         // includeIf and excludeIf
         for (T step : getSteps()) {
             step.substituteValues(globalConstants, false);
             step.substituteValues(constants, false);
             step.substituteValues(paramValues, true);
         }
-
-	if (forceDoneFileName != null) {
-            forceDoneFileNameInstantiated =
-		Utilities.substituteVariablesIntoString(forceDoneFileName, globalConstants,
-							xmlFileName, false, "forceDoneFileName");
-            forceDoneFileNameInstantiated =
-		Utilities.substituteVariablesIntoString(forceDoneFileNameInstantiated, constants,
-							xmlFileName, false, "forceDoneFileName");
-            forceDoneFileNameInstantiated =
-		Utilities.substituteVariablesIntoString(forceDoneFileNameInstantiated, paramValues,
-							xmlFileName, true, "forceDoneFileName");
-	}
     }
 
     void instantiateMacros(Map<String, String> macroValues) {
@@ -740,7 +717,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             WorkflowGraph<T> subgraph = WorkflowGraphUtil.createExpandedGraph(
                     stepClass, containerClass, workflow, paramErrorsMap,
                     globalSteps, globalConstants, subgraphXmlFileName,
-                    xmlFileName, subgraphCallerStep.getIsGlobal(), newPath,
+                    xmlFileName, subgraphCallerStep.getForceDoneFileName(),
+                    subgraphCallerStep.getIsGlobal(), newPath,
                     subgraphCallerStep.getBaseName(),
                     subgraphCallerStep.getParamValues(), macroValuesMap,
                     subgraphCallerStep, xmlFileNamesStack);

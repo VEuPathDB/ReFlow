@@ -7,14 +7,14 @@
 
   <constant name="blue">very blue</constant>
 
-  <subgraph name="firstStep" xmlFile="testSubgraph.xml" groupName="Step Group 1">
+  <subgraph name="firstStep" xmlFile="testSubgraph.xml" groupName="Step Group 1" forceDoneFileName="$$blue$$">
     <paramValue name="prefix">$$blue$$</paramValue>
     <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
     <paramValue name="seqFile">$$seqFile$$</paramValue>
   </subgraph>
 
   <step name="secondStep"
-        stepClass="ReFlow::TestFlow::TestStep" groupName="Step Group 1">
+        stepClass="ReFlow::TestFlow::TestStep" groupName="Step Group 1" forceDoneFileName="soso">
     <paramValue name="msg">green</paramValue>
   </step>
 

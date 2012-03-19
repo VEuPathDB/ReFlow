@@ -84,7 +84,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private Boolean excludeFromGraph = null;
     private String undoRoot;
     private String forceDoneFileName;
-    private String forceDoneFileNameInstantiated;
 
     // state from db
     protected Integer workflow_step_id = null;
@@ -277,30 +276,20 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     // called by xml parser
-    void setForceDoneFileName(String forceDoneFileName) {
-	this.forceDoneFileName = forceDoneFileName;
-    }
-
-    // called in two possible contexts:
-    // (1) the <step> has a forceDoneFileName attribute.  in this case it is called multiple
-    //     times because of successive variable interpolation
-    // (2) the <subgraph> call of the containg graph has the attribute.
-    // 
-    // only one of these or the other is allowed, not both.  because (2) would happen
-    // after (1), if we are coming here for (2), as indicated by the flag, we throw
-    // an error if it was already called by (1).  
-    //
-    // we have the restrictive rule to keep things simple, avoiding conflicting value
-    // or the need for maintaining a list
-    void setForceDoneFileNameInstantiated(String forceDoneFileNameInstantiated, boolean fromSubgraph) {
-	if (fromSubgraph && forceDoneFileNameInstantiated != null) {
+    public void setForceDoneFileName(String forceDoneFileName) {
+	System.err.println("fdfn1: " + forceDoneFileName);
+	if (this.forceDoneFileName != null) {
 	    Utilities.error("Step "
 			    + getFullName()
 			    + " in graph file "
 			    + workflowGraph.getXmlFileName()
 			    + " has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
 	}
-	this.forceDoneFileNameInstantiated = forceDoneFileNameInstantiated;
+	this.forceDoneFileName = forceDoneFileName;
+    }
+
+    String getForceDoneFileName() {
+	return forceDoneFileName;
     }
 
     public boolean getExcludeFromGraph() throws FileNotFoundException,
@@ -631,9 +620,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         }
 
         if (forceDoneFileName != null) {
-	    String s = Utilities.substituteVariablesIntoString(forceDoneFileName, variables,
-							where, check, "forceDoneFileName");
-            setForceDoneFileNameInstantiated(s, false);
+	    forceDoneFileName = Utilities.substituteVariablesIntoString(forceDoneFileName, variables,
+									where, check, "forceDoneFileName");
         }
 
         for (String paramName : paramValues.keySet()) {
@@ -770,6 +758,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // TODO Java6 @Override
     public void setGroupName(String arg0) {
+	System.err.println("gr: " + arg0);
         // value is not needed in this implementation;
         // added for interface compliance only
     }

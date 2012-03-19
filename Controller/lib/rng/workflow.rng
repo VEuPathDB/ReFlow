@@ -49,6 +49,9 @@
 	      <attribute name="groupName" />
             </optional>
             <optional>
+	      <attribute name="forceDoneFileName" />
+            </optional>
+            <optional>
               <choice>
                 <attribute name="includeIf"/>
                 <attribute name="excludeIf"/>
@@ -87,6 +90,9 @@
             <attribute name="xmlFile"/>
             <optional>
 	      <attribute name="externalName" />
+            </optional>
+            <optional>
+	      <attribute name="forceDoneFileName" />
             </optional>
             <optional>
 	      <attribute name="groupName" />
