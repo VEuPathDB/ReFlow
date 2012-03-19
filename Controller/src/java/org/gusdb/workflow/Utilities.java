@@ -43,7 +43,7 @@ public class Utilities {
 	    if (newString.indexOf("$$") != -1)
 		Utilities.error(type + " '"
 				+ string
-				+ "' in " + where + 
+				+ "' in " + where
 				+ " includes an unresolvable variable reference: '"
 				+ newString + "'");
 	}

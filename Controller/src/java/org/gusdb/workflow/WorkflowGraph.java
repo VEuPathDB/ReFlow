@@ -354,9 +354,9 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     }
 
     void setStepsForceDoneFileName () {
-	if (forcedDoneFileNameInstantiated == null) return;
+	if (forceDoneFileNameInstantiated == null) return;
         for (T step : getSteps()) {
-	    step.setForcedDoneFileNameInstantiated(forcedDoneFileNameInstantiated, true);
+	    step.setForceDoneFileNameInstantiated(forceDoneFileNameInstantiated, true);
 	}
     }
 

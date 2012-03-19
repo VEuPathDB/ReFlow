@@ -278,7 +278,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // called by xml parser
     void setForceDoneFileName(String forceDoneFileName) {
-	this.setForceDoneFileName = setForceDoneFileName;
+	this.forceDoneFileName = forceDoneFileName;
     }
 
     // called in two possible contexts:
@@ -615,7 +615,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // interpolate variables into subgraphXmlFileName, param values, includeIf
     // and excludeIf
     void substituteValues(Map<String, String> variables, boolean check) {
-	String where = xmlFileName + ", step " + getFullName() + " ";
+
+	String where = workflowGraph.getXmlFileName() + ", step " + getFullName() + " ";
 
         if (subgraphXmlFileName != null) {
             subgraphXmlFileName =
@@ -670,7 +671,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String processIfString(String type, String ifString,
             Map<String, String> variables, boolean check) {
 
-	String where = xmlFileName + ", step " + getFullName() + " ";
+	String where = workflowGraph.getXmlFileName() + ", step " + getFullName() + " ";
 
         String newIf =
 	    Utilities.substituteVariablesIntoString(ifString, variables,
