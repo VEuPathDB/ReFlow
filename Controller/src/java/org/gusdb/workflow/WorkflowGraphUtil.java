@@ -89,6 +89,12 @@ public class WorkflowGraphUtil {
         // delete excluded steps
         graph.deleteExcludedSteps();
 
+	// must happen after instantiation.  at instantiation, the subgraph element
+	// and step elements have their values set from their own attributes.
+	// now we set the steps using the subgraph's value.  (it is an error if they
+	// get both their own and one from the subgraph.)
+	graph.setStepsForceDoneFileName();
+
         return graph;
     }
 

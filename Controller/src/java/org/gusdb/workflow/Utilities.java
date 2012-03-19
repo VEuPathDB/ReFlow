@@ -29,8 +29,8 @@ public class Utilities {
         System.exit(1);
     }
 
-    public static String substituteVariablesIntoString(String string,
-            Map<String, String> variables) {
+    public static String substituteVariablesIntoString(String string, Map<String, String> variables,
+						       String where, boolean check, String type) {
         if (string.indexOf("$$") == -1) return string;
         String newString = string;
         for (String variableName : variables.keySet()) {
@@ -39,6 +39,15 @@ public class Utilities {
                     "\\$\\$" + variableName + "\\$\\$",
                     Matcher.quoteReplacement(variableValue));
         }
+	if (check) {
+	    if (newString.indexOf("$$") != -1)
+		Utilities.error(type + " '"
+				+ string
+				+ "' in " + where + 
+				+ " includes an unresolvable variable reference: '"
+				+ newString + "'");
+	}
+
         return newString;
     }
 

@@ -83,6 +83,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String excludeIfNoXml_string;
     private Boolean excludeFromGraph = null;
     private String undoRoot;
+    private String forceDoneFileName;
+    private String forceDoneFileNameInstantiated;
 
     // state from db
     protected Integer workflow_step_id = null;
@@ -272,6 +274,33 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     String getExcludeIfNoXmlString() {
         return excludeIfNoXml_string;
+    }
+
+    // called by xml parser
+    void setForceDoneFileName(String forceDoneFileName) {
+	this.setForceDoneFileName = setForceDoneFileName;
+    }
+
+    // called in two possible contexts:
+    // (1) the <step> has a forceDoneFileName attribute.  in this case it is called multiple
+    //     times because of successive variable interpolation
+    // (2) the <subgraph> call of the containg graph has the attribute.
+    // 
+    // only one of these or the other is allowed, not both.  because (2) would happen
+    // after (1), if we are coming here for (2), as indicated by the flag, we throw
+    // an error if it was already called by (1).  
+    //
+    // we have the restrictive rule to keep things simple, avoiding conflicting value
+    // or the need for maintaining a list
+    void setForceDoneFileNameInstantiated(String forceDoneFileNameInstantiated, boolean fromSubgraph) {
+	if (fromSubgraph && forceDoneFileNameInstantiated != null) {
+	    Utilities.error("Step "
+			    + getFullName()
+			    + " in graph file "
+			    + workflowGraph.getXmlFileName()
+			    + " has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
+	}
+	this.forceDoneFileNameInstantiated = forceDoneFileNameInstantiated;
     }
 
     public boolean getExcludeFromGraph() throws FileNotFoundException,
@@ -586,31 +615,32 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // interpolate variables into subgraphXmlFileName, param values, includeIf
     // and excludeIf
     void substituteValues(Map<String, String> variables, boolean check) {
+	String where = xmlFileName + ", step " + getFullName() + " ";
 
         if (subgraphXmlFileName != null) {
-            subgraphXmlFileName = Utilities.substituteVariablesIntoString(
-                    subgraphXmlFileName, variables);
+            subgraphXmlFileName =
+		Utilities.substituteVariablesIntoString(subgraphXmlFileName, variables,
+							where, check, "subgraphXmlFileName");
         }
+
         if (externalName != null) {
-            externalName = Utilities.substituteVariablesIntoString(
-                    externalName, variables);
+            externalName =
+		Utilities.substituteVariablesIntoString(externalName, variables,
+							where, check, "externalName");
         }
+
+        if (forceDoneFileName != null) {
+	    String s = Utilities.substituteVariablesIntoString(forceDoneFileName, variables,
+							where, check, "forceDoneFileName");
+            setForceDoneFileNameInstantiated(s, false);
+        }
+
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
-            String newParamValue = Utilities.substituteVariablesIntoString(
-                    paramValue, variables);
+            String newParamValue =
+		Utilities.substituteVariablesIntoString(paramValue, variables,
+							where, check, "paramValue");
             paramValues.put(paramName, newParamValue);
-            if (check) {
-                if (newParamValue.indexOf("$$") != -1)
-                    Utilities.error("In graph file "
-                            + workflowGraph.getXmlFileName()
-                            + ", parameter '"
-                            + paramName
-                            + "' in step '"
-                            + getFullName()
-                            + "' includes an unresolvable variable reference: '"
-                            + newParamValue + "'");
-            }
         }
         if (includeIf_string != null)
             includeIf_string = processIfString("includeIf", includeIf_string,
@@ -639,16 +669,14 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     private String processIfString(String type, String ifString,
             Map<String, String> variables, boolean check) {
-        String newIf = Utilities.substituteVariablesIntoString(ifString,
-                variables);
+
+	String where = xmlFileName + ", step " + getFullName() + " ";
+
+        String newIf =
+	    Utilities.substituteVariablesIntoString(ifString, variables,
+						    where, check, type);
 
         if (check) {
-            if (newIf.indexOf("$$") != -1)
-                Utilities.error("In graph file "
-                        + workflowGraph.getXmlFileName() + ", " + type
-                        + " in step '" + getFullName()
-                        + "' includes an unresolvable variable reference: '"
-                        + newIf + "'");
             if (!newIf.equals("true") && !newIf.equals("false"))
                 Utilities.error("In graph file "
                         + workflowGraph.getXmlFileName() + ", " + type
