@@ -1,5 +1,7 @@
 mood=happy
 
+# replace XXXXXXXX with your login on the cluster
+
 #clusterServer=beta.genomics.upenn.edu
 beta.genomics.upenn.edu.clusterLogin=XXXXXXXX
 beta.genomics.upenn.edu.clusterBaseDir=/gpfs/fs121/eupath/workflows
