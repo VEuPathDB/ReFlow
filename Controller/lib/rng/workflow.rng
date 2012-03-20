@@ -49,7 +49,7 @@
 	      <attribute name="groupName" />
             </optional>
             <optional>
-	      <attribute name="forceDoneFileName" />
+	      <attribute name="skipIfFile" />
             </optional>
             <optional>
               <choice>
@@ -92,7 +92,7 @@
 	      <attribute name="externalName" />
             </optional>
             <optional>
-	      <attribute name="forceDoneFileName" />
+	      <attribute name="skipIfFile" />
             </optional>
             <optional>
 	      <attribute name="groupName" />

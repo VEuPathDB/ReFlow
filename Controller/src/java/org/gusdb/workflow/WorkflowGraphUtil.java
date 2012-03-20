@@ -32,7 +32,7 @@ public class WorkflowGraphUtil {
             Map<String, Map<String, List<String>>> paramErrorsMap,
             Map<String, S> globalSteps, Map<String, String> globalConstants,
             String xmlFileName, String callerXmlFileName, 
-            String forceDoneFileName, boolean isGlobal,
+            String skipIfFileName, boolean isGlobal,
             String path, String baseName, Map<String, String> paramValuesMap,
             Map<String, String> macroValuesMap, S subgraphCallerStep,
             List<String> xmlFileNamesStack) throws FileNotFoundException,
@@ -69,7 +69,7 @@ public class WorkflowGraphUtil {
         graph.setCallingStep(subgraphCallerStep);
 
 	// must happen before instantiation.  
-	graph.setStepsForceDoneFileName(forceDoneFileName);
+	graph.setStepsSkipIfFileName(skipIfFileName);
 
         // instantiate global and local param values before expanding subgraphs
         graph.instantiateValues(baseName, callerXmlFileName, globalConstants,

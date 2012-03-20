@@ -31,7 +31,8 @@ public class RunnableWorkflowStep extends WorkflowStep {
         } else { // this step has been changed by wrapper or pilot UI. log
                  // change.
             if (!getOperativeState().equals(prevState)) {
-                steplog(getOperativeState(), "");
+		String skippedMsg = getSkipped()? "-skipped-" : "";
+                steplog(getOperativeState(), skippedMsg);
                 isInvoked = false;
             }
             if (off_line != prevOffline)
@@ -154,10 +155,12 @@ public class RunnableWorkflowStep extends WorkflowStep {
                 goToDone();
             } else {
                 String[] cmd = { "workflowstepwrap", workflow.getHomeDir(),
-                        workflow.getId().toString(), getFullName(),
-                        "" + getId(), invokerClassName,
-                        getStepDir() + "/step.err", testOnly ? "test" : "run",
-                        getUndoing() ? "1" : "0" };
+				 workflow.getId().toString(), getFullName(),
+				 "" + getId(), invokerClassName,
+				 getStepDir() + "/step.err", testOnly ? "test" : "run",
+				 getUndoing() ? "1" : "0",
+				 getSkipIfFileName()
+		};
                 List<String> cmd2 = new ArrayList<String>();
                 Collections.addAll(cmd2, cmd);
                 for (String name : paramValues.keySet()) {

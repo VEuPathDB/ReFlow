@@ -16,6 +16,7 @@ my $invokerClass = $ARGV[$i++];
 my $errFile =  $ARGV[$i++];
 my $mode = $ARGV[$i++];
 my $undo = $ARGV[$i++];
+my $forceUndoFileName = $ARGV[$i++];
 my @paramStrings = @ARGV[$i..$#ARGV];
 
 open (STDERR, ">>$errFile");
@@ -30,7 +31,7 @@ my $stepInvoker =  $invoker->getStepInvoker($invokerClass, $homeDir);
 
 $stepInvoker->setParamValues(\@paramStrings);
 
-my $status = $stepInvoker->runInWrapper($workflowId, $stepName, $stepId, $mode, $undo, $invokerClass);
+my $status = $stepInvoker->runInWrapper($workflowId, $stepName, $stepId, $mode, $undo, $invokerClass, $forceUndoFileName);
 
 exit($status);
 

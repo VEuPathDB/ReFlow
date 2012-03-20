@@ -83,7 +83,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String excludeIfNoXml_string;
     private Boolean excludeFromGraph = null;
     private String undoRoot;
-    private String forceDoneFileName;
+    private String skipIfFileName;
 
     // state from db
     protected Integer workflow_step_id = null;
@@ -91,6 +91,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     protected boolean state_handled;
     protected String undo_state;
     protected boolean undo_state_handled;
+    protected boolean skipped;
     protected boolean off_line;
     protected boolean stop_after;
     protected String process_id;
@@ -276,19 +277,19 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     // called by xml parser
-    public void setForceDoneFileName(String forceDoneFileName) {
-	if (this.forceDoneFileName != null) {
+    public void setSkipIfFile(String skipIfFileName) {
+	if (this.skipIfFileName != null) {
 	    Utilities.error("Step "
 			    + getFullName()
 			    + " in graph file "
 			    + workflowGraph.getXmlFileName()
 			    + " has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
 	}
-	this.forceDoneFileName = forceDoneFileName;
+	this.skipIfFileName = skipIfFileName;
     }
 
-    String getForceDoneFileName() {
-	return forceDoneFileName;
+    String getSkipIfFileName() {
+	return skipIfFileName;
     }
 
     public boolean getExcludeFromGraph() throws FileNotFoundException,
@@ -444,6 +445,10 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return undo_state;
     }
 
+    Boolean getSkipped() {
+        return skipped;
+    }
+
     String getOperativeState() {
         return getUndoing() ? undo_state : state;
     }
@@ -576,7 +581,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // static method
     static String getBulkSnapshotSql(int workflow_id, String workflowStepTable) {
-        return "SELECT name, workflow_step_id, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, process_id, start_time, end_time, host_machine"
+        return "SELECT name, workflow_step_id, state, state_handled, skipped, undo_state, undo_state_handled, off_line, stop_after, process_id, start_time, end_time, host_machine"
                 + " FROM "
                 + workflowStepTable
                 + " WHERE workflow_id = "
@@ -591,6 +596,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         workflow_step_id = rs.getInt("WORKFLOW_STEP_ID");
         state = rs.getString("STATE");
         state_handled = rs.getBoolean("STATE_HANDLED");
+        skipped = rs.getBoolean("SKIPPED");
         undo_state = rs.getString("UNDO_STATE");
         undo_state_handled = rs.getBoolean("UNDO_STATE_HANDLED");
         off_line = rs.getBoolean("OFF_LINE");
@@ -618,9 +624,9 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 							where, check, "externalName");
         }
 
-        if (forceDoneFileName != null) {
-	    forceDoneFileName = Utilities.substituteVariablesIntoString(forceDoneFileName, variables,
-									where, check, "forceDoneFileName");
+        if (skipIfFileName != null) {
+	    skipIfFileName = Utilities.substituteVariablesIntoString(skipIfFileName, variables,
+									where, check, "skipIfFile");
         }
 
         for (String paramName : paramValues.keySet()) {

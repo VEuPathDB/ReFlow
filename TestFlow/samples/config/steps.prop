@@ -1,7 +1,7 @@
 ReFlow/TestFlow/TestStep.wait=3
 secondStep.name=winnie
-firstStep.firstStep.name=piglet
-firstStep.secondStep.name=eeyore
+firstSubgraph.firstStep.name=piglet
+firstSubgraph.secondStep.name=eeyore
 thirdStep.name=owl
 whateverStep.mickeyStep.name=mickey
 whateverStep.mouseStep.name=mouse

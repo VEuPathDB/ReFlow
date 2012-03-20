@@ -387,6 +387,7 @@ SET
   ${undoStr}state = '$RUNNING',
   ${undoStr}state_handled = 0,
   process_id = $process_id,
+  skipped = 0,
   host_machine = '$hostname',
   start_time = SYSDATE,
   end_time = NULL
@@ -405,7 +406,7 @@ sub getStepInvoker {
 }
 
 sub runInWrapper {
-    my ($self, $workflowId, $stepName, $stepId, $mode, $undo, $invokerClass) = @_;
+    my ($self, $workflowId, $stepName, $stepId, $mode, $undo, $invokerClass, $skipIfFileName) = @_;
 
     $self->{name} = $stepName;
     $self->{id} = $stepId;
@@ -414,11 +415,19 @@ sub runInWrapper {
 
     my $undoStr = $undo? " (Undoing)" : "";
 
+    my $skip = $skipIfFileName ne 'null' && -e $skipIfFileName;
+
     $self->log("Running$undoStr Step Class $invokerClass");
+    my $skipped = 0;
     exec {
         my $testOnly = $mode eq 'test';
 	$self->log("only testing...") if $testOnly;
-	$self->run($testOnly, $undo);
+	if ($skip) {
+	  $skipped = 1;
+	  $self->log("Skipping (and setting to DONE) without running. Found skipIf file: '$skipIfFileName'\n");
+	} else {
+	  $self->run($testOnly, $undo);
+	}
 	sleep(int(rand(5))+1) if $testOnly;
     }
 
@@ -437,6 +446,7 @@ UPDATE $workflowStepTable
 SET
   ${undoStr}state = '$state',
   process_id = NULL,
+  skipped = $skipped,
   end_time = SYSDATE, $undoStr2
   ${undoStr}state_handled = 0
 WHERE name = '$stepName'

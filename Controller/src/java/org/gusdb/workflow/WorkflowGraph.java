@@ -341,10 +341,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         }
     }
 
-    void setStepsForceDoneFileName (String forceDoneFileName) {
-	if (forceDoneFileName == null) return;
+    void setStepsSkipIfFileName (String skipIfFileName) {
+	if (skipIfFileName == null) return;
         for (T step : getSteps()) {
-	    step.setForceDoneFileName(forceDoneFileName);
+	    step.setSkipIfFile(skipIfFileName);
 	}
     }
 
@@ -716,7 +716,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             WorkflowGraph<T> subgraph = WorkflowGraphUtil.createExpandedGraph(
                     stepClass, containerClass, workflow, paramErrorsMap,
                     globalSteps, globalConstants, subgraphXmlFileName,
-                    xmlFileName, subgraphCallerStep.getForceDoneFileName(),
+                    xmlFileName, subgraphCallerStep.getSkipIfFileName(),
                     subgraphCallerStep.getIsGlobal(), newPath,
                     subgraphCallerStep.getBaseName(),
                     subgraphCallerStep.getParamValues(), macroValuesMap,
