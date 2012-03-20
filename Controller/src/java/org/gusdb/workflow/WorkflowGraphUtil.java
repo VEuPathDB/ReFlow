@@ -112,7 +112,7 @@ public class WorkflowGraphUtil {
 
         WorkflowGraph<S> graph = createExpandedGraph(stepClass, containerClass,
                 workflow, paramErrorsMap, globalSteps, globalConstants,
-		workflow.getWorkflowXmlFileName(), "rootParams.prop", "", false,
+		workflow.getWorkflowXmlFileName(), "rootParams.prop", null, false,
                 "", "root", getRootGraphParamValues(workflow),
                 getGlobalPropValues(workflow), null, xmlFileNamesStack);
 

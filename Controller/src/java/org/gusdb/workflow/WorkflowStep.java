@@ -277,7 +277,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // called by xml parser
     public void setForceDoneFileName(String forceDoneFileName) {
-	System.err.println("fdfn1: " + forceDoneFileName);
 	if (this.forceDoneFileName != null) {
 	    Utilities.error("Step "
 			    + getFullName()
@@ -758,7 +757,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // TODO Java6 @Override
     public void setGroupName(String arg0) {
-	System.err.println("gr: " + arg0);
         // value is not needed in this implementation;
         // added for interface compliance only
     }

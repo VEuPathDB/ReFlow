@@ -56,7 +56,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     private Workflow<T> workflow;
     private String xmlFileName;
     private boolean isGlobal = false;
-    private String forceDoneFileName;   // a file produced at run time that, if present and containing 'true', forces all steps in graph to 'DONE'
 
     private List<T> subgraphCallerSteps = new ArrayList<T>();
     private List<T> rootSteps = new ArrayList<T>();
