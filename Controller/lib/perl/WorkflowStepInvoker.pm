@@ -323,10 +323,15 @@ nodeclass=$nodeClass
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
 
-    # if not already started, start it up (otherwise the local process was restarted)
+    # if not already started, start it up 
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
+
+	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
+	my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+	return $done && $done =~ /Done/;
+
+	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
-#	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; nohup workflowRunDistribJob $propFile $logFile $processIdFile $numNodes $time $queue $ppn $maxMemoryGigs &> /dev/null < /dev/null";
 	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; nohup liniacsubmit $numNodes $time $propFile --memoryPerNode $maxMemoryGigs --queue $queue $ppn $p > $logFile < /dev/null";
 	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
