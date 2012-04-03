@@ -615,25 +615,25 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         if (subgraphXmlFileName != null) {
             subgraphXmlFileName =
 		Utilities.substituteVariablesIntoString(subgraphXmlFileName, variables,
-							where, check, "subgraphXmlFileName");
+							where, check, "subgraphXmlFileName", null);
         }
 
         if (externalName != null) {
             externalName =
 		Utilities.substituteVariablesIntoString(externalName, variables,
-							where, check, "externalName");
+							where, check, "externalName", null);
         }
 
         if (skipIfFileName != null) {
 	    skipIfFileName = Utilities.substituteVariablesIntoString(skipIfFileName, variables,
-									where, check, "skipIfFile");
+								     where, check, "skipIfFile", null);
         }
 
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
             String newParamValue =
 		Utilities.substituteVariablesIntoString(paramValue, variables,
-							where, check, "paramValue");
+							where, check, "paramValue", paramName);
             paramValues.put(paramName, newParamValue);
         }
         if (includeIf_string != null)
@@ -668,7 +668,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
         String newIf =
 	    Utilities.substituteVariablesIntoString(ifString, variables,
-						    where, check, type);
+						    where, check, type, null);
 
         if (check) {
             if (!newIf.equals("true") && !newIf.equals("false"))

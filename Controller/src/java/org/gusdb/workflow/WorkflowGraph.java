@@ -442,7 +442,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         for (String constantName : to.keySet()) {
             String constantValue = to.get(constantName);
             String newConstantValue =
-		Utilities.substituteVariablesIntoString(constantValue, from, xmlFileName, true, "constant");
+		Utilities.substituteVariablesIntoString(constantValue, from,
+							xmlFileName, check, "constant", constantName);
             to.put(constantName, newConstantValue);
             if (updateFrom) from.put(constantName, newConstantValue);
         }

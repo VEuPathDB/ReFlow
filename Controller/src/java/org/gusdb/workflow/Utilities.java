@@ -30,7 +30,7 @@ public class Utilities {
     }
 
     public static String substituteVariablesIntoString(String string, Map<String, String> variables,
-						       String where, boolean check, String type) {
+						       String where, boolean check, String type, String name) {
         if (string.indexOf("$$") == -1) return string;
         String newString = string;
         for (String variableName : variables.keySet()) {
@@ -40,10 +40,10 @@ public class Utilities {
                     Matcher.quoteReplacement(variableValue));
         }
 	if (check) {
+	    String nm = name != null? (" '" + name + "'") : "";
 	    if (newString.indexOf("$$") != -1)
-		Utilities.error(type + " '"
-				+ string
-				+ "' in " + where
+		Utilities.error(type + nm 
+				+ " in " + where
 				+ " includes an unresolvable variable reference: '"
 				+ newString + "'");
 	}
