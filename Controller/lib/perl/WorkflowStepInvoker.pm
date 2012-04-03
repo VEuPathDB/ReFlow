@@ -185,7 +185,7 @@ sub runCmdSub {
 
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
-    my $testmode = $test? " (in test mode , so only pretending) " : "";
+    my $testmode = $test? " (in test mode, so only pretending) " : "";
     $self->log("running$testmode:  $cmd\n\n");
 
     my $output;
@@ -323,6 +323,8 @@ nodeclass=$nodeClass
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
 
+    return 1 if ($test);
+
     # if not already started, start it up 
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
 
@@ -336,8 +338,6 @@ sub runAndMonitorDistribJob {
 	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
-
-    return 1 if ($test);
 
     while (1) {
 	sleep(10);
