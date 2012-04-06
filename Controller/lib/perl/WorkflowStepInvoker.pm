@@ -205,6 +205,7 @@ produce bogus output, or if you run an UNDO it might fail.
 	$output = `echo just testing 2>> $err`;
     } else {
 	$output = `$cmd 2>> $err`;
+	chomp $output;
 	my $status = $? >> 8;
 	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status && !$allowFailure);
     }
@@ -329,8 +330,8 @@ sub runAndMonitorDistribJob {
     if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
-	my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
-	return $done && $done =~ /Done/;
+	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+	return $done =~ /Done/ if $done;
 
 	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
