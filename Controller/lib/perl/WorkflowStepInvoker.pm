@@ -331,7 +331,7 @@ sub runAndMonitorDistribJob {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
-	return $done =~ /Done/ if $done;
+	return 1 if $done =~ /Done/;
 
 	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
