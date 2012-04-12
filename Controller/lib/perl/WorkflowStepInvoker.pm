@@ -309,7 +309,6 @@ slotspernode=$slotsPerNode
 subtasksize=$taskSize
 taskclass=$taskClass
 nodeclass=$nodeClass
-restart=no
 ";
 
   $controllerPropFileContent .= "keepNodeForPostProcessing=$keepNode\n" if $keepNode;
