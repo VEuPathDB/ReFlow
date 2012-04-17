@@ -17,6 +17,8 @@ sub run {
   my $maxMemoryGigs = $self->getParamValue("maxMemoryGigs");
   my $processorsPerNode = $self->getParamValue("processorsPerNode");
 
+  $maxMemoryGigs = 10 if ($taskInputDir =~ /blastpNrdb/);  # patch
+
   $processorsPerNode = 1 unless $processorsPerNode;
 
   # get global properties
