@@ -17,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.gusdb.fgputil.EncryptionUtil;
 import org.gusdb.fgputil.xml.Name;
@@ -106,7 +106,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String externalName; // only used so steps can declare a
                                  // dependsExternal to this step
     private String dependsString;
-    protected Map<String, String> paramValues = new HashMap<String, String>();
+    protected Map<String, String> paramValues = new LinkedHashMap<String, String>();
     protected String prevState;
     protected boolean prevOffline;
     protected boolean prevStopAfter;
