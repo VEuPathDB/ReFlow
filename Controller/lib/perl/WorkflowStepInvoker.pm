@@ -228,7 +228,11 @@ sub getComputeClusterHomeDir {
     my $clusterBase = $self->getSharedConfig("$clusterServer.clusterBaseDir");
     my $projectName = $self->getWorkflowConfig('name');
     my $projectVersion = $self->getWorkflowConfig('version');
-    return "$clusterBase/$projectName/$projectVersion";
+    my $wfHomeDir = $self->getWorkflowHomeDir();
+    my @path = split(/\/+/, $wfHomeDir);
+    my $wfPathBase = $path[$#path-2];  # eg workflows/ or devWorkflows/
+
+    return "$clusterBase/$wfPathBase/$projectName/$projectVersion";
 }
 
 sub getClusterWorkflowDataDir {

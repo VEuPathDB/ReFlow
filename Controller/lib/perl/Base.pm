@@ -127,9 +127,17 @@ sub getWorkflowConfig {
 	);
 
     if (!$self->{workflowConfig}) {
-      my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
-      $self->{workflowConfig} =
-	FgpUtil::Prop::PropertySet->new($workflowConfigFile, \@properties);
+	my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
+	$self->{workflowConfig} =
+	    FgpUtil::Prop::PropertySet->new($workflowConfigFile, \@properties);
+	my @path = split(/\/+/, $wfHomeDir);
+	my $wfPathVersion = pop(@path);
+	my $wfPathProject = pop(@path);
+	my $wfName = $self->getWorkflowConfig('name');
+	my $wfVersion = $self->getWorkflowConfig('version');
+
+	$self->error("Error: in workflow.prop name=$wfName but in the workflow home dir path the project is '$wfPathProject'. These two must be equal.") unless $wfName eq $wfPathProject;
+	$self->error("Error: in workflow.prop version=$wfVersion but in the workflow home dir path the version is '$wfPathVersion'. These two must be equal.") unless $wfVersion eq $wfPathVersion;
 
     }
     return $self->{workflowConfig}->getProp($key);
