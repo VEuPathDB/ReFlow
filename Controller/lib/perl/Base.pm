@@ -130,7 +130,7 @@ sub getWorkflowConfig {
 	my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
 	$self->{workflowConfig} =
 	    FgpUtil::Prop::PropertySet->new($workflowConfigFile, \@properties);
-	my @path = split(/\/+/, $wfHomeDir);
+	my @path = split(/\/+/, $self->{homeDir});
 	my $wfPathVersion = pop(@path);
 	my $wfPathProject = pop(@path);
 	my $wfName = $self->getWorkflowConfig('name');
