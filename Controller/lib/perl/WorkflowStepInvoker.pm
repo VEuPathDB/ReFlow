@@ -425,7 +425,13 @@ sub runInWrapper {
 
     my $undoStr = $undo? " (Undoing)" : "";
 
-    my $skip = $skipIfFileName ne 'null' && -e $skipIfFileName;
+    my $skip = 0;
+    if ($skipIfFileName ne 'null') {
+      my $wfDataDir = $self->getWorkflowDataDir();
+      my $skipFile = "$wfDataDir/$skipIfFileName";
+      $skip = -e $skipFile;
+      $self->log("skipIfFile = $skipFile.  Skip = $skip");
+    }
 
     $self->log("Running$undoStr Step Class $invokerClass");
     my $skipped = 0;
