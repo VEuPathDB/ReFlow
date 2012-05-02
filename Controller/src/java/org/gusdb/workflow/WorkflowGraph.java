@@ -658,7 +658,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
     Set<String> getStepNamesInDb(String sql) throws SQLException,
             FileNotFoundException, IOException {
-        String workflowStepTable = getWorkflow().getWorkflowStepTable();
         Set<String> stepsInDb = new HashSet<String>();
 
         Statement stmt = null;
