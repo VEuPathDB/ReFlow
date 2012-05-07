@@ -559,7 +559,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     static PreparedStatement getPreparedParamValInsertStmt(Connection dbConnection,
-							int workflowId, String workflowStepParamValTable) throws SQLException {
+							String workflowStepParamValTable) throws SQLException {
         String sql = "INSERT INTO "
 	    + workflowStepParamValTable
 	    + " (workflow_step_param_value_id, workflow_step_id, workflow_step_class_name, param_name, param_value)"

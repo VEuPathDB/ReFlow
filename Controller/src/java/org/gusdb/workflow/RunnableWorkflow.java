@@ -224,10 +224,12 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                     getDbConnection(), workflow_id, workflowStepTable);
             PreparedStatement updateStepPstmt = WorkflowStep.getPreparedUpdateStmt(
                     getDbConnection(), workflow_id, workflowStepTable);
+            PreparedStatement insertStepParamValPstmt = WorkflowStep.getPreparedParamValInsertStmt(
+                    getDbConnection(), workflowStepTable);
             try {
                 for (WorkflowStep step : workflowGraph.getSortedSteps()) {
                     step.initializeStepTable(stepNamesInDb, insertStepPstmt,
-                            updateStepPstmt);
+					     updateStepPstmt, insertStepParamValPstmt);
                 }
             }
             finally {
