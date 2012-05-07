@@ -558,23 +558,46 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dbConnection.prepareStatement(sql);
     }
 
+    static PreparedStatement getPreparedParamValInsertStmt(Connection dbConnection,
+							int workflowId, String workflowStepParamValTable) throws SQLException {
+        String sql = "INSERT INTO "
+	    + workflowStepParamValTable
+	    + " (workflow_step_param_value_id, workflow_step_id, workflow_step_class_name, param_name, param_value)"
+	    + " VALUES (" + workflowStepParamValTable + "_sq.nextval, ?, ?, ?, ?)";
+        return dbConnection.prepareStatement(sql);
+    }
+
     // write this step to the db, if not already there.
     // called during workflow initialization
     void initializeStepTable(Set<String> stepNamesInDb,
-            PreparedStatement insertStmt, PreparedStatement updateStmt)
+			     PreparedStatement insertStepTableStmt, PreparedStatement updateStepTableStmt, PreparedStatement insertStepTableParamValStmt)
             throws SQLException, NoSuchAlgorithmException, Exception {
         if (stepNamesInDb.contains(getFullName())) {
-            updateStmt.setString(1, getDependsString());
-            updateStmt.setInt(2, getDepthFirstOrder());
-            updateStmt.setString(3, getFullName());
-            updateStmt.execute();
+            updateStepTableStmt.setString(1, getDependsString());
+            updateStepTableStmt.setInt(2, getDepthFirstOrder());
+            updateStepTableStmt.setString(3, getFullName());
+            updateStepTableStmt.execute();
         } else {
-            insertStmt.setString(1, getFullName());
-            insertStmt.setString(2, Workflow.READY);
-            insertStmt.setString(3, getDependsString());
-            insertStmt.setString(4, invokerClassName);
-            insertStmt.setString(5, getParamsDigest());
-            insertStmt.setInt(6, getDepthFirstOrder());
+            insertStepTableStmt.setString(1, getFullName());
+            insertStepTableStmt.setString(2, Workflow.READY);
+            insertStepTableStmt.setString(3, getDependsString());
+            insertStepTableStmt.setString(4, invokerClassName);
+            insertStepTableStmt.setString(5, getParamsDigest());
+            insertStepTableStmt.setInt(6, getDepthFirstOrder());
+            insertStepTableStmt.execute();
+	    initializeStepParamValTable(insertStepTableParamValStmt);
+        }
+    }
+
+    void initializeStepParamValTable(PreparedStatement insertStmt)
+	throws SQLException, NoSuchAlgorithmException, Exception {
+
+        for (String paramName : paramValues.keySet()) {
+            String paramValue = paramValues.get(paramName);
+            insertStmt.setInt(1, getId());
+            insertStmt.setString(2, getStepClassName());
+            insertStmt.setString(3, paramName);
+            insertStmt.setString(4, paramValue);
             insertStmt.execute();
         }
     }

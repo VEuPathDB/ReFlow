@@ -60,6 +60,7 @@ public class Workflow<T extends WorkflowStep> {
     protected String version;
     protected String workflowTable;
     protected String workflowStepTable;
+    protected String workflowStepParamValTable;
     protected String workflowStepTrackingTable;
 
     // persistent state
@@ -87,6 +88,7 @@ public class Workflow<T extends WorkflowStep> {
         version = getWorkflowConfig("version");
         workflowTable = getWorkflowConfig("workflowTable");
         workflowStepTable = getWorkflowConfig("workflowStepTable");
+        workflowStepParamValTable = getWorkflowConfig("workflowStepParamValTable");
         workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
     }
 
@@ -115,6 +117,10 @@ public class Workflow<T extends WorkflowStep> {
 
     String getWorkflowStepTable() {
         return workflowStepTable;
+    }
+
+    String getWorkflowStepParamValTable() {
+        return workflowStepParamValTable;
     }
 
     String getWorkflowStepTrackingTable() {
