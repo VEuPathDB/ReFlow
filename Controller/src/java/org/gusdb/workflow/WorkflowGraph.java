@@ -639,6 +639,13 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             Utilities.error(msg);
         }
 
+        sql = "delete from " + workflowStepParamValTable
+	    + " where workflow_step_id in (select workflow_step_id from "
+	    + workflowStepTable + " where workflow_id = "
+                + workflow.getId()
+                + " and (s.state = 'READY' or state = 'ON_DECK'))";
+        workflow.executeSqlUpdate(sql);
+
         sql = "delete from " + workflowStepTable + " where workflow_id = "
                 + workflow.getId()
                 + " and (state = 'READY' or state = 'ON_DECK')";
