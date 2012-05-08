@@ -123,6 +123,7 @@ sub getWorkflowConfig {
 	 ['workflowXmlFile', "", ""],
 	 ['workflowTable', "", ""],
 	 ['workflowStepTable', "", ""],
+	 ['workflowStepParamValueTable', "", ""],
 	 ['workflowStepTrackingTable', "", ""],
 	);
 

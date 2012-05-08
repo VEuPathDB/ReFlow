@@ -88,7 +88,7 @@ public class Workflow<T extends WorkflowStep> {
         version = getWorkflowConfig("version");
         workflowTable = getWorkflowConfig("workflowTable");
         workflowStepTable = getWorkflowConfig("workflowStepTable");
-        workflowStepParamValTable = getWorkflowConfig("workflowStepParamValTable");
+        workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
         workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
     }
 

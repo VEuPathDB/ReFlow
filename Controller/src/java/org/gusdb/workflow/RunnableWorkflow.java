@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 
 /*
  to do
@@ -225,7 +226,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             PreparedStatement updateStepPstmt = WorkflowStep.getPreparedUpdateStmt(
                     getDbConnection(), workflow_id, workflowStepTable);
             PreparedStatement insertStepParamValPstmt = WorkflowStep.getPreparedParamValInsertStmt(
-                    getDbConnection(), workflowStepTable);
+                    getDbConnection(), workflowStepParamValTable);
             try {
                 for (WorkflowStep step : workflowGraph.getSortedSteps()) {
                     step.initializeStepTable(stepNamesInDb, insertStepPstmt,
@@ -238,7 +239,19 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             }
 
             // update steps in memory, to get their new IDs
+	    // save before updating to remember which were in db previously
+            Set<String> stepNamesInDbSave = new HashSet<String>(stepNamesInDb);
             getStepsDbState();
+
+	    // update params table
+            try {
+                for (WorkflowStep step : workflowGraph.getSortedSteps()) {
+                    step.initializeStepParamValTable(stepNamesInDbSave, insertStepParamValPstmt);
+                }
+            }
+            finally {
+                insertStepParamValPstmt.close();
+            }
         }
         setInitializingStepTableFlag(false);
     }
