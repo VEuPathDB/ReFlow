@@ -614,6 +614,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             IOException {
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
+        String workflowStepParamValTable = getWorkflow().getWorkflowStepParamValTable();
         String workflowStepTrackingTable = getWorkflow().getWorkflowStepTrackingTable();
         String sql = "select s.name"
                 + " from "
