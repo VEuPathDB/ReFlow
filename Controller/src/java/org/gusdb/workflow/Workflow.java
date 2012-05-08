@@ -489,12 +489,21 @@ public class Workflow<T extends WorkflowStep> {
         }
 
         String sql = "update " + workflowTable
-                + " set undo_step_id = null where workflow_id = " + workflow_id;
+	    + " set undo_step_id = null where workflow_id = " + workflow_id;
         executeSqlUpdate(sql);
+
+        sql = "delete from " + workflowStepParamValTable
+	    + " where workflow_step_id in (select workflow_step_id from "
+	    + workflowStepTable + " where workflow_id = " + workflow_id
+	    + ")";
+        executeSqlUpdate(sql);
+        System.out.println(sql);
+
         sql = "delete from " + workflowStepTable + " where workflow_id = "
                 + workflow_id;
         executeSqlUpdate(sql);
         System.out.println(sql);
+
         sql = "delete from " + workflowTable + " where workflow_id = "
                 + workflow_id;
         executeSqlUpdate(sql);

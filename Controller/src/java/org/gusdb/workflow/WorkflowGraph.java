@@ -644,7 +644,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 	    + " where workflow_step_id in (select workflow_step_id from "
 	    + workflowStepTable + " where workflow_id = "
                 + workflow.getId()
-                + " and (s.state = 'READY' or state = 'ON_DECK'))";
+                + " and (state = 'READY' or state = 'ON_DECK'))";
         workflow.executeSqlUpdate(sql);
 
         sql = "delete from " + workflowStepTable + " where workflow_id = "

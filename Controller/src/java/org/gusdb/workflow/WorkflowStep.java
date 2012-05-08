@@ -562,8 +562,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 							String workflowStepParamValTable) throws SQLException {
         String sql = "INSERT INTO "
 	    + workflowStepParamValTable
-	    + " (workflow_step_param_value_id, workflow_step_id, workflow_step_class_name, param_name, param_value)"
-	    + " VALUES (" + workflowStepParamValTable + "_sq.nextval, ?, ?, ?, ?)";
+	    + " (workflow_step_param_value_id, workflow_step_id, param_name, param_value)"
+	    + " VALUES (" + workflowStepParamValTable + "_sq.nextval, ?, ?, ?)";
         return dbConnection.prepareStatement(sql);
     }
 
@@ -591,14 +591,15 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     void initializeStepParamValTable(Set<String> stepNamesInDb, PreparedStatement insertStmt)
 	throws SQLException, NoSuchAlgorithmException, Exception {
 
+	System.err.println("hello");
 	if (stepNamesInDb.contains(getFullName())) return;
+	System.err.println("goodbye");
 	
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
             insertStmt.setInt(1, getId());
-            insertStmt.setString(2, getStepClassName());
-            insertStmt.setString(3, paramName);
-            insertStmt.setString(4, paramValue);
+            insertStmt.setString(2, paramName);
+            insertStmt.setString(3, paramValue);
             insertStmt.execute();
         }
     }
