@@ -591,9 +591,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     void initializeStepParamValTable(Set<String> stepNamesInDb, PreparedStatement insertStmt)
 	throws SQLException, NoSuchAlgorithmException, Exception {
 
-	System.err.println("hello");
 	if (stepNamesInDb.contains(getFullName())) return;
-	System.err.println("goodbye");
 	
         for (String paramName : paramValues.keySet()) {
             String paramValue = paramValues.get(paramName);
