@@ -96,7 +96,16 @@ and undo_state = '$DONE'
 ";
 my ($stoppedCountU) = $workflow->runSqlQuery_single_array($sql);
 
-
+# if RUNNING in db, check for existing process
+my $state = $workflow->{state};
+if ($state eq $RUNNING) {
+    if ($workflow->{process_id} ) {
+	system("ps -p $processId > /dev/null");
+	$state = "STOPPED" if $? >> 8;
+    } else {
+	$state = 'UNKNOWN';
+    }
+}
 
 my $undoReport = "";
 if ($undoStepName ne 'no') {
@@ -122,7 +131,7 @@ print "
        Workflow: $workflow->{name} $workflow->{version}
        Database: $db
              ID: $workflow->{workflow_id}
-          State: $workflow->{state}
+          State: $state
            Mode: $mode
            Undo: $undoStepName
    Host machine: $workflow->{host_machine}
