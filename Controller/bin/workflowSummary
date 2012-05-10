@@ -100,7 +100,7 @@ my ($stoppedCountU) = $workflow->runSqlQuery_single_array($sql);
 my $state = $workflow->{state};
 if ($state eq $RUNNING) {
     if ($workflow->{process_id} ) {
-	system("ps -p $processId > /dev/null");
+	system("ps -p $workflow->{process_id} > /dev/null");
 	$state = "STOPPED" if $? >> 8;
     } else {
 	$state = 'UNKNOWN';
