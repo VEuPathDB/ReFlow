@@ -6,8 +6,8 @@
 
 
   <step name="firstStep"
-        stepClass="ReFlow::TestFlow::TestStep">
-      <paramValue name="msg">$$prefix$$/purple</paramValue>
+        stepClass="ReFlow::TestFlow::AnotherTestStep">
+      <paramValue name="size">$$prefix$$/purple</paramValue>
   </step>
 
   <step name="secondStep"

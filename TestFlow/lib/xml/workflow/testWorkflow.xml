@@ -19,8 +19,8 @@
   </step>
 
   <step name="thirdStep"
-        stepClass="ReFlow::TestFlow::TestStep">
-    <paramValue name="msg">$$shape$$</paramValue>
+        stepClass="ReFlow::TestFlow::AnotherTestStep">
+    <paramValue name="size">$$shape$$</paramValue>
     <depends name="firstSubgraph"/>
     <depends name="secondStep"/>
   </step>

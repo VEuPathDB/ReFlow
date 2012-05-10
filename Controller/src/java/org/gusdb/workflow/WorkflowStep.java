@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -567,6 +568,14 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dbConnection.prepareStatement(sql);
     }
 
+    static PreparedStatement getPreparedParamValStmt(Connection dbConnection,
+						     String workflowStepParamValTable) throws SQLException {
+        String sql = "select param_name,param_value from "
+	    + workflowStepParamValTable
+	    + " where workflow_step_id = ?";
+        return dbConnection.prepareStatement(sql);
+    }
+
     // write this step to the db, if not already there.
     // called during workflow initialization
     void initializeStepTable(Set<String> stepNamesInDb,
@@ -600,6 +609,75 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
             insertStmt.setString(3, paramValue);
             insertStmt.execute();
         }
+    }
+
+    Map<String, String> getDbParamValues(PreparedStatement stmt, Integer dbId) throws SQLException {
+	Map<String, String> dbParamValues = new LinkedHashMap<String, String>();
+	
+        ResultSet rs = null;
+        try {
+	    stmt.setInt(1, dbId);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                String paramName = rs.getString(1);
+                String paramValue = rs.getString(2);
+                dbParamValues.put(paramName, paramValue);
+            }
+        }
+        finally {
+            if (rs != null) rs.close();
+        }
+	return dbParamValues;
+    }
+
+    // updated provided data structures with info about changed params
+    // dbParamValuesDiff:  params that are in the db but are absent or different in memory
+    // newParamValuesDiff: params that in memory but are absent or different in memory
+    // return true if the changes are illegal
+    boolean checkChangedParams(PreparedStatement paramValuesStatement,
+			       Integer dbId,
+			       String dbParamsDigest,
+			       String dbState,
+			       Map<String, String> dbParamValuesDiff,
+			       Map<String, String> newParamValuesDiff) throws SQLException, Exception {
+
+	if (dbParamsDigest.equals(getParamsDigest())) return false;
+
+	boolean illegalChange = false;
+	boolean runningOrFailed = dbState.equals(Workflow.RUNNING) || dbState.equals(Workflow.FAILED);
+	boolean done = dbState.equals(Workflow.DONE);
+
+	Map<String, String> dbParamValues = getDbParamValues(paramValuesStatement, dbId);
+
+	// find new params that are different
+        for (String paramName : paramValues.keySet()) {
+	    String newValue = paramValues.get(paramName);
+
+	    // new in memory - illegal if failed or running
+	    if (!dbParamValues.containsKey(paramName)) {
+		newParamValuesDiff.put(paramName, newValue);
+		if (runningOrFailed) illegalChange = true;
+	    } 
+
+	    // different in memory and db - illegal if failed, running or done
+	    else if (!newValue.equals(dbParamValues.get(paramName))) {
+		newParamValuesDiff.put(paramName, newValue);
+		if (runningOrFailed || done) illegalChange = true;
+	    }
+	}
+
+	// find db params that are different
+        for (String paramName : dbParamValues.keySet()) {
+	    String dbValue = dbParamValues.get(paramName);
+
+	    // deleted in memory or different - illegal if failed, running or done
+	    if (!paramValues.containsKey(paramName) || !dbValue.equals(paramValues.get(paramName))) {
+		dbParamValuesDiff.put(paramName, dbValue);
+		if (runningOrFailed || done) illegalChange = true;
+	    } 
+	}
+
+	return illegalChange;
     }
 
     // static method

@@ -506,7 +506,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         if (stepTableEmpty) return false;
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
-        String sql = "select name, params_digest, depends_string, step_class, state"
+        String sql = "select name, params_digest, depends_string, step_class, state, workflow_step_id"
                 + " from "
                 + workflowStepTable
                 + " where workflow_id = "
@@ -514,6 +514,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
         Statement stmt = null;
         ResultSet rs = null;
+        PreparedStatement paramValuesStmt = null;
 
         StringBuffer diffs = new StringBuffer();
         StringBuffer errors = new StringBuffer();
@@ -522,6 +523,10 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
         try {
             stmt = workflow.getDbConnection().createStatement();
+	    paramValuesStmt =
+		WorkflowStep.getPreparedParamValStmt(getWorkflow().getDbConnection(),
+						     getWorkflow().getWorkflowStepParamValTable());
+	    
             rs = stmt.executeQuery(sql);
             int count = 0;
             while (rs.next()) {
@@ -531,6 +536,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
                 String dbDependsString = rs.getString(3);
                 String dbClassName = rs.getString(4);
                 String dbState = rs.getString(5);
+                Integer dbId = rs.getInt(6);
 
                 T step = stepsByName.get(dbName);
 
@@ -546,11 +552,9 @@ public class WorkflowGraph<T extends WorkflowStep> extends
                 } else {
                     notInDb.remove(dbName);
 
-                    // update diffs and errors depending on mismatch found, if
-                    // any
-                    checkStepMismatch(step, dbName, dbParamsDigest,
-                            dbDependsString, dbClassName, dbState, diffs,
-                            errors);
+                    // update diffs and errors depending on mismatch found, if any
+                    checkStepMismatch(step, dbId, dbName, dbParamsDigest, dbDependsString, dbClassName,
+				      dbState, diffs, errors, paramValuesStmt);
                 }
             }
 
@@ -569,44 +573,79 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         finally {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
+            if (paramValuesStmt != null) stmt.close();
         }
     }
 
-    void checkStepMismatch(T step, String dbName, String dbParamsDigest,
+    // allow ready steps to add new
+    void checkStepMismatch(T step, Integer dbId, String dbName, String dbParamsDigest,
             String dbDependsString, String dbClassName, String dbState,
-            StringBuffer diffs, StringBuffer errors)
-            throws NoSuchAlgorithmException, Exception {
+			   StringBuffer diffs, StringBuffer errors, PreparedStatement paramValuesStmt)
+	throws NoSuchAlgorithmException, SQLException, Exception {
 
         boolean stepClassMatch = (dbClassName == null && step.getStepClassName() == null)
-                || ((dbClassName != null && step.getStepClassName() != null) && step.getStepClassName().equals(
-                        dbClassName));
+                || ((dbClassName != null && step.getStepClassName() != null)
+		    && step.getStepClassName().equals(dbClassName));
+
+	boolean runningOrFailed = dbState.equals(Workflow.RUNNING) || dbState.equals(Workflow.FAILED);
+	boolean done = dbState.equals(Workflow.DONE);
+
 
         // don't require that the param digest of a subgraph call agrees.
         // this way steps can be grafted into a graph, and new params can
         // be passed to them. as long as existing steps have matching
         // param digests, all is ok
-        boolean mismatch = (!step.getIsSubgraphCall() && !step.getParamsDigest().equals(
-                dbParamsDigest))
-                || !stepClassMatch
-                || !step.getDependsString().equals(dbDependsString);
+        boolean mismatch =
+	    (!step.getIsSubgraphCall() && !dbParamsDigest.equals(step.getParamsDigest()))
+	    || !stepClassMatch
+	    || !step.getDependsString().equals(dbDependsString)
+	    || !step.getFullName().equals(dbName);
+	     
+	if (!mismatch) return;
 
-        if (mismatch) {
-            String s = "Step '" + dbName + "' has changed in XML file "
-                    + step.getSourceXmlFileName();
-            String diff = "old name:              " + dbName + nl
-                    + "old params digest:     " + dbParamsDigest + nl
-                    + "old depends string:    " + dbDependsString + nl
-                    + "old class name:        " + dbClassName + nl + nl
-                    + "new name:              " + step.getFullName() + nl
-                    + "new params digest:     " + step.getParamsDigest() + nl
-                    + "new depends string:    " + step.getDependsString() + nl
-                    + "new class name:        " + step.getStepClassName();
-            diffs.append(s + diff);
-            if (!dbState.equals(Workflow.READY)
-                    && !dbState.equals(Workflow.ON_DECK))
-                errors.append(s + " while in the state '" + dbState + "'" + nl
-                        + diff + nl + nl);
-        }
+	String s = "Step '" + dbName + "' has changed in XML file " + step.getSourceXmlFileName();
+	StringBuffer diff = new StringBuffer();
+
+	boolean illegalChange = false;
+	    	
+	if (!dbName.equals(step.getFullName())) {
+	    diff.append("  old name:            " + dbName + nl);
+	    diff.append("  new name:            " + step.getFullName() + nl);
+	    illegalChange |= (runningOrFailed || done);
+	}
+
+	if (!stepClassMatch) {
+	    diff.append("  old class name:      " + dbClassName + nl);
+	    diff.append("  new class name:      " + step.getStepClassName() + nl);
+	    illegalChange |= (runningOrFailed || done);
+	}
+
+	if (!dbDependsString.equals(step.getDependsString())) {
+	    diff.append("  old depends string:  " + dbDependsString + nl);
+	    diff.append("  new depends string:  " + step.getDependsString() + nl);
+	    illegalChange |= (runningOrFailed || done);
+	}
+
+	if (!dbParamsDigest.equals(step.getParamsDigest())) {
+	    diff.append("  old params digest:   " + dbParamsDigest + nl);
+	    diff.append("  new params digest:   " + step.getParamsDigest() + nl);
+	    Map<String,String> dbParamValuesDiff = new LinkedHashMap<String, String>();
+	    Map<String,String> newParamValuesDiff = new LinkedHashMap<String, String>();
+	    illegalChange |= step.checkChangedParams(paramValuesStmt, dbId, dbParamsDigest, dbState, dbParamValuesDiff, newParamValuesDiff);
+	    diff.append("  unmatched old params:" + nl);
+	    for (String paramName : dbParamValuesDiff.keySet()) {
+		diff.append("    " + paramName + ": " + dbParamValuesDiff.get(paramName) + nl);
+	    }
+	    diff.append("unmatched new params:" + nl);
+	    for (String paramName : newParamValuesDiff.keySet()) {
+		diff.append("  " + paramName + ": " + newParamValuesDiff.get(paramName) + nl);
+	    }
+	}
+
+	diffs.append(s + diff);
+
+	if (illegalChange)
+	    errors.append(s + " while in the state '" + dbState + "'" + nl + diff + nl + nl);
     }
 
     // remove from the db all READY or ON_DECK steps
