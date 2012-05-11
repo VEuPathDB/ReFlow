@@ -621,6 +621,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
             while (rs.next()) {
                 String paramName = rs.getString(1);
                 String paramValue = rs.getString(2);
+		if (paramValue == null) paramValue = "";
                 dbParamValues.put(paramName, paramValue);
             }
         }
@@ -660,14 +661,9 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	    } 
 
 	    // different in memory and db - illegal if failed, running or done
-	    else {
-		String dbValue = dbParamValues.get(paramName);
-		if ((newValue == null && dbValue != null)
-		    || (newValue != null && dbValue == null)
-		    || !newValue.equals(dbValue)) {
-		    newParamValuesDiff.put(paramName, newValue);
-		    if (runningOrFailed || done) illegalChange = true;
-		}
+	    else if (!newValue.equals(dbParamValues.get(paramName))) {
+		newParamValuesDiff.put(paramName, newValue);
+		if (runningOrFailed || done) illegalChange = true;
 	    }
 	}
 
@@ -675,21 +671,10 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         for (String dbParamName : dbParamValues.keySet()) {
 	    String dbValue = dbParamValues.get(dbParamName);
 
-	    // deleted in memory - illegal if failed, running or done
-	    if (!paramValues.containsKey(dbParamName)) {
+	    // deleted in memory or different - illegal if failed, running or done
+	    if (!paramValues.containsKey(dbParamName) || !dbValue.equals(paramValues.get(dbParamName))) {
 		dbParamValuesDiff.put(dbParamName, dbValue);
 		if (runningOrFailed || done) illegalChange = true;
-	    } 
-
-	    // different - illegal if failed, running or done
-	    else {
-		String newValue = paramValues.get(dbParamName);
-		if ((newValue == null && dbValue != null)
-		    || (newValue != null && dbValue == null)
-		    || !dbValue.equals(newValue)) {
-		    dbParamValuesDiff.put(dbParamName, dbValue);
-		    if (runningOrFailed || done) illegalChange = true;
-		}
 	    } 
 	}
 
