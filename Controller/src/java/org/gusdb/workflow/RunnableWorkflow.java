@@ -269,22 +269,17 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         // if not already running undo
         if (undo_step_id == null) {
 
-            // confirm that no steps are running
+            // confirm that no steps in the undo graph are running
             handleStepChanges(testOnly);
-            List<RunnableWorkflowStep> runningSteps = new ArrayList<RunnableWorkflowStep>();
-            for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
-                if (step.getState() != null && step.getState().equals(RUNNING))
-                    runningSteps.add(step);
-            }
-            if (runningSteps.size() != 0) {
-                String errStr = null;
-                for (RunnableWorkflowStep step : runningSteps) {
-                    errStr += step.getFullName() + nl;
-                }
-                // if (errStr != null)
-                // error("The following steps are running.  Can't start an undo while steps are running.  Wait for all steps to complete (or kill them), and try to run undo again"
-                // + nl +errStr);
-            }
+	    WorkflowStep undoRootStep = stepsByName.get(undoStepName);
+	    Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
+	    undoDescendants.add(undoRootStep);
+	    String errStr = null;
+            for (RunnableWorkflowStep step : undoDescendants) 
+                if (step.getState() != null && step.getState().equals(RUNNING)) errStr += step.getFullName() + nl;
+	    if (errStr != null)
+		error("The following steps are running.  Can't start an undo while steps are running.  Wait for all steps to complete (or kill them), and try to run undo again"
+		      + nl + errStr);
 
             // find the step based on its name, and set undo_step_id
             for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
