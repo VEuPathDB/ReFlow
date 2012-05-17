@@ -235,10 +235,14 @@ sub getComputeClusterHomeDir {
 
     my @clusterPath = split(/\/+/, $clusterBaseDir);
     my @homeDirPath = split(/\/+/, $wfHomeDir);
-    my $wfPathBase = $path[$#path-2];  # eg workflows/ or devWorkflows/
+    my $wfPathBase = $homeDirPath[$#homeDirPath-2];  # eg workflows/ or devWorkflows/
 
 
-    $self->error("In config/stepsShared.prop, property $clusterServer.clusterBaseDir should not include /$clusterPath[$#clusterPath].  This part of the path is added automatically based on $wfPathBase in the workflow home dir path $wfHomeDir") if $clusterPath[$#clusterPath] =~ /orkflows$/;  
+    if ($clusterPath[$#clusterPath] =~ /orkflows$/) {
+      pop(@clusterPath);
+      my $tmp = join("/",@clusterPath);
+      $self->error("In config/stepsShared.prop, property $clusterServer.clusterBaseDir should be '$tmp' not '$clusterBaseDir'.  The last part of the path is added automatically based on '/$wfPathBase' being in the workflow home dir path $wfHomeDir");
+    }
 
     return "$clusterBaseDir/$wfPathBase/$projectName/$projectVersion";
 }
