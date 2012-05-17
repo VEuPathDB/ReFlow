@@ -27,6 +27,8 @@ BEGIN {
 sub new {
   my ($class, $homeDir, $dbName) = @_;
 
+  $homeDir =~ s|/+$||;  # remove trailing /
+
   die "Workflow home dir '$homeDir' does not exist\n" unless -d $homeDir;
 
   my $login = '';
