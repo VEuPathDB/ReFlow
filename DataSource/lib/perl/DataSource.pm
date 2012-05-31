@@ -64,6 +64,13 @@ sub getVersion {
     return $self->{version};
 }
 
+# don't resolve TODAY into a date
+sub getRawVersion {
+    my ($self) = @_;
+
+    return $self->{version};
+}
+
 sub getParentResource {
     my ($self) = @_;
 
@@ -221,7 +228,7 @@ sub getGetAndUnpackOutputs {
 }
 
 sub getPluginArgs {
-    my ($self) = @_;
+    my ($self, $versionFromDb) = @_; # versionFromDb is optional
 
     my $parent = "";
     my $name = $self->getName();
@@ -241,6 +248,10 @@ sub getPluginArgs {
       $name = $self->getParentResource()->getName();
       $version = $self->getParentResource()->getVersion();
     }
+
+    # if the caller is forcing us to use the version from the db.  eg, if the version or parent version was TODAY
+    $version = $versionFromDb if $versionFromDb;
+
     $pluginArgs =~ s/\%${parent}RESOURCE_NAME\%/$name/g;
     $pluginArgs =~ s/\%${parent}RESOURCE_VERSION\%/$version/g;
     $pluginArgs =~ s/\n+/ /g;
