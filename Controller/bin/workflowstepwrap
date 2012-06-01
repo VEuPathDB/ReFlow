@@ -21,6 +21,7 @@ my @paramStrings = @ARGV[$i..$#ARGV];
 
 open (STDERR, ">>$errFile");
 print STDERR "\n\n================== " . localtime() . " ====================\n";
+print STDERR "step: $stepName\n";
 print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
 
 my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
