@@ -417,7 +417,7 @@ WHERE name = '$stepName'
 AND workflow_id = $workflowId
 ";
 
-    $self->runSql($sql);
+    $self->_runSql($sql);
 }
 
 sub getStepInvoker {
@@ -481,7 +481,7 @@ WHERE name = '$stepName'
 AND workflow_id = $workflowId
 AND ${undoStr}state = '$RUNNING'
 ";
-    $self->runSql($sql);
+    $self->_runSql($sql);
 
     $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
 }

@@ -25,7 +25,7 @@ where name = '$self->{name}'
 and version = '$self->{version}'
 ";
     ($self->{workflow_id}, $self->{state}, $self->{host_machine},$self->{process_id},$self->{initializing_step_table}, $self->{undo_step_id},$self->{test_mode})
-      = $self->runSqlQuery_single_array($sql);
+      = $self->_runSqlQuery_single_array($sql);
     $self->error("workflow '$self->{name}' version '$self->{version}' not in database")
       unless $self->{workflow_id};
   }

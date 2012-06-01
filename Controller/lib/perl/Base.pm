@@ -75,7 +75,8 @@ sub getDbh {
     return $self->{dbh};
 }
 
-sub runSql {
+# only to be used to run queries against workflow tables
+sub _runSql {
     my ($self,$sql) = @_;
     my $dbh = $self->getDbh();
     my $stmt = $dbh->prepare("$sql") or $self->error(DBI::errstr);
@@ -83,7 +84,8 @@ sub runSql {
     return $stmt;
 }
 
-sub runSqlQuery_single_array {
+# only to be used to run queries against workflow tables
+sub _runSqlQuery_single_array {
     my ($self, $sql) = @_;
     my $stmt = $self->getDbh()->prepare($sql);
     $stmt->execute();

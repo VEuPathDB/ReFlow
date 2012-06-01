@@ -175,12 +175,12 @@ sub pilotLog {
 
 sub runSql {
     my ($self,$sql) = @_;
-    $self->{workflow}->runSql($sql);
+    $self->{workflow}->_runSql($sql);
 }
 
 sub runSqlQuery_single_array {
     my ($self,$sql) = @_;
-    return $self->{workflow}->runSqlQuery_single_array($sql);
+    return $self->{workflow}->_runSqlQuery_single_array($sql);
 }
 
 sub toString {
