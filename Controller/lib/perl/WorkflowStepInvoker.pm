@@ -170,6 +170,20 @@ sub getDataSource {
   return $self->{dataSources}->getDataSource($dataSourceName);
 }
 
+sub runSqlFetchOneRow {
+    my ($self, $test, $sql) = @_;
+
+    my $className = ref($self);
+    if ($test != 1 && $test != 0) {
+	$self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
+    }
+    my $output = ("just", "testing");
+    my $testmode = $test? " (in test mode, so only pretending) " : "";
+    $self->log("running$testmode:  $sql\n\n");
+    $output = $self->_runSqlQuery_single_array($sql) unless $test;
+    return $output;
+}
+
 sub runCmd {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
     return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0);
@@ -182,6 +196,11 @@ sub runCmdNoError {
 
 sub runCmdSub {
     my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure) = @_;
+
+    my $className = ref($self);
+    if ($test != 1 && $test != 0) {
+	$self->error("Illegal 'test' arg '$test' passed to runCmd() in step class '$className'");
+    }
 
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
