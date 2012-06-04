@@ -88,7 +88,7 @@ sub _runSql {
 sub _runSqlQuery_single_array {
     my ($self, $sql) = @_;
     my $stmt = $self->getDbh()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute() or $self->error(DBI::errstr);
     return $stmt->fetchrow_array();
 }
 
