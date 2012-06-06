@@ -177,11 +177,11 @@ sub runSqlFetchOneRow {
     if ($test != 1 && $test != 0) {
 	$self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
     }
-    my $output = ("just", "testing");
+    my @output = ("just", "testing");
     my $testmode = $test? " (in test mode, so only pretending) " : "";
     $self->log("running$testmode:  $sql\n\n");
-    $output = $self->_runSqlQuery_single_array($sql) unless $test;
-    return $output;
+    @output = $self->_runSqlQuery_single_array($sql) unless $test;
+    return @output;
 }
 
 sub runCmd {
