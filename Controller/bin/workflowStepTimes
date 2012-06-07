@@ -30,7 +30,7 @@ and end_time is not null
 order by hours desc
 ";
 
-my $stmt = $workflow->runSql($sql);
+my $stmt = $workflow->_runSql($sql);
 while (my ($name, $hours) = $stmt->fetchrow_array()) {
     print "$hours\t$name\n";
 }
