@@ -4,38 +4,47 @@ use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 
 use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowHandle;
 
 usage() unless scalar(@ARGV) == 4 || scalar(@ARGV) == 5;
 
 my ($dontcare, $homeDir, $stepName, $state, $undo) = @ARGV;
 usage() unless (($state eq 'DONE' || $state eq 'FAILED') && (!$undo || $undo eq '-u') );
 
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
+$workflow->getDbState();
+my $workflowStepTable = $workflow->getWorkflowConfig('workflowStepTable');
+
 my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
-$invoker->getDbState();
 
-my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
-my $sql = "select name, process_id from $workflowStepTable where workflow_id = $invoker->{workflow_id} and name = '$stepName'";
-my ($stepName, $processId) = $invoker->runSqlFetchOneRow(0, $sql);
-die "Can't find step named '$stepName' in database" unless $stepName;
+my $sql = "select name, process_id from $workflowStepTable where workflow_id = $workflow->{workflow_id} and name = '$stepName'";
+my ($justchecking, $processId) = $invoker->runSqlFetchOneRow(0, $sql);
+die "Error: Can't find step named '$stepName' in database.\n" unless $justchecking;
 
-system("ps -p $processId > /dev/null");
-die "Error: Step '$stepName' is running." unless $? >> 8;
+if ($processId) {
+  system("ps -p $processId > /dev/null");
+  die "Error: Step '$stepName' is running." unless $? >> 8;
+}
 
-$invoker->setStepDbState($state, $invoker->{workflow_id}, $stepName, 0, $undo, "'RUNNING', 'FAILED'");
+$invoker->setStepDbState($state, $workflow->{workflow_id}, $stepName, 0, $undo, "'RUNNING', 'FAILED'");
+
+print STDERR "Step $stepName set to $state\n";
 
 sub usage {
     print "
-Use this command to force a step's state (whether running forward or undo).  Only use this command
-if you know what you are doing, as improper use can introduce errors into your workflow.
+Use this command to force a step's state (whether running forward or undo).
+Only use this command if you know what you are doing, as improper use can introduce
+ errors into your workflow.
 
 Rules:
   1) the step must not be running.
   2) if the controller is stopped, you can change a RUNNING step to DONE or FAILED.
   3) if the controller is running or stopped you can change a FAILED step to DONE.
 
-If you change a step to DONE you should have positive evidence that it has really done all its work.
+If you change a step to DONE you should have positive evidence that it has really
+done all its work.
 
-usage: workflowForceStepState -h workflow_home_dir stepname [DONE|FAILED] stepclass <-u>
+usage: workflowForceStepState -h workflow_home_dir stepname [DONE|FAILED] <-u>
 
 Use the -u flag if in undo mode.
 

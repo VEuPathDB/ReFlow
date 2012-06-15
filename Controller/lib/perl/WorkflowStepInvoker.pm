@@ -505,7 +505,7 @@ SET
   ${undoStr}state_handled = 0
 WHERE name = '$stepName'
 AND workflow_id = $workflowId
-AND ${undoStr}state in ($allowedCurrentStates);
+AND ${undoStr}state in ($allowedCurrentStates)
 ";
     $self->_runSql($sql);
 }
