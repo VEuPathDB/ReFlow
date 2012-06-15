@@ -483,8 +483,15 @@ sub runInWrapper {
 	$state = $FAILED;
     }
 
+    $self->setStepDbState($state, $workflowId, $stepName, $skipped, "'$RUNNING'");
 
-    $undoStr = $undo? "undo_" : "";
+    $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
+}
+
+sub setStepDbState {
+    my ($self, $state, $workflowId, $stepName, $skipped, $undo, $allowedCurrentStates) = @_;
+
+    my $undoStr = $undo? "undo_" : "";
 
     my $undoStr2 = ($undo && $state eq $DONE)? "\nstate = '$READY'," : "";
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
@@ -498,11 +505,9 @@ SET
   ${undoStr}state_handled = 0
 WHERE name = '$stepName'
 AND workflow_id = $workflowId
-AND ${undoStr}state = '$RUNNING'
+AND ${undoStr}state in ($allowedCurrentStates);
 ";
     $self->_runSql($sql);
-
-    $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
 }
 
 sub maybeSendAlert {
