@@ -101,6 +101,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             error("Failed making backups: " + "workflowMakeBackups -h "
                     + getHomeDir());
         process.destroy();
+	log("Making backup");
+
     }
 
     // write the workflow and steps to the db
