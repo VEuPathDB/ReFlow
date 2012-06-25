@@ -483,7 +483,7 @@ sub runInWrapper {
 	$state = $FAILED;
     }
 
-    $self->setStepDbState($state, $workflowId, $stepName, $skipped, "'$RUNNING'");
+    $self->setStepDbState($state, $workflowId, $stepName, $skipped, $undo, "'$RUNNING'");
 
     $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
 }
