@@ -15,6 +15,9 @@ my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 $workflow->getDbState();
 my $workflowStepTable = $workflow->getWorkflowConfig('workflowStepTable');
 
+die "Error:  workflow is running in undo mode.  Please use the -u argument.\n" if $workflow->{undo_step_id} && !$undo;
+die "Error:  workflow is not running in undo mode.  Please do not use the -u argument.\n" if !$workflow->{undo_step_id} && $undo;
+
 my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
 
 my $sql = "select name, process_id from $workflowStepTable where workflow_id = $workflow->{workflow_id} and name = '$stepName'";
@@ -32,9 +35,10 @@ print STDERR "Step $stepName set to $state\n";
 
 sub usage {
     print "
-Use this command to force a step's state (whether running forward or undo).
-Only use this command if you know what you are doing, as improper use can introduce
- errors into your workflow.
+Use this command to force a step's state to DONE or FAILED.
+
+Caution: only use this command if you know what you are doing. Improper use
+can introduce errors into your workflow.
 
 Rules:
   1) the step must not be running.

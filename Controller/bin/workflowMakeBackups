@@ -16,13 +16,18 @@ if (! -e "$backupDir/README") {
   open(F, ">$backupDir/README");
   print F "
 This directory contains backups automatically created each time the workflow
-runs.  The *_config.tar.gz files are a backup of workflow_home_dir/config.  The
-*_graph.tar.gz files are a backup of the graph xml files in \$GUS_HOME/lib/xml/workflow.
+runs.  Each backup directory contains:
+ - config.tar.gz       backup of workflow_home_dir/config.
+ - workflow.tar.gz     backup of the graph xml files in \$GUS_HOME/lib/xml/workflow.
+ - datasources.tar.gz  backup of the datasource xml files in \$GUS_HOME/lib/xml/datasources.
 
 These backups become very useful if you are attempting to upgrade the graph or
 config and are getting errors that the graph has changed illegally.  In that
 case, restore from these backups, UNDO the steps that are causing difficulty,
 and unrestore.
+
+Use the workflowRestoreBackup command to do a restore.
+
 ";
   close(F);
 }
@@ -32,26 +37,34 @@ $year += 1900;
 $mon += 1;
 my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
 
+$backupDir = "$backupDir/$time";
+mkdir("$backupDir");
 
 # backup home_dir/config and $GUS_HOME/lib/xml/workflow
-backup('graph', "$ENV{GUS_HOME}/lib/xml/workflow", $time);
-backup('config', "$workflow_home/config", $time);
-
+backup('workflow', "$ENV{GUS_HOME}/lib/xml/workflow");
+backup('config', "$workflow_home/config");
+backup('datasources', "$ENV{GUS_HOME}/lib/xml/datasources");
+print STDERR "Backup done.";
 
 
 sub backup {
-  my ($targetSuffix, $source, $time) = @_;
+  my ($target, $source) = @_;
 
-  my $basename = "${time}_$targetSuffix";
-  my $cmd = "cp -r $source $backupDir/$basename";
-  system($cmd) and die "Failed running $cmd:\n $?";
+  &runCmd("cp -rp $source $backupDir/$target");
   chdir("$backupDir");
-  my $cmd = "tar czfh $basename.tar.gz $basename";
-  system($cmd) and die "Failed running $cmd:\n $?";
-  my $cmd = "rm -r $basename";
-  system($cmd) and die "Failed running $cmd:\n $?";
-
+  &runCmd("rm -r $backupDir/$target/.html") if -e "$backupDir/$target/.html";
+  &runCmd("tar czfh $target.tar.gz $target");
+  &runCmd("rm -r $target");
 }
+
+sub runCmd {
+  my ($cmd) = @_;
+
+  print STDERR "$cmd\n";
+  system($cmd) and die "Failed running $cmd:\n $?";
+}
+
+
 
 sub usage {
   print STDERR "
