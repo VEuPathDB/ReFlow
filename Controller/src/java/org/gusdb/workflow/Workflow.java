@@ -413,7 +413,7 @@ public class Workflow<T extends WorkflowStep> {
                 Integer ws_id = rs.getInt("workflow_step_id");
                 String stat = rs.getString(state_str);
                 Date endTime = rs.getTimestamp("end_time");
-                float spent = rs.getFloat("hours");
+                double spent = rs.getFloat("hours");
 
                 if (oneColumnOutput) System.out.println(nm);
                 else {
@@ -421,7 +421,7 @@ public class Workflow<T extends WorkflowStep> {
                     formatter = new Formatter(sb);
                     if (spent != -1) {
                         int hour = (int) Math.floor(spent);
-                        int minute = Math.round((spent - hour) * 60);
+                        int minute = (int)Math.round((spent - hour) * 60);
                         if (endTime != null) {
                             formatter.format("%6$tm/%6$td/%6$ty %6$tH:%6$tM:%6$tS %1$03d:%2$02d %3$-8s %4$-12s  %5$s",
                                 hour, minute, stat, ws_id, nm, endTime);

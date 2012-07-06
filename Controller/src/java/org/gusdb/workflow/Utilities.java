@@ -109,7 +109,7 @@ public class Utilities {
         return value;
     }
 
-    private static void initializeGusProps() throws FileNotFoundException,
+    private synchronized static void initializeGusProps() throws FileNotFoundException,
             IOException {
         if (gusProps != null) return;
 
