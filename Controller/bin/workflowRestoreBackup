@@ -1,0 +1,89 @@
+#!/usr/bin/perl
+
+use strict;
+
+my ($dontcare, $workflow_home, $backupname) = @ARGV;
+
+usage() unless $workflow_home && $backupname;
+
+my $backupDir = "$workflow_home/backups/$backupname";
+
+die "workflow home dir '$workflow_home' does not exist" unless -d $workflow_home;
+
+die "workflow backup dir '$backupDir' does not exist" unless -d $backupDir;
+
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year += 1900;
+$mon += 1;
+my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$sec);
+
+chdir("$backupDir");
+&runCmd("tar -xzf workflow.tar.gz") if -e "workflow.tar.gz";
+&runCmd("tar -xzf datasources.tar.gz") if -e "datasources.tar.gz";
+&runCmd("tar -xzf config.tar.gz") if -e "config.tar.gz";
+&runCmd("mv $ENV{GUS_HOME}/lib/xml/workflow $ENV{GUS_HOME}/lib/xml/workflow.sv.$time");
+&runCmd("mv $ENV{GUS_HOME}/lib/xml/datasources $ENV{GUS_HOME}/lib/xml/datasources.sv.$time");
+&runCmd("cp -rp workflow $ENV{GUS_HOME}/lib/xml/workflow");
+&runCmd("cp -rp datasources $ENV{GUS_HOME}/lib/xml/datasources");
+print STDERR "
+Restore of \$GUS_HOME/lib/xml/workflow and \$GUS_HOMElib/xml/datasources is done.
+
+\$GUS_HOME/lib/xml/workflow was saved in \$GUS_HOME/lib/xml/workflow.sv.$time
+\$GUS_HOME/lib/xml/datasources was saved in \$GUS_HOME/lib/xml/datasources.sv.$time
+
+When you are done running your workflow using this restore, you have two options for
+reverting to the prior state:
+
+Option 1) generate and bld.   The only downside to this is that if you had a
+          lib/xml/workflow/.html directory (for graph visualization) it will be lost.
+
+Option 2) use the .sv.$time dirs to revert lib/xml/datasource and lib/xml/workflow.
+          This is less convenient but will preserve the lib/xml/workflow/.html dir
+          if you had one.
+
+Once all is well, you might want to delete the .sv.$time dirs to save disk space.
+
+";
+
+sub runCmd {
+  my ($cmd) = @_;
+
+  print STDERR "$cmd\n";
+  system($cmd) and die "Failed running $cmd:\n $?";
+}
+
+sub usage {
+  print STDERR "
+
+Restore from a workflow backup.
+
+Usage:  workflowRestoreBackup -h workflow_home_dir backup_dir_name
+
+Where:
+  backup_dir_name: the name of the backup dir in workflow_home_dir/backups to restore from
+
+ Restores:
+  - \$GUS_HOME/lib/xml/workflow
+  - \$GUS_HOME/lib/xml/datasources
+
+Makes a save of the directories it overwrites with suffix .sv.xxxxx where xxxxx
+is the current time.
+
+To choose the correct backup:
+  - note that the controller makes a backup each time you start it up.
+  - look in the controller log for the start time of controller run that had
+    the version you want.
+  - look for a backup with that time stamp.
+
+
+To return to the latest code when done with the backup generate and bld (and optionally remove the .sv.xxxxx file).
+
+(The backup directory also includes workflow_home/config, but this is not
+restored automatically.  You can restore that manually if needed).
+
+
+";
+
+exit(1);
+}
