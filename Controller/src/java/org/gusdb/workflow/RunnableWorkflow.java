@@ -190,10 +190,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         else {
             if (stepTableEmpty) {
-                if (undoStepName != null) {
-		    log(diffs);
-                    error("Workflow has never run.  Undo not allowed.  See controller log.");
-		}
+                if (undoStepName != null) 
+                    error("Workflow has never run.  Undo not allowed.");
             } else {
                 // can't allow changes to graph if already in undo mode, because
                 // it
@@ -203,8 +201,10 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                 // converted
                 // (ie, we are about to set undo_step_id in the db, but its not
                 // set yet)
-                if (undo_step_id != null)
-                    error("Workflow graph in XML has changed.  Not allowed while in UNDO mode.");
+	       if (undo_step_id != null) {
+		    log(diffs);
+                    error("Workflow graph in XML has changed.  Not allowed while in UNDO mode.  See controller log");
+	       }
 
                 if (checkForRunningOrFailedSteps())
                     error("Workflow graph in XML has changed while there are steps in state RUNNING or FAILED."
