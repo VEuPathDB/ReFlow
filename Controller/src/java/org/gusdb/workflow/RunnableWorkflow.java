@@ -186,7 +186,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         // if so, no need to update db. otherwise, log the differences.
         // throw an error if any DONE or FAILED steps are changed
 	String diffs = workflowGraph.inDbExactly(stepTableEmpty);
-        if (diffs.length == 0) log("Graph in XML matches graph in database.  No need to update database.");
+        if (diffs.length() == 0) log("Graph in XML matches graph in database.  No need to update database.");
 
         else {
             if (stepTableEmpty) {
