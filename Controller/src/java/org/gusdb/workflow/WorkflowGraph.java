@@ -499,11 +499,11 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     // //////////////////////////////////////////////////////////////////////
 
     // check if the in-memory graph matches that in the db exactly
-    boolean inDbExactly(boolean stepTableEmpty) throws SQLException,
+    String inDbExactly(boolean stepTableEmpty) throws SQLException,
             FileNotFoundException, NoSuchAlgorithmException, IOException,
             Exception {
 
-        if (stepTableEmpty) return false;
+        if (stepTableEmpty) return "";
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
         String sql = "select name, params_digest, depends_string, step_class, state, workflow_step_id"
@@ -568,7 +568,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
                 workflow.log(errors.toString());
                 Utilities.error("The XML graph has changed illegally.  See controller.log for details");
             }
-            return diffs.length() == 0;
+            return diffs.toString();
         }
         finally {
             if (rs != null) rs.close();

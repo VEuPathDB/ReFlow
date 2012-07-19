@@ -185,12 +185,15 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         // see if our current graph is already in db (exactly)
         // if so, no need to update db. otherwise, log the differences.
         // throw an error if any DONE or FAILED steps are changed
-        if (workflowGraph.inDbExactly(stepTableEmpty)) log("Graph in XML matches graph in database.  No need to update database.");
+	String diffs = workflowGraph.inDbExactly(stepTableEmpty);
+        if (diffs.length == 0) log("Graph in XML matches graph in database.  No need to update database.");
 
         else {
             if (stepTableEmpty) {
-                if (undoStepName != null)
-                    error("Workflow has never run.  Undo not allowed.");
+                if (undoStepName != null) {
+		    log(diffs);
+                    error("Workflow has never run.  Undo not allowed.  See controller log.");
+		}
             } else {
                 // can't allow changes to graph if already in undo mode, because
                 // it
