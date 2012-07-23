@@ -12,16 +12,17 @@ my ($dontcare, $homeDir, $stepName, $state, $undo) = @ARGV;
 usage() unless (($state eq 'DONE' || $state eq 'FAILED') && (!$undo || $undo eq '-u') );
 
 my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
-$workflow->getDbState();
+my $stepId = $workflow->getStepId($stepName);
+my $workflowStep =  ReFlow::Controller::WorkflowHandle->new($workflow, $stepName, $stepId);
+my $workflowId = $workflow->getId();
 my $workflowStepTable = $workflow->getWorkflowConfig('workflowStepTable');
 
 die "Error:  workflow is running in undo mode.  Please use the -u argument.\n" if $workflow->{undo_step_id} && !$undo;
 die "Error:  workflow is not running in undo mode.  Please do not use the -u argument.\n" if !$workflow->{undo_step_id} && $undo;
 
-my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
+my $sql = "select name, process_id from $workflowStepTable where workflow_id = $workflowId and name = '$stepName'";
+my ($justchecking, $processId) = $workflow->_runSqlQuery_single_array($sql);
 
-my $sql = "select name, process_id from $workflowStepTable where workflow_id = $workflow->{workflow_id} and name = '$stepName'";
-my ($justchecking, $processId) = $invoker->runSqlFetchOneRow(0, $sql);
 die "Error: Can't find step named '$stepName' in database.\n" unless $justchecking;
 
 if ($processId) {
@@ -29,7 +30,7 @@ if ($processId) {
   die "Error: Step '$stepName' is running." unless $? >> 8;
 }
 
-$invoker->setStepDbState($state, $workflow->{workflow_id}, $stepName, 0, $undo, "'RUNNING', 'FAILED'");
+$workflowStep->setDbState($state, $stepName, 0, $undo, "'RUNNING', 'FAILED'");
 
 print STDERR "Step $stepName set to $state\n";
 

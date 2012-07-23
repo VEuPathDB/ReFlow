@@ -3,7 +3,7 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowHandle;
 
 usage() unless scalar(@ARGV) >= 7;
 
@@ -12,7 +12,7 @@ my $homeDir = $ARGV[$i++];
 my $workflowId = $ARGV[$i++];
 my $stepName = $ARGV[$i++];
 my $stepId = $ARGV[$i++];
-my $invokerClass = $ARGV[$i++];
+my $stepClassName = $ARGV[$i++];
 my $errFile =  $ARGV[$i++];
 my $mode = $ARGV[$i++];
 my $undo = $ARGV[$i++];
@@ -24,15 +24,11 @@ print STDERR "\n\n================== " . localtime() . " ====================\n"
 print STDERR "step: $stepName\n";
 print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
 
-my $invoker = ReFlow::Controller::WorkflowStepInvoker->new($homeDir);
-
-$invoker->setRunningState($workflowId, $stepName, $undo);
-
-my $stepInvoker =  $invoker->getStepInvoker($invokerClass, $homeDir);
-
-$stepInvoker->setParamValues(\@paramStrings);
-
-my $status = $stepInvoker->runInWrapper($workflowId, $stepName, $stepId, $mode, $undo, $invokerClass, $forceUndoFileName);
+my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
+# construct step subclass
+my $workflowStep =  $workflow->getRunnableStep($stepClassName, $workflow, $stepName, $stepId);
+$workflowStep->setParamValues(\@paramStrings);
+my $status = $workflowStep->runInWrapper($mode, $undo, $stepClassName, $forceUndoFileName);
 
 exit($status);
 

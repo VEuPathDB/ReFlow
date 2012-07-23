@@ -3,7 +3,6 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 use Data::Dumper;
-use ReFlow::Controller::Base;
 
 usage() unless scalar(@ARGV) == 3 && $ARGV[0] eq '-h'
 	 && ($ARGV[2] eq '-r' || $ARGV[2] eq '-t');

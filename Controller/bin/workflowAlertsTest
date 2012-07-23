@@ -3,19 +3,17 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 use Data::Dumper;
-use ReFlow::Controller::Base;
+use ReFlow::Controller::WorkflowHandle;
 
 usage() unless scalar(@ARGV) == 1;
 my $alertsFile = $ARGV[0];
 
-my $base = ReFlow::Controller::Base->new("dontcare");
-
-my $alerts = $base->parseAlertsFile($alertsFile);
+my $alerts = ReFlow::Controller::WorkflowHandle::parseAlertsFile($alertsFile);
 
 while (<STDIN>) {
   if (/^name:\s+(\S+)$/) {
     my $stepName = $1;
-    my @list = $base->findAlertEmailList($stepName, $alerts);
+    my @list = ReFlow::Controller::WorkflowHandle::findAlertEmailList($stepName, $alerts);
     my $liststr = join(', ', @list);
     print "$stepName\t$liststr\n" if $liststr;
   }

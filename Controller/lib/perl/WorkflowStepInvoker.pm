@@ -1,9 +1,7 @@
 package ReFlow::Controller::WorkflowStepInvoker;
 
-@ISA = qw(ReFlow::Controller::Base);
 use strict;
 use FgpUtil::Prop::PropertySet;
-use ReFlow::Controller::Base;
 use ReFlow::Controller::SshComputeCluster;
 use ReFlow::Controller::LocalComputeCluster;
 use ReFlow::DataSource::DataSources;
@@ -17,6 +15,20 @@ use Sys::Hostname;
 ##########################################################################
 ## Methods available to the subclasses (step classes)
 ##########################################################################
+
+sub new {
+  my ($class, $workflowHandle, $stepName, $stepId) = @_;
+
+  my $self = {
+      workflow => $workflowHandle,
+      name => $stepName,
+      id => $stepId,
+  };
+
+  bless($self,$class);
+
+  return $self;
+}
 
 sub getParamValue {
   my ($self, $name) = @_;
@@ -180,7 +192,7 @@ sub runSqlFetchOneRow {
     my @output = ("just", "testing");
     my $testmode = $test? " (in test mode, so only pretending) " : "";
     $self->log("running$testmode:  $sql\n\n");
-    @output = $self->_runSqlQuery_single_array($sql) unless $test;
+    @output = $self->{workflow}->_runSqlQuery_single_array($sql) unless $test;
     return @output;
 }
 
@@ -400,10 +412,21 @@ sub _distribJobRunning {
     return $status;
 }
 
+sub getWorkflowConfig {
+    my ($self) = @_;
+    return $self->{workflow}->getWorkflowConfig();
+}
+
+sub error {
+    my ($self, $msg) = @_;
+    $self->{workflow}->error($msg);
+}
+
 
 #######################################################################
 ## Methods called by workflowstepwrap
 #######################################################################
+
 sub setParamValues {
   my ($self, $paramValuesArray) = @_;
 
@@ -414,43 +437,25 @@ sub setParamValues {
   }
 }
 
-sub setRunningState {
-    my ($self, $workflowId, $stepName, $undo) = @_;
+sub deleteFromTrackingTable {
+    my ($self, $test) = @_;
 
-    my $process_id = $$;
-    my $hostname = hostname();
-
-    my $undoStr = $undo? "undo_" : "";
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $workflowTable = $self->getWorkflowConfig('workflowTable');
+    my $workflowStepTrackingTable = $self->getWorkflowConfig('workflowStepTrackingTable');
+    my $id = $self->getId();
     my $sql = "
-UPDATE $workflowStepTable
-SET
-  ${undoStr}state = '$RUNNING',
-  ${undoStr}state_handled = 0,
-  process_id = $process_id,
-  skipped = 0,
-  host_machine = '$hostname',
-  start_time = SYSDATE,
-  end_time = NULL
-WHERE name = '$stepName'
-AND workflow_id = $workflowId
+DELETE FROM $workflowStepTrackingTable
+WHERE workflow_step_id = $id;
 ";
 
-    $self->_runSql($sql);
-}
-
-sub getStepInvoker {
-  my ($self, $invokerClass, $homeDir) = @_;
-  my $stepInvoker =  eval "{require $invokerClass; $invokerClass->new('$homeDir')}";
-  $self->error($@) if $@;
-  return $stepInvoker;
+    $self->{workflow}->_runSql($sql);
 }
 
 sub runInWrapper {
-    my ($self, $workflowId, $stepName, $stepId, $mode, $undo, $invokerClass, $skipIfFileName) = @_;
+    my ($self, $mode, $undo, $stepClassName, $skipIfFileName) = @_;
 
-    $self->{name} = $stepName;
-    $self->{id} = $stepId;
+    $self->setRunningState($undo);
 
     chdir $self->getStepDir();
 
@@ -464,7 +469,7 @@ sub runInWrapper {
       $self->log("skipIfFile = $skipFile.  Skip = $skip");
     }
 
-    $self->log("Running$undoStr Step Class $invokerClass");
+    $self->log("Running$undoStr Step Class $stepClassName");
     my $skipped = 0;
     exec {
         my $testOnly = $mode eq 'test';
@@ -483,13 +488,13 @@ sub runInWrapper {
 	$state = $FAILED;
     }
 
-    $self->setStepDbState($state, $workflowId, $stepName, $skipped, $undo, "'$RUNNING'");
+    $self->setDbState($state, $skipped, $undo, "'$RUNNING'");
 
     $self->maybeSendAlert() if $state eq $DONE  && $mode ne 'test' && !$undo;
 }
 
-sub setStepDbState {
-    my ($self, $state, $workflowId, $stepName, $skipped, $undo, $allowedCurrentStates) = @_;
+sub setDbState {
+    my ($self, $state, $skipped, $undo, $allowedCurrentStates) = @_;
 
     my $undoStr = $undo? "undo_" : "";
 
@@ -503,11 +508,34 @@ SET
   skipped = $skipped,
   end_time = SYSDATE, $undoStr2
   ${undoStr}state_handled = 0
-WHERE name = '$stepName'
-AND workflow_id = $workflowId
+WHERE workfow_step_id = $self->{id}
 AND ${undoStr}state in ($allowedCurrentStates)
 ";
-    $self->_runSql($sql);
+    $self->{workflow}->_runSql($sql);
+}
+
+sub setRunningState {
+    my ($self, $undo) = @_;
+
+    my $process_id = $$;
+    my $hostname = hostname();
+
+    my $undoStr = $undo? "undo_" : "";
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $sql = "
+UPDATE $workflowStepTable
+SET
+  ${undoStr}state = '$RUNNING',
+  ${undoStr}state_handled = 0,
+  process_id = $process_id,
+  skipped = 0,
+  host_machine = '$hostname',
+  start_time = SYSDATE,
+  end_time = NULL
+WHERE workfow_step_id = $self->{id}
+";
+
+    $self->{workflow}->_runSql($sql);
 }
 
 sub maybeSendAlert {
