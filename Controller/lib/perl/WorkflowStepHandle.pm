@@ -1,4 +1,4 @@
-package ReFlow::Controller::WorkflowStepInvoker;
+package ReFlow::Controller::WorkflowStepHandle;
 
 use strict;
 use FgpUtil::Prop::PropertySet;
@@ -6,6 +6,7 @@ use ReFlow::Controller::SshComputeCluster;
 use ReFlow::Controller::LocalComputeCluster;
 use ReFlow::DataSource::DataSources;
 use Sys::Hostname;
+use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
 
 #
@@ -17,10 +18,10 @@ use Sys::Hostname;
 ##########################################################################
 
 sub new {
-  my ($class, $workflowHandle, $stepName, $stepId) = @_;
+  my ($class, $stepName, $stepId, $workflowHandle) = @_;
 
   my $self = {
-      workflow => $workflowHandle,
+      workflow => $workflowHandle,   # if null, better caller better call setWorkflow()
       name => $stepName,
       id => $stepId,
   };
@@ -28,6 +29,12 @@ sub new {
   bless($self,$class);
 
   return $self;
+}
+
+# a hack method to workaround difficulty in setting workflow in constructor when called from eval
+sub setWorkflow {
+  my ($self, $workflow) = @_;
+  $self->{workflow} = $workflow;
 }
 
 sub getParamValue {
@@ -54,6 +61,12 @@ sub getWorkflowDataDir {
     my ($self) = @_;
     my $workflowHome = $self->getWorkflowHomeDir();
     return "$workflowHome/data";
+}
+
+sub getWorkflowHomeDir {
+    my ($self) = @_;
+    return $self->{workflow}->getWorkflowHomeDir();
+
 }
 
 sub getConfig {
@@ -413,8 +426,8 @@ sub _distribJobRunning {
 }
 
 sub getWorkflowConfig {
-    my ($self) = @_;
-    return $self->{workflow}->getWorkflowConfig();
+    my ($self, $key) = @_;
+    return $self->{workflow}->getWorkflowConfig($key);
 }
 
 sub error {
@@ -508,7 +521,7 @@ SET
   skipped = $skipped,
   end_time = SYSDATE, $undoStr2
   ${undoStr}state_handled = 0
-WHERE workfow_step_id = $self->{id}
+WHERE workflow_step_id = $self->{id}
 AND ${undoStr}state in ($allowedCurrentStates)
 ";
     $self->{workflow}->_runSql($sql);
@@ -532,7 +545,7 @@ SET
   host_machine = '$hostname',
   start_time = SYSDATE,
   end_time = NULL
-WHERE workfow_step_id = $self->{id}
+WHERE workflow_step_id = $self->{id}
 ";
 
     $self->{workflow}->_runSql($sql);
@@ -558,3 +571,5 @@ sub maybeSendAlert {
     print SENDMAIL "woohoo!";
     close(SENDMAIL);
 }
+
+1;

@@ -32,7 +32,7 @@ print STDERR "Done\n";
 sub usage {
     print "
 
-Gracefully stop the workflow controller.  This does not stop running workflow steps.  They will continue until complete, or until you kill them individually (use unix kill to kill the workflowstepwrap process).  You will be able to restart a stopped controller.
+Gracefully stop the workflow controller.  This does not stop running workflow steps.  They will continue until complete, or until you kill them individually (use unix kill to kill the workflowRunStep process).  You will be able to restart a stopped controller.
 
 Requires a confirm before executing the stop (eg FungiDB/2.1)
 

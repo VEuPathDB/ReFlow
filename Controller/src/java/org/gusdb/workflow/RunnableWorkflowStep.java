@@ -154,7 +154,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
                 else steplog(Workflow.DONE, "");
                 goToDone();
             } else {
-                String[] cmd = { "workflowstepwrap", workflow.getHomeDir(),
+                String[] cmd = { "workflowRunStep", workflow.getHomeDir(),
 				 workflow.getId().toString(), getFullName(),
 				 "" + getId(), invokerClassName,
 				 getStepDir() + "/step.err", testOnly ? "test" : "run",

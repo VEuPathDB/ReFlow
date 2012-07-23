@@ -3,14 +3,7 @@
 use lib "$ENV{GUS_HOME}/lib/perl";
 
 use strict;
-use ReFlow::Controller::WorkflowHandle;
-
-# these should be imported from someplace, not duplicated here
-my $READY = 'READY';      # my parents are not done yet  -- default state
-my $ON_DECK = 'ON_DECK';  # my parents are done, but there is no slot for me
-my $FAILED = 'FAILED';
-my $DONE = 'DONE';
-my $RUNNING = 'RUNNING';
+use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
 &usage unless ((scalar(@ARGV) == 2 || scalar(@ARGV) == 4) && $ARGV[0] eq '-h');
 

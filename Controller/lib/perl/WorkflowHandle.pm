@@ -69,8 +69,9 @@ sub new {
 # construct step subclass that has a run() method (ie, a step class)
 sub getRunnableStep {
   my ($self, $stepClassName, $stepName, $stepId) = @_;
-  my $stepClass =  eval "{require $stepClassName; $stepClassName->new($self, $stepName, $stepId)}";
+  my $stepClass =  eval "{require $stepClassName; $stepClassName->new('$stepName', '$stepId')}";
   $self->error($@) if $@;
+  $stepClass->setWorkflow($self);
   return $stepClass;
 }
 
@@ -199,6 +200,20 @@ and version = '$self->{version}'
     $self->error("workflow '$self->{name}' version '$self->{version}' not in database")
       unless $self->{workflow_id};
   }
+}
+
+sub getStepNamesFromPattern {
+    my ($self, $stepNamePattern) = @_;
+
+    $self->getId();
+    my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
+    my $sql = 
+"SELECT name, state, undo_state
+FROM $workflowStepTable
+WHERE name like '$stepNamePattern' ESCAPE '!'
+AND workflow_id = $self->{workflow_id}
+order by depth_first_order";
+  return $self->getStepNamesWithSql($sql);
 }
 
 sub getStepNamesFromFile {

@@ -3,7 +3,7 @@
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepHandle;
 use ReFlow::Controller::WorkflowHandle;
 
 usage() unless scalar(@ARGV) == 4 || scalar(@ARGV) == 5;
@@ -13,7 +13,7 @@ usage() unless (($state eq 'DONE' || $state eq 'FAILED') && (!$undo || $undo eq 
 
 my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 my $stepId = $workflow->getStepId($stepName);
-my $workflowStep =  ReFlow::Controller::WorkflowHandle->new($workflow, $stepName, $stepId);
+my $workflowStep =  ReFlow::Controller::WorkflowStepHandle->new($stepName, $stepId, $workflow);
 my $workflowId = $workflow->getId();
 my $workflowStepTable = $workflow->getWorkflowConfig('workflowStepTable');
 

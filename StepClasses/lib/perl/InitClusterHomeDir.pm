@@ -1,8 +1,8 @@
 package ReFlow::StepClasses::InitClusterHomeDir;
 
-@ISA = (ReFlow::Controller::WorkflowStepInvoker);
+@ISA = (ReFlow::Controller::WorkflowStepHandle);
 use strict;
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepHandle;
 
 # should be broken into two step classes, separating distrib job into its own
 

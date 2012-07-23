@@ -1,8 +1,8 @@
 package ReFlow::TestFlow::TestStep;
 
-@ISA = (ReFlow::Controller::WorkflowStepInvoker);
+@ISA = (ReFlow::Controller::WorkflowStepHandle);
 use strict;
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepHandle;
 
 sub run {
   my ($self, $test, $undo) = @_;

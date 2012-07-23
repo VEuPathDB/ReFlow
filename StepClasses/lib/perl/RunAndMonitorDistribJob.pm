@@ -1,9 +1,9 @@
 package ReFlow::StepClasses::RunAndMonitorDistribJob;
 
-@ISA = (ReFlow::Controller::WorkflowStepInvoker);
+@ISA = (ReFlow::Controller::WorkflowStepHandle);
 
 use strict;
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepHandle;
 use File::Basename;
 
 sub run {

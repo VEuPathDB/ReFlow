@@ -1,8 +1,8 @@
 package ReFlow::TestFlow::AcquireFile;
 
-@ISA = (ReFlow::Controller::WorkflowStepInvoker);
+@ISA = (ReFlow::Controller::WorkflowStepHandle);
 use strict;
-use ReFlow::Controller::WorkflowStepInvoker;
+use ReFlow::Controller::WorkflowStepHandle;
 
 # get external file and place in data/ within workflow home
 

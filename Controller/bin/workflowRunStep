@@ -26,7 +26,7 @@ print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
 
 my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 # construct step subclass
-my $workflowStep =  $workflow->getRunnableStep($stepClassName, $workflow, $stepName, $stepId);
+my $workflowStep =  $workflow->getRunnableStep($stepClassName, $stepName, $stepId);
 $workflowStep->setParamValues(\@paramStrings);
 my $status = $workflowStep->runInWrapper($mode, $undo, $stepClassName, $forceUndoFileName);
 
@@ -36,7 +36,7 @@ sub usage {
     print "
 Caution!! this program is only called by the workflow controller
 
-usage: workflowstepwrap workflow_dir workflow_id stepname stepid stepclass errfile [run|test] undo param1name=param1value ...
+usage: workflowRunStep workflow_dir workflow_id stepname stepid stepclass errfile [run|test] undo param1name=param1value ...
 ";
     exit(1);
 }

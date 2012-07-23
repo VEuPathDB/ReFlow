@@ -427,7 +427,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                     + nl
                     + "If the controller is running on "
                     + host_machine
-                    + ", you must kill it to run here.  If workflowstepwrap processes are running, then you must either wait until they complete or kill them."
+                    + ", you must kill it to run here.  If workflowRunStep processes are running, then you must either wait until they complete or kill them."
                     + nl
                     + nl
                     + "If there are NO PROCESSES RUNNING on "
