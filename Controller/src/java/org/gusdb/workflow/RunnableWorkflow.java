@@ -277,17 +277,25 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 	    WorkflowStep undoRootStep = workflowGraph.getStepsByName().get(undoStepName);
 	    Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
 	    undoDescendants.add(undoRootStep);
-	    String errStr = "";
-	    boolean foundRunning = false;
+	    String runningStr = "";
+	    String failedStr = "";
+	    boolean foundRunningOrFailed = false;
             for (WorkflowStep step : undoDescendants) {
                 if (step.getState() != null && step.getState().equals(RUNNING)) {
-		    errStr += "  " + step.getFullName() + nl;
-		    foundRunning = true;
+		    runningStr += "  " + step.getFullName() + nl;
+		    foundRunningOrFailed = true;
+		}
+                if (step.getState() != null && step.getState().equals(FAILED)) {
+		    failedStr += "  " + step.getFullName() + nl;
+		    foundRunningOrFailed = true;
 		}
 	    }
-	    if (foundRunning)
-		error("You can't start an undo while steps in the undo graph are running.  You must wait for them to finish or kill them." + nl + "The following steps are running:"
-		      + nl + errStr);
+	    if (foundRunningOrFailed)
+		error("You can't start an undo while steps in the undo graph are RUNNING or FAILED.  You must wait for RUNNING steps to finish or kill them.  You must clean up FAILED steps and set them to ready" + nl + nl
+		      + "The following steps are RUNNING:"
+		      + nl + runningStr + nl +nl
+		      + "The following steps are FAILED:"
+		      + nl + failedStr);
 
             // find the step based on its name, and set undo_step_id
             for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
