@@ -498,8 +498,21 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     // Manage DB
     // //////////////////////////////////////////////////////////////////////
 
-    // check if the in-memory graph matches that in the db exactly
-    // return string holding differences, if any
+    /*
+     Check if the in-memory graph matches that in the db exactly
+     Return string holding differences, if any.
+
+     Following are the kinds of differences.
+     All are illegal if the step is RUNNING, FAILED or DONE, except as noted.
+      1) step deleted (or excluded)
+      2) name
+      3) step class
+      4) depends
+      5) params (ignored for subgraph calls)
+        - new in memory (Ok if DONE)
+        - deleted in memory
+        - different in memory and db
+    */
     String inDbExactly(boolean stepTableEmpty) throws SQLException,
             FileNotFoundException, NoSuchAlgorithmException, IOException,
             Exception {
