@@ -246,7 +246,7 @@ sub getStepNamesWithSql {
     my $result = [];
     my $workflowStepTable = $self->getWorkflowConfig('workflowStepTable');
     my $stmt = $self->getDbh()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute() or $self->error(DBI::errstr);
     while (my ($name, $status, $undo_status) = $stmt->fetchrow_array()) {
 	push(@$result, [$name, $status, $undo_status]);
     }
