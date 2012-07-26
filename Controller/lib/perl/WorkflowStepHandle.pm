@@ -430,6 +430,11 @@ sub getWorkflowConfig {
     return $self->{workflow}->getWorkflowConfig($key);
 }
 
+sub getWorkflow {
+    my ($self) = @_;
+    return $self->{workflow};
+}
+
 sub error {
     my ($self, $msg) = @_;
     $self->{workflow}->error($msg);
