@@ -517,7 +517,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             FileNotFoundException, NoSuchAlgorithmException, IOException,
             Exception {
 
-        if (stepTableEmpty) return "";
+        if (stepTableEmpty) return "Step table empty";
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
         String sql = "select name, params_digest, depends_string, step_class, state, workflow_step_id"
