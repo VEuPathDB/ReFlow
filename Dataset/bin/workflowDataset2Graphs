@@ -99,11 +99,11 @@ sub resolveDependsPatterns {
 
   # find all dependsPatterns and make the substitution
   foreach my $stepName (keys(%{$data->{step}})) {
-    expandPatterns($data->{step}->{$stepName}, \@stepNames, $expandedPatterns);
+    expandPatterns($data->{step}->{$stepName}, \@stepNames, $expandedPatterns, $templateFileName);
   }
 
   foreach my $subgraphName (keys(%{$data->{subgraph}})) {
-    expandPatterns($data->{subgraph}->{$subgraphName}, \@stepNames, $expandedPatterns);
+    expandPatterns($data->{subgraph}->{$subgraphName}, \@stepNames, $expandedPatterns, $templateFileName);
   }
 
   # use text substitution to insert the new <depends>
@@ -122,16 +122,20 @@ sub resolveDependsPatterns {
 # add to the output hash a key for each pattern with values in an array ref
 # of step or subgraph names that match.
 sub expandPatterns {
-  my ($stepOrSubgraph, $stepNames, $outputHash) = @_;
+  my ($stepOrSubgraph, $stepNames, $outputHash, $templateFileName) = @_;
 
   foreach my $dependsPatternValue (keys(%{$stepOrSubgraph->{dependsPattern}})) {
+    if ($dependsPatternValue =~ /\%/) {
+       die "\nError: Template file '$templateFileName' contains <dependsPattern name=\"$dependsPatternValue\"/> that attempts to use the invalid wild card '%'. The correct wildcard is '*'\n";
+    }
+
     my $dependsPatternRegex = $dependsPatternValue;
     # replace * wild card with .+
     my $x = '.+';		# avoid syntax highlighting error
     $dependsPatternRegex =~ s/\*/$x/;
 
     # find all step or subgraph names that match the pattern
-    my @matchingStepNames = grep(/$dependsPatternRegex/, @$stepNames);
+    my @matchingStepNames = grep(/^${dependsPatternRegex}$/, @$stepNames);
 
     # for all matches, create a new <depends> element
     foreach my $matchingStepName (@matchingStepNames) {
