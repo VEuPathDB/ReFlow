@@ -630,7 +630,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	return dbParamValues;
     }
 
-    // updated provided data structures with info about changed params
+    // update provided data structures with info about changed params
     // dbParamValuesDiff:  params that are in the db but are absent or different in memory
     // newParamValuesDiff: params that in memory but are absent or different in memory
     // return true if the changes are illegal
