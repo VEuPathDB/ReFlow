@@ -108,11 +108,13 @@ public class RunnableWorkflowStep extends WorkflowStep {
     // if this step is ready, and all parents are done, transition to ON_DECK
     void maybeGoToOnDeck() throws SQLException, IOException {
 
-        if (!getOperativeState().equals(Workflow.READY) || off_line) return;
+	// (ignore off_line or stop_after if undoing)
+
+        if (!getOperativeState().equals(Workflow.READY) || (off_line && !getUndoing())) return;
 
         for (WorkflowStep parent : getParents()) {
             if (!parent.getOperativeState().equals(Workflow.DONE)
-                    || parent.getStopAfter()) return;
+		|| (parent.getStopAfter() && !getUndoing())) return;
         }
 
         steplog(Workflow.ON_DECK, "");
