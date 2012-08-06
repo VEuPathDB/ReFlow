@@ -464,7 +464,7 @@ sub deleteFromTrackingTable {
     my $id = $self->getId();
     my $sql = "
 DELETE FROM $workflowStepTrackingTable
-WHERE workflow_step_id = $id;
+WHERE workflow_step_id = $id
 ";
 
     $self->{workflow}->_runSql($sql);
