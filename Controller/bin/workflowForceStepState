@@ -30,7 +30,7 @@ if ($processId) {
   die "Error: Step '$stepName' is running." unless $? >> 8;
 }
 
-$workflowStep->setDbState($state, $stepName, 0, $undo, "'RUNNING', 'FAILED'");
+$workflowStep->setDbState($state, 0, $undo, "'RUNNING', 'FAILED'");
 
 print STDERR "Step $stepName set to $state\n";
 
