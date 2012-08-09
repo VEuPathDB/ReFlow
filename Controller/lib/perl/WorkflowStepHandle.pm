@@ -556,8 +556,8 @@ sub maybeSendAlert {
 
     my $homeDir = $self->getWorkflowHomeDir();
     my $alertsFile = "$homeDir/config/alerts";
-    my $alerts = $self->parseAlertsFile($alertsFile);
-    my @whoToMail = $self->findAlertEmailList($self->getName(), $alerts);
+    my $alerts = ReFlow::Controller::WorkflowHandle::parseAlertsFile($alertsFile);
+    my @whoToMail = ReFlow::Controller::WorkflowHandle::findAlertEmailList($self->getName(), $alerts);
 
     return unless @whoToMail;
 
