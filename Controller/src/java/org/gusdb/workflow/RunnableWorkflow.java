@@ -262,6 +262,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             // confirm that no steps in the undo graph are running
             handleStepChanges(testOnly);
 	    WorkflowStep undoRootStep = workflowGraph.getStepsByName().get(undoStepName);
+	    if (undoRootStep == null) error("The step name you are trying to undo does not exist.  Check its spelling: '" + undoStepName + "'");
 	    Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
 	    undoDescendants.add(undoRootStep);
 	    String runningStr = "";
