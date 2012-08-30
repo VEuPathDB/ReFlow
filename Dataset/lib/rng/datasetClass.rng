@@ -6,12 +6,12 @@
     <element name="datasetClasses">
       <optional>
         <element name="defaultPropertyDescriptions">
-          <oneOrMore>
+          <optional>
             <element name="prop">
               <attribute name="name" />
               <text/>
             </element>
-          </oneOrMore>
+          </optional>
         </element>
       </optional>
       <oneOrMore>
