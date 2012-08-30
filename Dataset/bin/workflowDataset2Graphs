@@ -11,9 +11,13 @@ use ReFlow::Dataset::Template;
 use Data::Dumper;
 use File::Path;
 
-usage() unless scalar(@ARGV) == 2;
+usage() unless scalar(@ARGV) == 2 ||  scalar(@ARGV) == 3;
 
-my ($datasetFile, $classesFile) = @ARGV;
+my ($datasetFile, $classesFile, $doNotValidateXml) = @ARGV;
+
+if (!$doNotValidateXml) {
+    system("validateXmlWithRng  $ENV{GUS_HOME}/lib/rng/datasetClass.rng $classesFile") && exit(1);
+}
 
 # parse class file
 my $classes = ReFlow::Dataset::Classes->new($classesFile);
@@ -155,7 +159,7 @@ sub usage {
   print "
 Create graph files for a dataset, from graph template files (in \$GUS_HOME)
 
-Usage:  workflowDataset2Graphs datasets_file classes_file
+Usage:  workflowDataset2Graphs datasets_file classes_file [-skipXmlValidation]
 
 Where:
   datasets_file:    an xml file containing a set of datasets.  Must be in a file
@@ -165,6 +169,7 @@ Where:
                     XXX/YYY/templateFileName.xml
 
   classes_file:     an xml file containing a set of dataset classes.
+  skipXmlValidation: skip the validation of the classes_file
 
 Output: the generated workflow xml file in \$GUS_HOME/lib/xml/workflow
 
