@@ -573,7 +573,7 @@ sub maybeSendAlert {
     print SENDMAIL "To: $maillist\n";
     print SENDMAIL "From: reflow\@eupathdb.org\n";
     print SENDMAIL "Content-type: text/plain\n\n";
-    print SENDMAIL "woohoo!";
+    print SENDMAIL "woohoo!\n\n$homeDir";
     close(SENDMAIL);
 }
 
