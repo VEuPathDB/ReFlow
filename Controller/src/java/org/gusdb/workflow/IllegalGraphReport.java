@@ -1,7 +1,6 @@
 package org.gusdb.workflow;
 
 import org.apache.commons.cli.CommandLine;
-//import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 
