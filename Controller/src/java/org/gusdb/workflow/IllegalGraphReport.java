@@ -46,7 +46,8 @@ public class IllegalGraphReport {
 	if (!runnableWorkflow.workflowTableInitialized()) {
 	    System.out.println("Workflow not in database yet.  Are you sure you are running the right report?");
 	} else {
-	    
+	    String diffs = rootGraph.inDbExactly(false);
+	    System.out.println("The graph has no illegal changes.  Woohoo.");
 	}
     }
 

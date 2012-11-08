@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+use FgpUtil::Runtime::CommandHelper;
+
+my $GUS_HOME = $ENV{GUS_HOME};
+my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowIllegalGraphReport');
+my $args = &FgpUtil::Runtime::CommandHelper::getJavaArgs(@ARGV);
+
+my $cmd = "java $sysProps -classpath $CLASSPATH org.gusdb.workflow.IllegalGraphReport $args";
+
+system($cmd);
