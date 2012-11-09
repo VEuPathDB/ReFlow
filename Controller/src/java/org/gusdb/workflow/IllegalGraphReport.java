@@ -26,7 +26,7 @@ public class IllegalGraphReport {
         String cmdlineSyntax = cmdName
 	    + " -h workflow_home_dir";
         String cmdDescrip = "Get a report of illegal graph changes.  This is useful when you update the graph in an existing workflow.";
-	String usageNotes = "Typically you would set up a new $GUS_HOME which has the version of the graph you want to check.  (Don't forget to generate from dataset classes.)  In that $GUS_HOME, set the gus.config to point to the database that the previous workflow was run on.";
+	String usageNotes = "To use this command, set up a new $GUS_HOME which has the version of the graph you want to check.  (Don't forget to generate from dataset classes.)  In that $GUS_HOME, set the gus.config to point to the database that the previous workflow was run on.  Run this command from the new $GUS_HOME.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
 						   usageNotes, options, args);
 
@@ -46,7 +46,7 @@ public class IllegalGraphReport {
 	if (!runnableWorkflow.workflowTableInitialized()) {
 	    System.out.println("Workflow not in database yet.  Are you sure you are running the right report?");
 	} else {
-	    String diffs = rootGraph.inDbExactly(false);
+	    rootGraph.inDbExactly(false);
 	    System.out.println("The graph has no illegal changes.  Woohoo.");
 	}
     }
