@@ -29,7 +29,7 @@ sub datasetTemplateElementHandler {
   my ($twig, $datasetTemplate) = @_;
 
   my $datasetTemplateAsText = $datasetTemplate->sprint();
-  my $template = ReFlow::Dataset::Template->new($templateFileName,
+  my $template = ReFlow::DatasetClass::Template->new($templateFileName,
 						$datasetTemplateAsText,
 						$datasetTemplate->{att}->{class});
   push(@$templates, $template);
@@ -76,7 +76,7 @@ sub addInstance {
     my $graphText = join("\n", @graphLines);
     
     my ($instantiatedGraphText, $err) = 
-	ReFlow::Dataset::Classes::substitutePropsIntoXmlText($graphText, $dataset);
+	ReFlow::DatasetClass::Classes::substitutePropsIntoXmlText($graphText, $dataset);
 
     if ($err) {
       die "\nError: <datasetTemplate class=\"$self->{class}\"> in template file $self->{templateFile} has an invalid property macro: $err\n";
