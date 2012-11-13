@@ -1,4 +1,4 @@
-package ReFlow::Dataset::Template;
+package ReFlow::DatasetClass::Template;
 
 use strict;
 

@@ -1,4 +1,4 @@
-package ReFlow::Dataset::Datasets;
+package ReFlow::DatasetClass::Datasets;
 
 use strict;
 
@@ -99,7 +99,7 @@ sub getDatasetsByClass {
 
 }
 
-sub printResourceXml {
+sub printDatasetLoaderXml {
     my ($self) = @_;
     my $xml = new XML::Simple();
     print STDOUT $xml->xmlOut($self->{data});

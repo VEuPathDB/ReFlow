@@ -37,13 +37,13 @@
             </element>
 	  </zeroOrMore>
 	  <optional>
-            <element name="resource">
-              <attribute name="resource"/>
+            <element name="datasetLoader">
+              <attribute name="datasetName"/>
               <attribute name="version"/>
               <attribute name="plugin"/>
               <attribute name="scope"/>
               <optional>
-		<attribute name="parentResource"/>
+		<attribute name="parentDatasetName"/>
               </optional>
               <optional>
 		<attribute name="organismAbbrev"/>

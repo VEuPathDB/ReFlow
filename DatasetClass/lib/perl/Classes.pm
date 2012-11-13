@@ -1,4 +1,4 @@
-package ReFlow::Dataset::Classes;
+package ReFlow::DatasetClass::Classes;
 
 use strict;
 
@@ -59,20 +59,20 @@ sub getClassGraphFileDir {
     return $class->{graphFile}->{dir};
 }
 
-sub getResourceText {
+sub getDatasetLoaderText {
     my ($self, $dataset) = @_;
     my $class = $self->getClass($dataset->{class});
-    my $resource;
-    $resource->{resource} = $class->{resource}; # hack a little to outsmart XMLout
-    return "" unless $resource->{resource};
+    my $datasetLoader;
+    $datasetLoader->{datasetLoader} = $class->{datasetLoader}; # hack a little to outsmart XMLout
+    return "" unless $datasetLoader->{datasetLoader};
 
-    my $rawResourceText = $self->{xml}->XMLout($resource);
+    my $rawDatasetLoaderText = $self->{xml}->XMLout($datasetLoader);
 
     # jump through some hoops to lose weird lines out put by XMLout
     # probably a better way to do this
     # also, add CDATA to URL
 #    <externalDbIdUrl>http://www.pberghei.eu/index.php?cat=geneid&q=EXTERNAL_ID_HERE</externalDbIdUrl>
-    my @lines = split(/\n/,$rawResourceText);
+    my @lines = split(/\n/,$rawDatasetLoaderText);
     my @lines2;
     my $cdatastart = '<![CDATA[';
     my $cdataend = ']]';
@@ -85,13 +85,13 @@ sub getResourceText {
       }
       push(@lines2,$line);
     }
-    my $rawResourceText2 = join("\n", @lines2);
+    my $rawDatasetLoaderText2 = join("\n", @lines2);
 
-    my ($resourceText, $err) = substitutePropsIntoXmlText($rawResourceText2, $dataset);
+    my ($datasetLoaderText, $err) = substitutePropsIntoXmlText($rawDatasetLoaderText2, $dataset);
     if ($err) {
-	die "Error: in classes file $self->{classesFile}, the <resource> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
+	die "Error: in classes file $self->{classesFile}, the <datasetLoader> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
     }
-    return "$resourceText\n";
+    return "$datasetLoaderText\n";
 }
 
 # static method
