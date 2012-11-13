@@ -31,7 +31,7 @@ sub getXmlFile {
 sub getDataSourceNames {
   my ($self) = @_;
 
-  my $resources = $self->{data}->{resource};
+  my $resources = $self->{data}->{datasetLoader};
 
   return keys(%$resources);
 }
@@ -39,16 +39,16 @@ sub getDataSourceNames {
 sub getDataSource {
     my ($self, $dataSourceName) = @_;
 
-    die "can't find resource '$dataSourceName' in xml file $self->{resourcesXmlFile}"
-      unless $self->{data}->{resource}->{$dataSourceName};
+    die "can't find datasetLoader '$dataSourceName' in xml file $self->{resourcesXmlFile}"
+      unless $self->{data}->{datasetLoader}->{$dataSourceName};
 
-    return ReFlow::DataSource::DataSource->new($dataSourceName, $self->{data}->{resource}->{$dataSourceName}, $self);
+    return ReFlow::DataSource::DataSource->new($dataSourceName, $self->{data}->{datasetLoader}->{$dataSourceName}, $self);
 }
 
 # static method to publicize elements that need forceArray.  this is used
 # by Dataset/Classes.pm in its code generating of resource files
 sub getForceArray {
-  return ['unpack', 'getAndUnpackOutput', 'resource'];
+  return ['unpack', 'getAndUnpackOutput', 'datasetLoader'];
 }
 
 sub _parseXmlFile {
@@ -57,7 +57,7 @@ sub _parseXmlFile {
   my $xmlString = $self->_substituteMacros($resourcesXmlFile, $properties);
   my $xml = new XML::Simple();
   my $forceArray = getForceArray();
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'resource', ForceArray=>$forceArray) };
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'datasetLoader', ForceArray=>$forceArray) };
 #  print STDERR Dumper $self->{data};
   die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
 }
@@ -66,7 +66,7 @@ sub _substituteMacros {
   my ($self, $xmlFile, $props) = @_;
 
   my $xmlString;
-  open(FILE, $xmlFile) || die "Cannot open resources XML file '$xmlFile'\n";
+  open(FILE, $xmlFile) || die "Cannot open datasetLoader XML file '$xmlFile'\n";
   while (<FILE>) {
     my $line = $_;
     my @macroKeys = /\@\@([\w.]+)\@\@/g;   # allow keys of the form nrdb.release

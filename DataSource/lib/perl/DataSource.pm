@@ -77,12 +77,12 @@ sub getParentResource {
     my $parsedXml = $self->getParsedXml();
 
     my $parentDatasource;
-    my $parentResourceName = $parsedXml->{parentResource};
+    my $parentResourceName = $parsedXml->{parentDatasetName};
 
     if ($parentResourceName) {
 	$parentDatasource =
 	    $self->{dataSources}->getDataSource($parentResourceName);
-	$self->error("Can't find parent resource '$parentResourceName'")unless $parentDatasource;
+	$self->error("Can't find parent datasetLoader '$parentResourceName'") unless $parentDatasource;
     } 
     return $parentDatasource;
 }
@@ -238,11 +238,11 @@ sub getPluginArgs {
 
     my $pluginArgs = $parsedXml->{pluginArgs};
 
-    if ($parsedXml->{parentResource}) {
+    if ($parsedXml->{parentDatasetName}) {
 
       if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
 	my $macro = $1;
-	$self->error("Has a parentResource but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead");
+	$self->error("Has a parentDatasetName but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead");
       }
       $parent = 'PARENT_';
       $name = $self->getParentResource()->getName();
@@ -261,7 +261,7 @@ sub getPluginArgs {
 sub error {
     my ($self, $msg) = @_;
     my $xmlFile = $self->{dataSources}->getXmlFile();
-    die "Error in Resource $self->{resourceName} in file $xmlFile:\n$msg";
+    die "Error in DatasetLoader $self->{resourceName} in file $xmlFile:\n$msg";
 }
 
 1;
