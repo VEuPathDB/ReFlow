@@ -1,7 +1,11 @@
-package ReFlow::DataSource::DataSource;
+package ReFlow::DatasetLoader::DatasetLoader;
 
 use strict;
 use Data::Dumper;
+
+## beware:  this file needs to be cleaned up.  there are three different names here for the same thing:  datasetLoader, resource, datasource
+
+# the correct name is datasetLoader
 
 sub new {
   my ($class, $resourceName, $parsedXml, $dataSources) = @_;

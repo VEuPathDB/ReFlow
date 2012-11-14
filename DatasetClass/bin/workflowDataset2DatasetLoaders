@@ -29,7 +29,7 @@ my $classNamesUsed = $datasets->getClassNamesUsed();
 $datasets->validateAgainstClasses();
 
 my $datasetsFullName = $datasets->getFullName();
-my $datasetLoadersFileName = "$ENV{GUS_HOME}/lib/xml/datasources/${datasetsFullName}.xml";
+my $datasetLoadersFileName = "$ENV{GUS_HOME}/lib/xml/datasetLoaders/${datasetsFullName}.xml";
 my ($basename,$path,$suffix) = fileparse($datasetLoadersFileName, '.xml');
 mkpath($path);
 open(F, ">$datasetLoadersFileName") || die "Can't open file file '$datasetLoadersFileName' for writing\n";
@@ -59,7 +59,7 @@ Where:
   classes_file:     an xml file containing a set of dataset classes.
   skipXmlValidation: skip the validation of the classes_file
 
-Output: the generated datasetLoaders xml file in \$GUS_HOME/lib/xml/datasources
+Output: the generated datasetLoaders xml file in \$GUS_HOME/lib/xml/datasetLoaders
 
 ";
 

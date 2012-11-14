@@ -45,7 +45,7 @@
                                             ReFlow/Controller-Installation,
                                             ReFlow/TestFlow-Installation,
                                             ReFlow/DatasetClass-Installation,
-                                            ReFlow/DataSource-Installation,
+                                            ReFlow/DatasetLoader-Installation,
                                             ReFlow/StepClasses-Installation,
                                             ReFlow/AuthoringGui-Installation" >
 
@@ -98,10 +98,10 @@
     </ant>
   </target>  
 
-  <target name="ReFlow/DataSource-Installation">
+  <target name="ReFlow/DatasetLoader-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="ReFlow"/>
-      <property name="component" value="DataSource"/>
+      <property name="component" value="DatasetLoader"/>
     </ant>
   </target>
   

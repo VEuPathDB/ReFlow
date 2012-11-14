@@ -1,8 +1,12 @@
-package ReFlow::DataSource::DataSources;
+package ReFlow::DatasetLoader::DatasetLoaders;
+
+## beware:  this file needs to be cleaned up.  there are three different names here for the same thing:  datasetLoader, resource, datasource
+
+# the correct name is datasetLoader
 
 use strict;
 
-use ReFlow::DataSource::DataSource;
+use ReFlow::DatasetLoader::DatasetLoader;
 
 use XML::Simple;
 use Data::Dumper;
@@ -16,7 +20,7 @@ sub new {
 
   bless($self,$class);
 
-  $self->{resourcesXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasources/$resourcesXmlFile";
+  $self->{resourcesXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasetLoaders/$resourcesXmlFile";
 
   $self->_parseXmlFile($self->{resourcesXmlFile}, $properties);
 
@@ -42,7 +46,7 @@ sub getDataSource {
     die "can't find datasetLoader '$dataSourceName' in xml file $self->{resourcesXmlFile}"
       unless $self->{data}->{datasetLoader}->{$dataSourceName};
 
-    return ReFlow::DataSource::DataSource->new($dataSourceName, $self->{data}->{datasetLoader}->{$dataSourceName}, $self);
+    return ReFlow::DatasetLoader::DatasetLoader->new($dataSourceName, $self->{data}->{datasetLoader}->{$dataSourceName}, $self);
 }
 
 # static method to publicize elements that need forceArray.  this is used
