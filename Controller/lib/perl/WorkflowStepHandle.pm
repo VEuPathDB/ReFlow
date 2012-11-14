@@ -4,7 +4,7 @@ use strict;
 use FgpUtil::Prop::PropertySet;
 use ReFlow::Controller::SshComputeCluster;
 use ReFlow::Controller::LocalComputeCluster;
-use ReFlow::DataSource::DataSources;
+use ReFlow::DatasetLoader::DatasetLoaderss;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
@@ -179,7 +179,7 @@ sub getInputFiles{
   return @inputFiles;
 }
 
-sub getDataSource {
+sub getDatasetLoader {
   my ($self, $dataSourceName, $dataSourcesXmlFile, $dataDirPath) = @_;
 
   if (!$self->{dataSources}) {
@@ -190,9 +190,9 @@ sub getDataSource {
     $globalProperties->addProperty("dataDir", $dataDir);
     print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasources/$dataSourcesXmlFile\n";
     $self->{dataSources} =
-      ReFlow::DataSource::DataSources->new($dataSourcesXmlFile, $globalProperties);  }
+      ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
     print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
-  return $self->{dataSources}->getDataSource($dataSourceName);
+  return $self->{dataSources}->getDatasetLoader($dataSourceName);
 }
 
 sub runSqlFetchOneRow {

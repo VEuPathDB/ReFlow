@@ -75,7 +75,7 @@ sub getRawVersion {
     return $self->{version};
 }
 
-sub getParentResource {
+sub getParentDatasetLoader {
     my ($self) = @_;
 
     my $parsedXml = $self->getParsedXml();
