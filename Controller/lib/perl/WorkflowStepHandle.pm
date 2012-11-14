@@ -4,7 +4,7 @@ use strict;
 use FgpUtil::Prop::PropertySet;
 use ReFlow::Controller::SshComputeCluster;
 use ReFlow::Controller::LocalComputeCluster;
-use ReFlow::DatasetLoader::DatasetLoaderss;
+use ReFlow::DatasetLoader::DatasetLoaders;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 
