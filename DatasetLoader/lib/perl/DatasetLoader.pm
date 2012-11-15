@@ -3,16 +3,12 @@ package ReFlow::DatasetLoader::DatasetLoader;
 use strict;
 use Data::Dumper;
 
-## beware:  this file needs to be cleaned up.  there are three different names here for the same thing:  datasetLoader, resource, datasource
-
-# the correct name is datasetLoader
-
 sub new {
-  my ($class, $resourceName, $parsedXml, $dataSources) = @_;
+  my ($class, $datasetName, $parsedXml, $datasetLoaders) = @_;
 
   my $self = {parsedXml => $parsedXml,
-              resourceName => $resourceName,
-              dataSources => $dataSources,
+              datasetName => $datasetName,
+              datasetLoaders => $datasetLoaders,
               version => $parsedXml->{version},
               plugin =>  $parsedXml->{plugin},
               scope =>  $parsedXml->{scope},
@@ -41,7 +37,7 @@ sub new {
 sub getDataSources {
   my ($self) = @_;
 
-  return $self->{dataSources};
+  return $self->{datasetLoaders};
 }
 
 sub getParsedXml {
@@ -54,7 +50,7 @@ sub getParsedXml {
 sub getName {
     my ($self) = @_;
 
-    return $self->{resourceName};
+    return $self->{datasetName};
 }
 
 sub getVersion {
@@ -81,12 +77,12 @@ sub getParentDatasetLoader {
     my $parsedXml = $self->getParsedXml();
 
     my $parentDatasource;
-    my $parentResourceName = $parsedXml->{parentDatasetName};
+    my $parentDatasetName = $parsedXml->{parentDatasetName};
 
-    if ($parentResourceName) {
+    if ($parentDatasetName) {
 	$parentDatasource =
-	    $self->{dataSources}->getDataSource($parentResourceName);
-	$self->error("Can't find parent datasetLoader '$parentResourceName'") unless $parentDatasource;
+	    $self->{datasetLoaders}->getDataSource($parentDatasetName);
+	$self->error("Can't find parent datasetLoader '$parentDatasetName'") unless $parentDatasource;
     } 
     return $parentDatasource;
 }
@@ -200,11 +196,11 @@ sub getManualFileOrDir {
 
     my $manualGet = $self->getManualGet();
     my $version = $self->getVersion();
-    my $resourceName = $self->getName();
+    my $datasetName = $self->getName();
 
     my $fileOrDir = $manualGet->{fileOrDir};
-    $fileOrDir =~ s/\%RESOURCE_NAME\%/$resourceName/g;
-    $fileOrDir =~ s/\%RESOURCE_VERSION\%/$version/g;
+    $fileOrDir =~ s/\%DATASET_NAME\%/$datasetName/g;
+    $fileOrDir =~ s/\%DATASET_VERSION\%/$version/g;
     return $fileOrDir;
 }
 
@@ -216,7 +212,7 @@ sub getUnpacks {
       my $version = $self->getVersion();
       my @unpacks2;
       foreach my $unpacker (@{$self->{unpacks}}) {
-	$unpacker =~ s/\%RESOURCE_VERSION\%/$version/g;
+	$unpacker =~ s/\%DATASET_VERSION\%/$version/g;
 	push(@unpacks2, $unpacker);
       }
       $self->{fixedUnpacks} = \@unpacks2;
@@ -244,28 +240,28 @@ sub getPluginArgs {
 
     if ($parsedXml->{parentDatasetName}) {
 
-      if ($pluginArgs =~ /\%(RESOURCE_\w+)\%/) {
+      if ($pluginArgs =~ /\%(DATASET_\w+)\%/) {
 	my $macro = $1;
 	$self->error("Has a parentDatasetName but is using the macro \%$macro\%.  It must use \%PARENT_$macro\% instead");
       }
       $parent = 'PARENT_';
-      $name = $self->getParentResource()->getName();
-      $version = $self->getParentResource()->getVersion();
+      $name = $self->getParentDatasetLoader()->getName();
+      $version = $self->getParentDatasetLoader()->getVersion();
     }
 
     # if the caller is forcing us to use the version from the db.  eg, if the version or parent version was TODAY
     $version = $versionFromDb if $versionFromDb;
 
-    $pluginArgs =~ s/\%${parent}RESOURCE_NAME\%/$name/g;
-    $pluginArgs =~ s/\%${parent}RESOURCE_VERSION\%/$version/g;
+    $pluginArgs =~ s/\%${parent}DATASET_NAME\%/$name/g;
+    $pluginArgs =~ s/\%${parent}DATASET_VERSION\%/$version/g;
     $pluginArgs =~ s/\n+/ /g;
     return $pluginArgs;
 }
 
 sub error {
     my ($self, $msg) = @_;
-    my $xmlFile = $self->{dataSources}->getXmlFile();
-    die "Error in DatasetLoader $self->{resourceName} in file $xmlFile:\n$msg";
+    my $xmlFile = $self->{datasetLoaders}->getXmlFile();
+    die "Error in DatasetLoader $self->{datasetName} in file $xmlFile:\n$msg";
 }
 
 1;

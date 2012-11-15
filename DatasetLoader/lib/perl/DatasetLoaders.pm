@@ -1,9 +1,5 @@
 package ReFlow::DatasetLoader::DatasetLoaders;
 
-## beware:  this file needs to be cleaned up.  there are three different names here for the same thing:  datasetLoader, resource, datasource
-
-# the correct name is datasetLoader
-
 use strict;
 
 use ReFlow::DatasetLoader::DatasetLoader;
@@ -14,22 +10,22 @@ use Data::Dumper;
 # this is a separate .pm file because it is of general utility
 
 sub new {
-  my ($class, $resourcesXmlFile, $properties) = @_;
+  my ($class, $datasetLoadersXmlFile, $properties) = @_;
 
   my $self = {};
 
   bless($self,$class);
 
-  $self->{resourcesXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasetLoaders/$resourcesXmlFile";
+  $self->{datasetLoadersXmlFile} = "$ENV{GUS_HOME}/lib/xml/datasetLoaders/$datasetLoadersXmlFile";
 
-  $self->_parseXmlFile($self->{resourcesXmlFile}, $properties);
+  $self->_parseXmlFile($self->{datasetLoadersXmlFile}, $properties);
 
   return $self;
 }
 
 sub getXmlFile {
   my ($self) = @_;
-  return $self->{resourcesXmlFile};
+  return $self->{datasetLoadersXmlFile};
 }
 
 sub getDatasetNames {
@@ -41,12 +37,12 @@ sub getDatasetNames {
 }
 
 sub getDatasetLoader {
-    my ($self, $dataSourceName) = @_;
+    my ($self, $datasetName) = @_;
 
-    die "can't find datasetLoader '$dataSourceName' in xml file $self->{resourcesXmlFile}"
-      unless $self->{data}->{datasetLoader}->{$dataSourceName};
+    die "can't find datasetLoader '$datasetName' in xml file $self->{datasetLoadersXmlFile}"
+      unless $self->{data}->{datasetLoader}->{$datasetName};
 
-    return ReFlow::DatasetLoader::DatasetLoader->new($dataSourceName, $self->{data}->{datasetLoader}->{$dataSourceName}, $self);
+    return ReFlow::DatasetLoader::DatasetLoader->new($datasetName, $self->{data}->{datasetLoader}->{$datasetName}, $self);
 }
 
 # static method to publicize elements that need forceArray.  this is used
@@ -56,14 +52,14 @@ sub getForceArray {
 }
 
 sub _parseXmlFile {
-  my ($self, $resourcesXmlFile, $properties) = @_;
+  my ($self, $datasetLoadersXmlFile, $properties) = @_;
 
-  my $xmlString = $self->_substituteMacros($resourcesXmlFile, $properties);
+  my $xmlString = $self->_substituteMacros($datasetLoadersXmlFile, $properties);
   my $xml = new XML::Simple();
   my $forceArray = getForceArray();
   $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'datasetLoader', ForceArray=>$forceArray) };
 #  print STDERR Dumper $self->{data};
-  die "$@\n$xmlString\nerror processing XML file $resourcesXmlFile\n" if($@);
+  die "$@\n$xmlString\nerror processing XML file $datasetLoadersXmlFile\n" if($@);
 }
 
 sub _substituteMacros {
