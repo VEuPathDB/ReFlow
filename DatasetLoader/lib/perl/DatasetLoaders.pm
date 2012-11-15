@@ -32,7 +32,7 @@ sub getXmlFile {
   return $self->{resourcesXmlFile};
 }
 
-sub getDataSourceNames {
+sub getDatasetNames {
   my ($self) = @_;
 
   my $resources = $self->{data}->{datasetLoader};
@@ -40,7 +40,7 @@ sub getDataSourceNames {
   return keys(%$resources);
 }
 
-sub getDataSource {
+sub getDatasetLoader {
     my ($self, $dataSourceName) = @_;
 
     die "can't find datasetLoader '$dataSourceName' in xml file $self->{resourcesXmlFile}"
