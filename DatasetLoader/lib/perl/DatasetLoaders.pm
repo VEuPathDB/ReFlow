@@ -57,7 +57,7 @@ sub _parseXmlFile {
   my $xmlString = $self->_substituteMacros($datasetLoadersXmlFile, $properties);
   my $xml = new XML::Simple();
   my $forceArray = getForceArray();
-  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'datasetLoader', ForceArray=>$forceArray) };
+  $self->{data} = eval{ $xml->XMLin($xmlString, SuppressEmpty => undef, KeyAttr => 'datasetName', ForceArray=>$forceArray) };
 #  print STDERR Dumper $self->{data};
   die "$@\n$xmlString\nerror processing XML file $datasetLoadersXmlFile\n" if($@);
 }
