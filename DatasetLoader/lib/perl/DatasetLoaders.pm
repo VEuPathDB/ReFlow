@@ -31,9 +31,9 @@ sub getXmlFile {
 sub getDatasetNames {
   my ($self) = @_;
 
-  my $resources = $self->{data}->{datasetLoader};
+  my $datasetLoaders = $self->{data}->{datasetLoader};
 
-  return keys(%$resources);
+  return keys(%$datasetLoaders);
 }
 
 sub getDatasetLoader {
