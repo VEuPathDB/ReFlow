@@ -4,7 +4,7 @@ use strict;
 
 use XML::Simple;
 use Data::Dumper;
-use ReFlow::DataSource::DataSources;
+use ReFlow::DatasetLoader::DatasetLoaders;
 
 sub new {
   my ($class, $classesFile) = @_;
@@ -117,7 +117,7 @@ sub _parseXmlFile {
 
   # need to force all elements to be an array so that when we 
   # use XMLout to print xml text, they stay as elements
-  my $fa = ReFlow::DataSource::DataSources::getForceArray();
+  my $fa = ReFlow::DatasetLoader::DatasetLoaders::getForceArray();
   my $forceArray = ['graphTemplateFile', 'prop','datasetClass', ,'manualGet', 'pluginArgs', 'externalDbIdUrl', @$fa];
 
   $self->{data} = eval{ $self->{xml}->XMLin($classesFile, SuppressEmpty => undef, KeyAttr=>'class', ForceArray=>$forceArray) };
