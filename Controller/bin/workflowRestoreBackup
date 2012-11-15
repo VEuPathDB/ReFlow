@@ -20,17 +20,17 @@ my $time = sprintf("%4d-%02d-%02d_%02d.%02d.%02d", $year,$mon,$mday,$hour,$min,$
 
 chdir("$backupDir");
 &runCmd("tar -xzf workflow.tar.gz") if -e "workflow.tar.gz";
-&runCmd("tar -xzf datasources.tar.gz") if -e "datasources.tar.gz";
+&runCmd("tar -xzf datasetLoaders.tar.gz") if -e "datasetLoaders.tar.gz";
 &runCmd("tar -xzf config.tar.gz") if -e "config.tar.gz";
 &runCmd("mv $ENV{GUS_HOME}/lib/xml/workflow $ENV{GUS_HOME}/lib/xml/workflow.sv.$time");
-&runCmd("mv $ENV{GUS_HOME}/lib/xml/datasources $ENV{GUS_HOME}/lib/xml/datasources.sv.$time");
+&runCmd("mv $ENV{GUS_HOME}/lib/xml/datasetLoaders $ENV{GUS_HOME}/lib/xml/datasetLoaders.sv.$time");
 &runCmd("cp -rp workflow $ENV{GUS_HOME}/lib/xml/workflow");
-&runCmd("cp -rp datasources $ENV{GUS_HOME}/lib/xml/datasources");
+&runCmd("cp -rp datasetLoaders $ENV{GUS_HOME}/lib/xml/datasetLoaders");
 print STDERR "
-Restore of \$GUS_HOME/lib/xml/workflow and \$GUS_HOMElib/xml/datasources is done.
+Restore of \$GUS_HOME/lib/xml/workflow and \$GUS_HOMElib/xml/datasetLoaders is done.
 
 \$GUS_HOME/lib/xml/workflow was saved in \$GUS_HOME/lib/xml/workflow.sv.$time
-\$GUS_HOME/lib/xml/datasources was saved in \$GUS_HOME/lib/xml/datasources.sv.$time
+\$GUS_HOME/lib/xml/datasetLoaders was saved in \$GUS_HOME/lib/xml/datasetLoaders.sv.$time
 
 When you are done running your workflow using this restore, you have two options for
 reverting to the prior state:
@@ -65,7 +65,7 @@ Where:
 
  Restores:
   - \$GUS_HOME/lib/xml/workflow
-  - \$GUS_HOME/lib/xml/datasources
+  - \$GUS_HOME/lib/xml/datasetLoaders
 
 Makes a save of the directories it overwrites with suffix .sv.xxxxx where xxxxx
 is the current time.

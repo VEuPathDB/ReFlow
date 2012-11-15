@@ -19,7 +19,7 @@ This directory contains backups automatically created each time the workflow
 runs.  Each backup directory contains:
  - config.tar.gz       backup of workflow_home_dir/config.
  - workflow.tar.gz     backup of the graph xml files in \$GUS_HOME/lib/xml/workflow.
- - datasetLoaders.tar.gz  backup of the datasource xml files in \$GUS_HOME/lib/xml/datasetLoaders.
+ - datasetLoaders.tar.gz  backup of the datasetLoader xml files in \$GUS_HOME/lib/xml/datasetLoaders.
 
 These backups become very useful if you are attempting to upgrade the graph or
 config and are getting errors that the graph has changed illegally.  In that
