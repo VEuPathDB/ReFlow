@@ -188,7 +188,7 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
-    print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasources/$dataSourcesXmlFile\n";
+    print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n";
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
     print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
