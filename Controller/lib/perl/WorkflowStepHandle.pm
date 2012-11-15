@@ -192,7 +192,7 @@ sub getDatasetLoader {
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
     print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
-  return $self->{dataSources}->getDataSource($dataSourceName);
+  return $self->{dataSources}->getDatasetLoader($dataSourceName);
 }
 
 sub runSqlFetchOneRow {
