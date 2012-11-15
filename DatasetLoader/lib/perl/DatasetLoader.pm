@@ -34,7 +34,7 @@ sub new {
 }
 
 
-sub getDataSources {
+sub getDatasetLoaders {
   my ($self) = @_;
 
   return $self->{datasetLoaders};
@@ -76,15 +76,15 @@ sub getParentDatasetLoader {
 
     my $parsedXml = $self->getParsedXml();
 
-    my $parentDatasource;
+    my $parentDatasetLoader;
     my $parentDatasetName = $parsedXml->{parentDatasetName};
 
     if ($parentDatasetName) {
-	$parentDatasource =
-	    $self->{datasetLoaders}->getDataSource($parentDatasetName);
-	$self->error("Can't find parent datasetLoader '$parentDatasetName'") unless $parentDatasource;
+	$parentDatasetLoader =
+	    $self->{datasetLoaders}->getDatasetLoader($parentDatasetName);
+	$self->error("Can't find parent datasetLoader '$parentDatasetName'") unless $parentDatasetLoader;
     } 
-    return $parentDatasource;
+    return $parentDatasetLoader;
 }
 
 
