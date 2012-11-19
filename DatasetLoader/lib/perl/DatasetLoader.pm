@@ -10,6 +10,7 @@ sub new {
               datasetName => $datasetName,
               datasetLoaders => $datasetLoaders,
               version => $parsedXml->{version},
+              releaseDate => $parsedXml->{releaseDate},
               plugin =>  $parsedXml->{plugin},
               scope =>  $parsedXml->{scope},
               type =>  $parsedXml->{type},
@@ -62,6 +63,12 @@ sub getVersion {
     }
 
     return $self->{version};
+}
+
+sub getReleseDate {
+    my ($self) = @_;
+
+    return $self->{releaseDate};
 }
 
 # don't resolve TODAY into a date
