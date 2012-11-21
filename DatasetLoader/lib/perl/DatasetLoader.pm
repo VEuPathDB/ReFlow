@@ -65,7 +65,7 @@ sub getVersion {
     return $self->{version};
 }
 
-sub getReleseDate {
+sub getReleaseDate {
     my ($self) = @_;
 
     return $self->{releaseDate};
