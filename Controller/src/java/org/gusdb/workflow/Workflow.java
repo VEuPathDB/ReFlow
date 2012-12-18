@@ -541,7 +541,7 @@ public class Workflow<T extends WorkflowStep> {
         // parse command line
         Options options = declareOptions();
         String cmdlineSyntax = cmdName
-                + " -h workflow_home_dir <-r | -t | -m | -q | -s <states>| -d <states>> <-u step_name> <-db [login[/pass]@]instance>";
+                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name> <-db [login[/pass]@]instance>";
         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
                 getUsageNotes(), options, args);
@@ -555,7 +555,7 @@ public class Workflow<T extends WorkflowStep> {
             Utilities.setDatabase(cmdLine.getOptionValue("db"));
 
         // runnable workflow, either test or run mode
-        if (cmdLine.hasOption("r") || cmdLine.hasOption("t")) {
+        if (cmdLine.hasOption("r") || cmdLine.hasOption("t") || (cmdLine.hasOption("u") && cmdLine.hasOption("c"))) {
             System.err.println("Initializing...");
             RunnableWorkflow runnableWorkflow = new RunnableWorkflow(
                     homeDirName);
@@ -569,10 +569,17 @@ public class Workflow<T extends WorkflowStep> {
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                     stepClass, containerClass, runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
-            boolean testOnly = cmdLine.hasOption("t");
             runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u")
                     : null;
-            runnableWorkflow.run(testOnly);
+            boolean testOnly = cmdLine.hasOption("t");
+	    if (cmdLine.hasOption("c")) {
+		runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
+  		rootGraph.convertToUndo();
+		System.out.println("Steps in the Undo Graph:");
+		System.out.println(rootGraph.getStepsAsString());
+	    } else {
+		runnableWorkflow.run(testOnly);
+	    }
         }
 
         // quick workflow report
@@ -698,6 +705,11 @@ public class Workflow<T extends WorkflowStep> {
                 + "    % workflow -h workflow_dir -t"
                 + nl
                 + nl
+                + "  report steps that would be undone for a given step:"
+                + nl
+                + "    % workflow -h workflow_dir -c -u step_name"
+                + nl
+                + nl
                 + "  undo a step:"
                 + nl
                 + "    % workflow -h workflow_dir -r -u step_name"
@@ -757,7 +769,7 @@ public class Workflow<T extends WorkflowStep> {
         Option test = new Option("t", "Test a workflow");
         actions.addOption(test);
 
-        Option compile = new Option("c", "Compile check a workflow graph");
+        Option compile = new Option("c", "Compile check a workflow graph.  If combined with -u, report the steps that would be undone (without doing the undo!)");
         actions.addOption(compile);
 
         Option detailedRep = new Option("d", true,
