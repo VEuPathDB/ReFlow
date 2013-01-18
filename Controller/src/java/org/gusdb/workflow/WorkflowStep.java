@@ -22,6 +22,8 @@ import java.util.Set;
 import org.gusdb.fgputil.EncryptionUtil;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
+import org.gusdb.fgputil.JavaScript;
+import javax.script.ScriptException;
 import org.gusdb.workflow.xml.WorkflowNode;
 
 /*
@@ -57,6 +59,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // static
     private static final String nl = System.getProperty("line.separator");
     static final String defaultLoadType = "total";
+    private static final JavaScript javaScriptInterpreter = new JavaScript();
 
     // from construction and configuration
     // file referenced as subgraph in this step
@@ -242,12 +245,11 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
             Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(
                     loadType);
             if (val == null) {
-                if (loadType.equals(defaultLoadType)) Utilities.error("Config file loadBalancing.prop must have a line with "
+                if (loadType.equals(defaultLoadType)) error("Config file loadBalancing.prop must have a line with "
                         + defaultLoadType
                         + "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
 
-                else Utilities.error("Step " + getFullName()
-                        + " has unknown stepLoadType: " + loadType);
+                else error("Unknown stepLoadType: " + loadType);
             }
         }
     }
@@ -256,16 +258,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         includeIf_string = includeIf_str;
     }
 
-    String getIncludeIfString() {
-        return includeIf_string;
-    }
-
     public void setExcludeIf(String excludeIf_str) {
         excludeIf_string = excludeIf_str;
-    }
-
-    String getExcludeIfString() {
-        return excludeIf_string;
     }
 
     public void setExcludeIfXmlFileDoesNotExist(String excludeIfNoXml_str) {
@@ -279,11 +273,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // called by xml parser
     public void setSkipIfFile(String skipIfFileName) {
 	if (this.skipIfFileName != null) {
-	    Utilities.error("Step "
-			    + getFullName()
-			    + " in graph file "
-			    + workflowGraph.getXmlFileName()
-			    + " has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
+	    error("It has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
 	}
 	this.skipIfFileName = skipIfFileName;
     }
@@ -292,14 +282,33 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	return skipIfFileName;
     }
 
-    public boolean getExcludeFromGraph() throws FileNotFoundException,
+    // parse string versions of includeIf and excludeIf, and return final combined value
+    // this will be done only once inside getExcludeFromGraph, which saves the final state
+    // (the xml schema prevents having both includeIf and excludeIf)
+    private boolean evalIncludeIfExcludeIf() throws Exception {
+	boolean exclude = false;
+	String s = null;
+	try {
+	    if (includeIf_string != null) {
+		s = includeIf_string;
+		exclude = !javaScriptInterpreter.evaluateBooleanExpression(includeIf_string);
+	    } else if (excludeIf_string != null) {
+		s = excludeIf_string;
+		exclude = javaScriptInterpreter.evaluateBooleanExpression(excludeIf_string);
+	    }
+	} catch (ScriptException e) {
+	    error("The following includeIf or excludeIf expression is not formatted legally: '" + s + "'");
+	}
+	return exclude;
+    }
+
+    public boolean getExcludeFromGraph() throws FileNotFoundException, Exception,
             IOException {
         if (excludeFromGraph == null) {
             boolean efg = false;
             if (callingStep != null && callingStep.getExcludeFromGraph()) {
                 efg = true;
-            } else if ((includeIf_string != null && includeIf_string.equals("false"))
-                    || (excludeIf_string != null && excludeIf_string.equals("true"))) {
+            } else if (evalIncludeIfExcludeIf()) {
                 efg = true;
                 String gr = isSubgraphCall ? "SUBGRAPH " : "";
                 if (!isSubgraphReturn)
@@ -374,11 +383,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         if (list.contains(this)) {
             if (poppedSteps.contains(this)) return; // ok if done processing
                                                     // kids
-            else Utilities.error("Step "
-                    + getFullName()
-                    + " in graph file "
-                    + workflowGraph.getXmlFileName()
-                    + " is reached by an illegal cycle in the graph. Please check if it is referenced by a dependsExternal that might be causing the cycle ");
+            else error("It is reached by an illegal cycle in the graph. Please check if it is referenced by a dependsExternal that might be causing the cycle ");
         }
         list.add(this);
         for (WorkflowStep child : getChildren()) {
@@ -709,6 +714,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // interpolate variables into subgraphXmlFileName, param values, includeIf
     // and excludeIf
+    // check is set to true only for final subsitution.
     void substituteValues(Map<String, String> variables, boolean check) {
 
 	String where = workflowGraph.getXmlFileName() + ", step " + getFullName() + " ";
@@ -754,16 +760,15 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
                     paramValue, globalProps);
             paramValues.put(paramName, newParamValue);
             if (newParamValue.indexOf("@@") != -1)
-                Utilities.error("In graph file "
-                        + workflowGraph.getXmlFileName() + ", parameter '"
-                        + paramName + "' in step '" + getFullName()
+                error("Parameter '"
+                        + paramName 
                         + "' includes an unresolvable macro reference: '"
                         + newParamValue + "'");
         }
     }
 
     private String processIfString(String type, String ifString,
-            Map<String, String> variables, boolean check) {
+				   Map<String, String> variables, boolean check) {
 
 	String where = workflowGraph.getXmlFileName() + ", step " + getFullName() + " ";
 
@@ -772,13 +777,13 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 						    where, check, type, null);
 
         if (check) {
-            if (!newIf.equals("true") && !newIf.equals("false"))
-                Utilities.error("In graph file "
-                        + workflowGraph.getXmlFileName() + ", " + type
-                        + " in step '" + getFullName()
-                        + "' is neither 'true' nor 'false': '" + newIf + "'");
-        }
-        return newIf;
+	    try {
+		javaScriptInterpreter.evaluateBooleanExpression(newIf);
+	    } catch (ScriptException e) {
+		error(type + " is not a valid boolean expression " + e);
+	    }
+	}
+	return newIf;
     }
 
     protected String getStepDir() {
@@ -817,6 +822,14 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     WorkflowStep newStep() {
         return new WorkflowStep();
     }
+
+    private void error(String msg) {
+	Utilities.error("Step "
+			+ getFullName()
+			+ " in graph file " 
+			+ workflowGraph.getXmlFileName() + " has an error. " + msg);
+    }
+
 
     protected void executeSqlUpdate(String sql) throws SQLException,
             FileNotFoundException, IOException {
