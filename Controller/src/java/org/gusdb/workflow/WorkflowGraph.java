@@ -306,7 +306,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     }
 
     // delete steps with includeIf = false
-    void deleteExcludedSteps() throws java.io.IOException {
+    void deleteExcludedSteps() throws java.io.IOException, Exception {
         Map<String, T> stepsTmp = new HashMap<String, T>(stepsByName);
         for (T step : stepsTmp.values()) {
             if (step.getExcludeFromGraph()) {
