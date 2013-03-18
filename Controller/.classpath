@@ -12,9 +12,8 @@
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-collections-3.1.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/FGP Utilities"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ReFlow Graph Parser"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/FGP XML Utilities"/>
 	<classpathentry kind="lib" path="/WSF Test/lib/java/junit-4.4.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

@@ -7,8 +7,7 @@
 	<classpathentry kind="lib" path="lib/java/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-logging-1.0.4.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/FGP Utilities"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/FGP XML Utilities"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ReFlow Graph Parser"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
