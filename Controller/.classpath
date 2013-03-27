@@ -5,7 +5,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GUS_HOME/lib/java/db_driver/ojdbc5.jar"/>
 	<classpathentry kind="lib" path="lib/java/db_driver/postgresql-8.3-603.jdbc3.jar"/>
-	<classpathentry kind="lib" path="lib/java/jing-20030619.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-digester-1.7.jar"/>
 	<classpathentry kind="lib" path="lib/java/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-beanutils-1.8.3.jar"/>
@@ -15,5 +14,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ReFlow Graph Parser"/>
 	<classpathentry kind="lib" path="/WSF Test/lib/java/junit-4.4.jar"/>
+	<classpathentry kind="lib" path="lib/java/jing-20091111.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
