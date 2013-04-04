@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 
 use lib "$ENV{GUS_HOME}/lib/perl";
-use FgpUtil::Runtime::CommandHelper;
+use FgpUtil::Util::CommandHelper;
 use File::Spec;
 use File::Basename;
 
 my $GUS_HOME = $ENV{GUS_HOME};
-my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
-my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
+my $CLASSPATH = &FgpUtil::Util::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &FgpUtil::Util::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
 sub main { # takes two args: port number and output directory
 

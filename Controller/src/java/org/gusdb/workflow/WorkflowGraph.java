@@ -542,9 +542,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 						     getWorkflow().getWorkflowStepParamValTable());
 	    
             rs = stmt.executeQuery(sql);
-            int count = 0;
+            
             while (rs.next()) {
-                count++;
                 String dbName = rs.getString(1);
                 String dbParamsDigest = rs.getString(2);
                 String dbDependsString = rs.getString(3);

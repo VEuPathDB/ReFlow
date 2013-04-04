@@ -1,7 +1,7 @@
 package ReFlow::Controller::WorkflowStepHandle;
 
 use strict;
-use FgpUtil::Prop::PropertySet;
+use FgpUtil::Util::PropertySet;
 use ReFlow::Controller::SshComputeCluster;
 use ReFlow::Controller::LocalComputeCluster;
 use ReFlow::DatasetLoader::DatasetLoaders;
@@ -94,7 +94,7 @@ sub getConfig {
     my $fullDeclaration = [];
 
     $self->{stepConfig} =
-      FgpUtil::Prop::PropertySet->new($propFile, $fullDeclaration, 1);
+      FgpUtil::Util::PropertySet->new($propFile, $fullDeclaration, 1);
   }
 
   # first try explicit step property
@@ -123,7 +123,7 @@ sub getSharedConfigProperties {
     if (!$self->{globalStepsConfig}) {
       my $homeDir = $self->getWorkflowHomeDir();
       $self->{globalStepsConfig} =
-	FgpUtil::Prop::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
+	FgpUtil::Util::PropertySet->new("$homeDir/config/stepsShared.prop",[], 1);
     }
     return $self->{globalStepsConfig};
 }

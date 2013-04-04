@@ -2,7 +2,7 @@
 
 use lib "$ENV{GUS_HOME}/lib/perl";
 
-use FgpUtil::Runtime::CommandHelper;
+use FgpUtil::Util::CommandHelper;
 
 use File::Basename;
 use File::stat;
@@ -16,8 +16,8 @@ use strict;
 
 my $GUS_HOME = $ENV{GUS_HOME};
 my $PROJECT_HOME = $ENV{PROJECT_HOME};
-my $CLASSPATH = &FgpUtil::Runtime::CommandHelper::getJavaClasspath($GUS_HOME);
-my $sysProps = &FgpUtil::Runtime::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
+my $CLASSPATH = &FgpUtil::Util::CommandHelper::getJavaClasspath($GUS_HOME);
+my $sysProps = &FgpUtil::Util::CommandHelper::getSystemProps($GUS_HOME, 'workflowHtmlGenerator');
 
 my $IMAGES_DIR = "images_";
 my $XML_DIR = "xml_";

@@ -36,6 +36,7 @@ public class IllegalGraphReport {
 	RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
 
 	Class<RunnableWorkflowStep> stepClass = RunnableWorkflowStep.class;
+	@SuppressWarnings("unchecked")
 	Class<WorkflowGraph<RunnableWorkflowStep>> containerClass = 
 	    Utilities.getXmlContainerClass(RunnableWorkflowStep.class, WorkflowGraph.class);
 

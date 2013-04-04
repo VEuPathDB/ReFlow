@@ -51,7 +51,6 @@ import java.util.Set;
  */
 
 public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
-    private int runningCount;
 
     final static String nl = System.getProperty("line.separator");
 
@@ -330,12 +329,13 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     private boolean handleStepChanges(boolean testOnly) throws SQLException,
             IOException, InterruptedException {
 
-        runningCount = 0;
+        int runningCount = 0;
         boolean notDone = false;
         for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
             runningCount += step.handleChangesSinceLastSnapshot(this);
             notDone |= !step.getOperativeState().equals(DONE);
         }
+        log("Number of steps running: " + runningCount);
         if (!notDone) setDoneState(testOnly);
         return !notDone;
     }
