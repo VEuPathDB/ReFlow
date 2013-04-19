@@ -1,5 +1,6 @@
 package org.gusdb.workflow;
 
+import java.io.InputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -335,7 +336,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             runningCount += step.handleChangesSinceLastSnapshot(this);
             notDone |= !step.getOperativeState().equals(DONE);
         }
-        log("Number of steps running: " + runningCount);
+	// don't know why this is in here, but seems like way too much logging
+	//  log("Number of steps running: " + runningCount);
         if (!notDone) setDoneState(testOnly);
         return !notDone;
     }
@@ -486,7 +488,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         String[] cmd = { "bash", "-c", "echo $PPID" };
         Process p = Runtime.getRuntime().exec(cmd);
         p.waitFor();
-        p.getInputStream().read(bo);
+        InputStream s = p.getInputStream();
+	s.read(bo);
+	s.close();
         p.destroy();
         return new String(bo).trim();
     }
@@ -498,7 +502,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             String[] cmd = { "ls", "-l", getHomeDir() + "/kill" };
             Process p = Runtime.getRuntime().exec(cmd);
             p.waitFor();
-            p.getInputStream().read(bo);
+	    InputStream s = p.getInputStream();
+	    s.read(bo);
+	    s.close();
             p.destroy();
             String details = new String(bo).trim();
             log("Found kill file:");
