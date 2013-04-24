@@ -85,6 +85,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                                                     // done
             findOndeckSteps();
             fillOpenSlots(testOnly);
+	    System.gc();
             Thread.sleep(2000);
             cleanProcesses();
             checkForKillSignal(); // if a kill file exists in wf home.
