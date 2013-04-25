@@ -43,9 +43,15 @@ mkdir("$backupDir");
 # backup home_dir/config and $GUS_HOME/lib/xml/workflow
 backup('workflow', "$ENV{GUS_HOME}/lib/xml/workflow");
 backup('config', "$workflow_home/config");
-backup('datasetLoaders', "$ENV{GUS_HOME}/lib/xml/datasetLoaders");
+backupIfExists('datasetLoaders', "$ENV{GUS_HOME}/lib/xml/datasetLoaders");
 print STDERR "Backup done.";
 
+sub backupIfExists {
+  my ($target, $source) = @_;
+  if ( -e $source ) {
+    backup($target, $source);
+  }
+}
 
 sub backup {
   my ($target, $source) = @_;
