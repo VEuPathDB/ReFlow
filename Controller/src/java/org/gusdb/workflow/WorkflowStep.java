@@ -763,7 +763,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
                 error("Parameter '"
                         + paramName 
                         + "' includes an unresolvable macro reference: '"
-                        + newParamValue + "'");
+                        + newParamValue + "'.  Likely solution: add the macro to the config/stepsShared.prop file");
         }
     }
 
