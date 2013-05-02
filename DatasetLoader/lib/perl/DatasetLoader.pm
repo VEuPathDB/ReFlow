@@ -268,7 +268,7 @@ sub getPluginArgs {
 sub error {
     my ($self, $msg) = @_;
     my $xmlFile = $self->{datasetLoaders}->getXmlFile();
-    die "Error in DatasetLoader $self->{datasetName} in file $xmlFile:\n$msg";
+    die "Error in DatasetLoader $self->{datasetName} in file $xmlFile:\n$msg\n";
 }
 
 1;
