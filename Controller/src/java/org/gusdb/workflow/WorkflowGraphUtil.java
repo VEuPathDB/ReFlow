@@ -71,12 +71,12 @@ public class WorkflowGraphUtil {
 	// must happen before instantiation.  
 	graph.setStepsSkipIfFileName(skipIfFileName);
 
+        // instantiate local macros before expanding subgraphs
+        graph.instantiateMacros(macroValuesMap);
+
         // instantiate global and local param values before expanding subgraphs
         graph.instantiateValues(baseName, callerXmlFileName, globalConstants,
                 paramValuesMap, paramErrorsMap);
-
-        // instantiate local macros before expanding subgraphs
-        graph.instantiateMacros(macroValuesMap);
 
         graph.setRootsAndLeafs();
 

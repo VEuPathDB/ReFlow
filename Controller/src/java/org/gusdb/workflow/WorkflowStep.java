@@ -754,17 +754,32 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     void substituteMacros(Map<String, String> globalProps) {
-        for (String paramName : paramValues.keySet()) {
-            String paramValue = paramValues.get(paramName);
-            String newParamValue = Utilities.substituteMacrosIntoString(
-                    paramValue, globalProps);
-            paramValues.put(paramName, newParamValue);
-            if (newParamValue.indexOf("@@") != -1)
-                error("Parameter '"
-                        + paramName 
-                        + "' includes an unresolvable macro reference: '"
-                        + newParamValue + "'.  Likely solution: add the macro to the config/stepsShared.prop file");
-        }
+
+      includeIf_string = substituteMacrosIntoIfString("includeIf", includeIf_string, globalProps);
+      excludeIf_string = substituteMacrosIntoIfString("excludeIf", excludeIf_string, globalProps);
+
+      for (String paramName : paramValues.keySet()) {
+	String paramValue = paramValues.get(paramName);
+	String newParamValue = Utilities.substituteMacrosIntoString(
+								    paramValue, globalProps);
+	paramValues.put(paramName, newParamValue);
+	if (newParamValue.indexOf("@@") != -1)
+	  error("Parameter '"
+		+ paramName 
+		+ "' includes an unresolvable macro reference: '"
+		+ newParamValue + "'.  Likely solution: add the macro to the config/stepsShared.prop file");
+      }
+    }
+
+    private String substituteMacrosIntoIfString(String type, String ifString, Map<String, String> globalProps) {
+      if (ifString != null) {
+	ifString = Utilities.substituteMacrosIntoString(ifString, globalProps);
+	if (ifString.indexOf("@@") != -1)
+	  error(type + " includes an unresolvable macro reference: '"
+		+ ifString + "'.  Likely solution: add the macro to the config/stepsShared.prop file");
+      
+      }
+      return ifString;
     }
 
     private String processIfString(String type, String ifString,
@@ -780,7 +795,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	    try {
 		javaScriptInterpreter.evaluateBooleanExpression(newIf);
 	    } catch (ScriptException e) {
-		error(type + " is not a valid boolean expression " + e);
+		error(nl + type + " is not a valid boolean expression " + nl + e);
 	    }
 	}
 	return newIf;
