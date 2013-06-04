@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use XML::Twig;
+use File::Basename;
+use ReFlow::DatasetClass::Datasets;
+use ReFlow::DatasetClass::Classes;
+use ReFlow::DatasetClass::Template;
+use Data::Dumper;
+use File::Path;
+
+usage() unless scalar(@ARGV) == 2 ||  scalar(@ARGV) == 3;
+
+my ($datasetFile, $classesFile, $doNotValidateXml) = @ARGV;
+
+if (!$doNotValidateXml) {
+    system("validateXmlWithRng  $ENV{GUS_HOME}/lib/rng/datasetClass.rng $classesFile") && exit(1);
+}
+
+# parse class file
+my $classes = ReFlow::DatasetClass::Classes->new($classesFile);
+
+# parse datasets file
+my $datasets = ReFlow::DatasetClass::Datasets->new($datasetFile, $classes);
+my $classNamesUsed = $datasets->getClassNamesUsed();
+
+# validate all dataset properties against classes
+$datasets->validateAgainstClasses();
+
+my $datasetsFullName = $datasets->getFullName();
+my $datasetPropertiesFileName = "$ENV{GUS_HOME}/lib/xml/datasetProperties/${datasetsFullName}.xml";
+
+if (-e $datasetPropertiesFileName)
+  if (-M $datasetPropertiesFileName < -M $datasetFile) {
+    print STDERR "File $datasetPropertiesFileName is up to date.\n";
+    exit(0);
+  } else {
+    unlink($datasetPropertiesFileName) || die "Couldn't delete old $datasetPropertiesFileName\n";
+  }
+}
+
+my ($basename,$path,$suffix) = fileparse($datasetPropertiesFileName, '.xml');
+mkpath($path);
+open(F, ">$datasetPropertiesFileName") || die "Can't open file file '$datasetPropertiesFileName' for writing\n";
+
+foreach my $dataset (@{$datasets->getDatasets()}) {
+  my $datasetPropertiesText = $classes->getDatasetPropertiesText($dataset);
+  print F "$datasetPropertiesText\n";
+}
+
+
+sub usage {
+
+  print "
+Create a simple properties file from a dataset file for consumption by the DatasetPresenter system. Provides
+for each dataset its _RSRC name as well as its property values.  The presenter system uses the _RSRC name as a key.
+
+Usage:  workflowDataset2PropsFile datasets_file classes_file [-skipXmlValidation]
+
+Where:
+  datasets_file:    an xml file containing a set of datasets.  Must be in a file
+                    path including lib/xml/datasets/XXX/YYY.xml where XXX is one
+                    or more optional subirs, and YYY is the name of the dataset.
+                    Files generated from plans will be named like this:
+                    XXX/YYY/planFileName.xml
+
+  classes_file:     an xml file containing a set of dataset classes.
+  skipXmlValidation: skip the validation of the classes_file
+
+Output: the generated dataset prop file in \$GUS_HOME/lib/xml/datasetProperties
+
+";
+
+  exit(1);
+}
