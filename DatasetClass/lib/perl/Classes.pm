@@ -99,7 +99,9 @@ sub getDatasetPropertiesText {
     my $class = $self->getClass($dataset->{class});
     return "" unless $class->{datasetLoader};
 
-    my $rawName = $class->{datasetLoader}->{name};
+    #print Dumper $class->{datasetLoader};
+
+    my $rawName = $class->{datasetLoader}->[0]->{datasetName};
 
     my ($name, $err) = substitutePropsIntoXmlText($rawName, $dataset);
     if ($err) {

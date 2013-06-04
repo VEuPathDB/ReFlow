@@ -9,6 +9,7 @@ use ReFlow::DatasetClass::Classes;
 use ReFlow::DatasetClass::Template;
 use Data::Dumper;
 use File::Path;
+use File::Copy;
 
 usage() unless scalar(@ARGV) == 2 ||  scalar(@ARGV) == 3;
 
@@ -29,9 +30,9 @@ my $classNamesUsed = $datasets->getClassNamesUsed();
 $datasets->validateAgainstClasses();
 
 my $datasetsFullName = $datasets->getFullName();
-my $datasetPropertiesFileName = "$ENV{GUS_HOME}/lib/xml/datasetProperties/${datasetsFullName}.xml";
+my $datasetPropertiesFileName = "$ENV{GUS_HOME}/lib/prop/datasetProperties/${datasetsFullName}.prop";
 
-if (-e $datasetPropertiesFileName)
+if (-e $datasetPropertiesFileName) {
   if (-M $datasetPropertiesFileName < -M $datasetFile) {
     print STDERR "File $datasetPropertiesFileName is up to date.\n";
     exit(0);
@@ -40,15 +41,17 @@ if (-e $datasetPropertiesFileName)
   }
 }
 
-my ($basename,$path,$suffix) = fileparse($datasetPropertiesFileName, '.xml');
+my ($basename,$path,$suffix) = fileparse($datasetPropertiesFileName, '.prop');
 mkpath($path);
-open(F, ">$datasetPropertiesFileName") || die "Can't open file file '$datasetPropertiesFileName' for writing\n";
+open(F, ">$datasetPropertiesFileName.tmp") || die "Can't open file file '$datasetPropertiesFileName.tmp' for writing\n";
 
 foreach my $dataset (@{$datasets->getDatasets()}) {
   my $datasetPropertiesText = $classes->getDatasetPropertiesText($dataset);
-  print F "$datasetPropertiesText\n";
+  print F "$datasetPropertiesText\n\n";
 }
+close(F);
 
+move("$datasetPropertiesFileName.tmp", $datasetPropertiesFileName) || die "Couldn't move $datasetPropertiesFileName.tmp to $datasetPropertiesFileName\n";
 
 sub usage {
 
@@ -68,7 +71,7 @@ Where:
   classes_file:     an xml file containing a set of dataset classes.
   skipXmlValidation: skip the validation of the classes_file
 
-Output: the generated dataset prop file in \$GUS_HOME/lib/xml/datasetProperties
+Output: the generated dataset prop file in \$GUS_HOME/lib/prop/datasetProperties
 
 ";
 
