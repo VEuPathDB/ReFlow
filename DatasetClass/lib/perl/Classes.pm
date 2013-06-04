@@ -94,6 +94,27 @@ sub getDatasetLoaderText {
     return "$datasetLoaderText\n";
 }
 
+sub getDatasetPropertiesText {
+    my ($self, $dataset) = @_;
+    my $class = $self->getClass($dataset->{class});
+    return "" unless $class->{datasetLoader};
+
+    my $rawName = $class->{datasetLoader}->{name};
+
+    my ($name, $err) = substitutePropsIntoXmlText($rawName, $dataset);
+    if ($err) {
+	die "Error: in classes file $self->{classesFile}, the <datasetLoader> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
+    }
+
+    my @props = ("datasetLoaderName=$name");
+
+    foreach my $propKey (keys(%{$dataset->{prop}})) {
+      my $propValue = $dataset->{prop}->{$propKey}->{content};
+      push(@props, "$propKey=$propValue");
+    }
+    return join("\n", @props);
+}
+
 # static method
 sub substitutePropsIntoXmlText {
     my ($xmlText, $dataset) = @_;
