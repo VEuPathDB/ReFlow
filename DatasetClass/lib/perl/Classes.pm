@@ -108,7 +108,8 @@ sub getDatasetPropertiesText {
 	die "Error: in classes file $self->{classesFile}, the <datasetLoader> element in class '$dataset->{class}' contains an invalid macro:\n$err\n";
     }
 
-    my @props = ("datasetLoaderName=$name");
+    my $project = $dataset->{prop}->{projectName}->{content};
+    my @props = ("datasetLoaderName=$project:$name");
 
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
