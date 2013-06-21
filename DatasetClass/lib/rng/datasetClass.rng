@@ -100,7 +100,9 @@
 		      </element>
 		    </zeroOrMore>
 		  </optional>
-                  <ref name="Dir"/>
+		  <optional>
+                    <ref name="Dir"/>
+		  </optional>
 		</element>
               </choice>
               <zeroOrMore>
