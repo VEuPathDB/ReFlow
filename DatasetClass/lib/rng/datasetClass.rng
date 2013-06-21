@@ -37,6 +37,17 @@
             </element>
 	  </zeroOrMore>
 	  <optional>
+            <element name="qaNotes">
+              <text />
+            </element>
+	  </optional>
+	  <zeroOrMore>
+            <element name="templateInjector">
+              <attribute name="name"/>
+              <text />
+            </element>
+	  </zeroOrMore>
+	  <optional>
             <element name="datasetLoader">
               <attribute name="datasetName"/>
               <attribute name="version"/>
@@ -78,6 +89,17 @@
 		</element>
 		<element name="manualGet">
 		  <attribute name="fileOrDir"/>
+		  <optional>
+		    <element name="descriptionOfFinal">
+		      <text/>
+		    </element>
+		    <zeroOrMore>
+		      <element name="example">
+			<attribute name="dir"/>
+			<text/>
+		      </element>
+		    </zeroOrMore>
+		  </optional>
                   <ref name="Dir"/>
 		</element>
               </choice>
