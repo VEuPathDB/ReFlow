@@ -117,8 +117,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
 
     private boolean initWorkflowTable(boolean updateXmlFileDigest,
-            boolean testmode) throws SQLException, IOException, Exception,
-            NoSuchAlgorithmException {
+            boolean testmode) throws SQLException, IOException {
 
         boolean uninitialized = !workflowTableInitialized();
         if (uninitialized) {
@@ -331,14 +330,11 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     private boolean handleStepChanges(boolean testOnly) throws SQLException,
             IOException, InterruptedException {
 
-        int runningCount = 0;
         boolean notDone = false;
         for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
-            runningCount += step.handleChangesSinceLastSnapshot(this);
+            step.handleChangesSinceLastSnapshot(this);
             notDone |= !step.getOperativeState().equals(DONE);
         }
-	// don't know why this is in here, but seems like way too much logging
-	//  log("Number of steps running: " + runningCount);
         if (!notDone) setDoneState(testOnly);
         return !notDone;
     }
@@ -543,6 +539,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         return stepDir.list().length == 0 && dataDir.list().length == 0;
     }
 
+    @Override
     void log(String msg) throws IOException {
         String logFileName = getHomeDir() + "/logs/controller.log";
         PrintWriter writer = new PrintWriter(new FileWriter(logFileName, true));
