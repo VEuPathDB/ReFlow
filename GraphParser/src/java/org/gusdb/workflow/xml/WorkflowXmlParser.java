@@ -14,7 +14,6 @@ import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -78,7 +77,7 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
     
     @SuppressWarnings("unchecked")
     private S parseXml(Document doc, Map<String, String> properties)
-        throws TransformerFactoryConfigurationError, TransformerException, IOException, SAXException {
+        throws TransformerException, IOException, SAXException {
       InputStream xmlStream = substituteProps(doc, properties);
       return (S)digester.parse(xmlStream);
     }
@@ -131,7 +130,7 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
 
     private InputStream substituteProps(Document masterDoc,
             Map<String, String> properties)
-            throws TransformerFactoryConfigurationError, TransformerException {
+            throws TransformerException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // transform the DOM doc to a string

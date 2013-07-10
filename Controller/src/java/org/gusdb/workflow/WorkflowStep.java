@@ -119,6 +119,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         loadTypes.add(defaultLoadType);
     }
 
+    @Override
     public void setName(String name) {
         this.baseName = name;
     }
@@ -418,10 +419,12 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return newStep;
     }
 
+    @Override
     public void addParamValue(NamedValue paramValue) {
         paramValues.put(paramValue.getName(), paramValue.getValue());
     }
 
+    @Override
     public String getBaseName() {
         return baseName;
     }
@@ -466,11 +469,12 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return workflowGraph.getWorkflow().getUndoStepId() != null;
     }
 
+    @Override
     public List<Name> getDependsNames() {
         return dependsNames;
     }
 
-    String getDependsString() throws NoSuchAlgorithmException, Exception {
+    String getDependsString() {
         if (dependsString == null) {
             List<String> d = new ArrayList<String>();
             for (WorkflowStep parent : parents)
@@ -481,6 +485,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dependsString;
     }
 
+    @Override
     public void addDependsName(Name dependsName) {
         dependsNames.add(dependsName);
     }
@@ -489,6 +494,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dependsGlobalNames;
     }
 
+    @Override
     public void addDependsGlobalName(Name dependsName) {
         dependsGlobalNames.add(dependsName);
     }
@@ -497,27 +503,28 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return dependsExternalNames;
     }
 
+    @Override
     public void addDependsExternalName(Name dependsName) {
         dependsExternalNames.add(dependsName);
     }
 
-    // TODO Java6 @Override
+    @Override
     public void setXmlFile(String subgraphXmlFileName) {
         this.subgraphXmlFileName = subgraphXmlFileName;
         isSubgraphCall = true;
     }
 
-    // TODO Java6 @Override
+    @Override
     public String getSubgraphXmlFileName() {
         return subgraphXmlFileName;
     }
 
-    // TODO Java6 @Override
+    @Override
     public void setSourceXmlFileName(String fileName) {
         this.sourceXmlFileName = fileName;
     }
 
-    // TODO Java6 @Override
+    @Override
     public String getSourceXmlFileName() {
         return workflowGraph.getXmlFileName();
     }
@@ -602,7 +609,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     void initializeStepParamValTable(Set<String> stepNamesInDb, PreparedStatement insertStmt)
-	throws SQLException, NoSuchAlgorithmException, Exception {
+	throws SQLException {
 
 	if (stepNamesInDb.contains(getFullName())) return;
 	
@@ -851,6 +858,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         workflowGraph.getWorkflow().executeSqlUpdate(sql);
     }
 
+    @Override
     public String toString() {
 
         String s = nl + "name:       " + getFullName() + nl + "id:         "
@@ -875,6 +883,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return buf.toString();
     }
 
+    @Override
     public int compareTo(WorkflowStep s) {
         return baseName.compareTo(s.getBaseName());
     }
@@ -884,13 +893,13 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         // added for interface compliance only
     }
 
-    // TODO Java6 @Override
+    @Override
     public String getGroupName() {
         throw new UnsupportedOperationException(
                 "This implementation does not support this method.");
     }
 
-    // TODO Java6 @Override
+    @Override
     public void setGroupName(String arg0) {
         // value is not needed in this implementation;
         // added for interface compliance only
