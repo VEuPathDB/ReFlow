@@ -68,15 +68,18 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     final static String nl = System.getProperty("line.separator");
 
     public WorkflowGraph() {}
-
+    
+    @Override
     public void addConstant(NamedValue constant) {
         constants.put(constant.getName(), constant.getValue());
     }
 
+    @Override
     public void addGlobalConstant(NamedValue constant) {
         tmpGlobalConstants.put(constant.getName(), constant.getValue());
     }
 
+    @Override
     public void addParamDeclaration(Name paramName) {
         paramDeclarations.add(paramName.getName());
     }
@@ -91,6 +94,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
     // called in the order found in the XML file. stepsByName retains
     // that order. this keeps the global subgraph first, if there is one
+    @Override
     public void addStep(T step) throws IOException {
         step.setWorkflowGraph(this);
         String stepName = step.getBaseName();
@@ -116,6 +120,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         return workflow;
     }
 
+    @Override
     public void setXmlFileName(String xmlFileName) {
         this.xmlFileName = xmlFileName;
     }
@@ -375,6 +380,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         sortedSteps = null;
     }
 
+    @Override
     public String toString() {
         return "Constants" + nl + constants.toString() + nl + nl + "Steps" + nl
                 + getSortedSteps().toString();
@@ -490,7 +496,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         }
         finally {
             undoStepPstmt.close();
-            ;
         }
     }
 

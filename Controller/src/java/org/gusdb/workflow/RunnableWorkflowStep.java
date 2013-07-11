@@ -211,6 +211,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
         workflowGraph.getWorkflow().log(sb.toString());
     }
 
+    @Override
     WorkflowStep newStep() {
         return new RunnableWorkflowStep();
     }
