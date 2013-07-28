@@ -891,6 +891,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public void setGroupName(Name groupName) {
         // value is not needed in this implementation;
         // added for interface compliance only
+        // (groups are used for the ReFlow Graph Viewer)
     }
 
     @Override
