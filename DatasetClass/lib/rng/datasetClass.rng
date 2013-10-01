@@ -57,6 +57,9 @@
 		<attribute name="parentDatasetName"/>
               </optional>
               <optional>
+		<attribute name="releaseDate"/>
+              </optional>
+              <optional>
 		<attribute name="organismAbbrev"/>
               </optional>
               <optional>
