@@ -57,10 +57,10 @@
 		<attribute name="parentDatasetName"/>
               </optional>
               <optional>
-		<attribute name="releaseDate"/>
+		<attribute name="organismAbbrev"/>
               </optional>
               <optional>
-		<attribute name="organismAbbrev"/>
+		<attribute name="releaseDate"/>
               </optional>
               <optional>
 		<attribute name="externalDbIdType"/>
