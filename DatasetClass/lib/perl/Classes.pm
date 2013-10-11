@@ -99,20 +99,13 @@ sub getDatasetPropertiesText {
     my ($self, $dataset) = @_;
     my $class = $self->getClass($dataset->{class});
 
-    my $isOrganism = $dataset->{class} eq 'organism' ? 1 : 0;
+    my $isOrganism = $dataset->{class};
 
-    return "" unless $class->{datasetLoader} || $isOrganism;
+    return "" unless $class->{datasetLoader};
 
     #print Dumper $class->{datasetLoader};
 
-    my $rawName;
-
-    if($isOrganism) {
-      $rawName = "\${organismAbbrev}";
-    }
-    else {
-      $rawName = $class->{datasetLoader}->[0]->{datasetName};
-    }
+    my $rawName = $class->{datasetLoader}->[0]->{datasetName};
 
     my ($name, $err) = substitutePropsIntoXmlText($rawName, $dataset);
     if ($err) {
