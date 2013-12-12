@@ -1,4 +1,4 @@
-package ReFlow::TestFlow::AnotherTestStep;
+package ReFlow::TestFlow::HelloUnderworld;
 
 @ISA = (ReFlow::Controller::WorkflowStepHandle);
 use strict;
@@ -8,7 +8,7 @@ use ReFlow::Controller::WorkflowStepHandle;
 sub run {
   my ($self, $test, $undo) = @_;
 
-  my $size = $self->getParamValue('greeting');
+  my $greeting = $self->getParamValue('greeting');
 
   $self->runCmd($test, "echo '$greeting' > underworld.out");
 

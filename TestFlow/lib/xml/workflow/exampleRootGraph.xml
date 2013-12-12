@@ -18,12 +18,12 @@
         stepClass="ReFlow::TestFlow::HelloWorld" 
 	groupName="Step Group 1"
 	skipIfFile="/home/sfischer/junk/soso">
-    <paramValue name="greeting">Wazzup $$person$$</paramValue>
+    <paramValue name="msg">The sky is blue</paramValue>
   </step>
 
   <step name="speakToPluto"
         stepClass="ReFlow::TestFlow::HelloUnderworld">
-    <paramValue name="msg">Hello down there</paramValue>
+    <paramValue name="greeting">Hello down there $$person$$</paramValue>
     <depends name="doSomeStuff"/>
     <depends name="sayHello"/>
   </step>
