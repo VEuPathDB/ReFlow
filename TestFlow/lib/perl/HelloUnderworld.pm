@@ -4,12 +4,13 @@ package ReFlow::TestFlow::AnotherTestStep;
 use strict;
 use ReFlow::Controller::WorkflowStepHandle;
 
+# this doesn't do much, just exists to show yet another little step class
 sub run {
   my ($self, $test, $undo) = @_;
 
-  my $size = $self->getParamValue('size');
+  my $size = $self->getParamValue('greeting');
 
-  $self->runCmd($test, "echo 'testing... $size' > teststep.out");
+  $self->runCmd($test, "echo '$greeting' > underworld.out");
 
   if (!$test) {
     sleep(2);

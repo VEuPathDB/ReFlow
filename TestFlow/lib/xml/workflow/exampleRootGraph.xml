@@ -1,0 +1,37 @@
+<workflowGraph name="root">
+  <param name="person"/>
+  <param name="testComputeCluster"/>
+  <param name="seqFile"/>
+
+  <constant name="mood">happy</constant>
+
+  <subgraph name="doSomeStuff" 
+	    xmlFile="exampleGraph.xml"
+	    groupName="Step Group 1" 
+	    skipIfFile="/home/sfischer/junk/soso">
+    <paramValue name="dance">$$mood$$ waltz</paramValue>
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+    <paramValue name="seqFile">$$seqFile$$</paramValue>
+  </subgraph>
+
+  <step name="sayHello"
+        stepClass="ReFlow::TestFlow::HelloWorld" 
+	groupName="Step Group 1"
+	skipIfFile="/home/sfischer/junk/soso">
+    <paramValue name="greeting">Wazzup $$person$$</paramValue>
+  </step>
+
+  <step name="speakToPluto"
+        stepClass="ReFlow::TestFlow::HelloUnderworld">
+    <paramValue name="msg">Hello down there</paramValue>
+    <depends name="doSomeStuff"/>
+    <depends name="sayHello"/>
+  </step>
+
+  <subgraph name="doMoreStuff"
+	    xmlFile="anotherExampleGraph.xml"
+	    groupName="Step Group 2">
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+  </subgraph>
+
+</workflowGraph>
