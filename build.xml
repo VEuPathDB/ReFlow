@@ -4,28 +4,27 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="FgpUtil-Installation">
-    <ant antfile="../FgpUtil/build.xml" target="FgpUtil-Installation">
-      <property name="project" value="FgpUtil"/>
-    </ant>
-  </target>  
+  <import file="${projectsDir}/FgpUtil/build.xml" />
     
-  <target name="FgpUtil-Checkout" unless="FgpUtil.present"> 
-    <ant target="defaultProjectCheckout" inheritAll="false">
-      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/FgpUtil"/>
-      <property name="project" value="FgpUtil"/>
-    </ant>
-  </target>
   
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ReFlow-ChildCheckout">
-    <available file="../FgpUtil" type="dir" property="FgpUtil.present" />
+    <available file="${projectsDir}/FgpUtil" type="dir" property="FgpUtil.present" />
     <antcall target="FgpUtil-Checkout"/>
   </target>
   
+
+  <target name="FgpUtil-Checkout" unless="FgpUtil.present">
+    <ant target="defaultProjectCheckout" inheritAll="false">
+      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/FgpUtil"/>
+      <property name="project" value="FgpUtil"/>
+    </ant>
+  </target>
+
+
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- ooooooooooooooooooooooooooo    Update    ooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -49,7 +48,9 @@
                                             ReFlow/StepClasses-Installation,
                                             ReFlow/AuthoringGui-Installation" >
 
-    <ant target="defaultProjectInstall"/>
+    <ant target="defaultProjectInstall">
+      <property name="project" value="ReFlow"/>
+    </ant>
 
   </target>  
    
