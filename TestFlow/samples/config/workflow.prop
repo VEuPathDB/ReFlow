@@ -1,7 +1,7 @@
 name=TestFlow
 version=1.0
 workflowXmlFile=exampleRootGraph.xml
-workflowTable=ApiDB.Workflow
-workflowStepTable=ApiDB.WorkflowStep
-workflowStepTrackingTable=ApiDB.WorkflowStepAlgInvocation
-workflowStepParamValueTable=ApiDB.WorkflowStepParamValue
+workflowTable=Workflow
+workflowStepTable=WorkflowStep
+workflowStepTrackingTable=WorkflowStepAlgInvocation
+workflowStepParamValueTable=WorkflowStepParamValue
