@@ -1,15 +1,15 @@
-DROP TABLE apidb.WorkflowStepParamValue;
-DROP SEQUENCE apidb.WorkflowStepParamValue_sq;
+DROP TABLE WorkflowStepParamValue;
+DROP SEQUENCE WorkflowStepParamValue_sq;
 
-DROP TABLE apidb.WorkflowStepAlgInvocation;
-DROP SEQUENCE apidb.WorkflowStepAlgInvocation_sq;
+DROP TABLE WorkflowStepAlgInvocation;
+DROP SEQUENCE WorkflowStepAlgInvocation_sq;
 
-ALTER TABLE apidb.Workflow DROP CONSTRAINT workflow_fk1;
+ALTER TABLE Workflow DROP CONSTRAINT workflow_fk1;
 
-DROP TABLE apidb.WorkflowStep;
-DROP SEQUENCE apidb.WorkflowStep_sq;
+DROP TABLE WorkflowStep;
+DROP SEQUENCE WorkflowStep_sq;
 
-DROP TABLE apidb.Workflow;
-DROP SEQUENCE apidb.Workflow_sq;
+DROP TABLE Workflow;
+DROP SEQUENCE Workflow_sq;
  
 exit;
