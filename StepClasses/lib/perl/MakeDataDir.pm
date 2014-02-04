@@ -15,9 +15,17 @@ sub run {
   my $workflowDataDir = $self->getWorkflowDataDir();
 
   if($undo){
-
+      
+      # for SNPs remove symlink and replace with empty dir
+      if (-l "$workflowDataDir/$dataDir"){
+        $self->runCmd(0, "rm $workflowDataDir/$dataDir");
+        $self->runCmd(0, "mkdir $workflowDataDir/$dataDir");
+      
+      # otherwise assume regular dir and remove with rmdir
+      }else{
       # should be emtpy
       $self->runCmd(0, "rmdir $workflowDataDir/$dataDir");
+      }
 
   }else{
       # don't use -p.  parents should be made already
