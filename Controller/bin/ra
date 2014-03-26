@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $workflowDir = $ENV{WORKFLOW_DIR};
+unless($workflowDir) {
+  die "ra requires ENVIRONMENT Variable WORKFLOW_DIR";
+}  
+
+my @actions = ("list", "run", "undo", "reset", "set");
+my @listable = ("failed", "done", "ready", "on_deck");
+my @modes = ("real", "test");
+my @states = ("ready", "kill", "offline", "online", "stopafter", "resume");
+
+my $action = $ARGV[0];
+unless($action) {
+  &usage();
+  exit;
+}
+
+
+&checkValue(\@actions, $action);
+
+my $cmd;
+
+if($action eq "list") {
+  my $listVal = $ARGV[1];
+  &checkValue(\@listable, $listVal);
+
+  $listVal = uc($listVal);
+  $cmd = "workflow -h $workflowDir -s1 $listVal |sort";
+} 
+elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
+  my $modeVal = $ARGV[1];
+  &checkValue(\@modes, $modeVal);
+
+  die "Mode must be 'test' for reset action" if($action eq "reset" && $modeVal ne "test");
+  
+  my $mode = $modeVal eq "test" ? "-t" : "-r";
+
+  $cmd = "workflow -h $workflowDir $mode";
+
+  if($action eq 'undo') {
+    &usage();
+    die "<step pattern> is required but missing" unless($ARGV[2]);
+  }
+  
+  $cmd = $cmd . " -u " . $ARGV[2] if($action eq 'undo');
+  $cmd = $cmd . " -reset" if($action eq 'reset');
+
+} 
+elsif($action eq "set") {
+  my $state = $ARGV[1];
+  &checkValue(\@states, $state);
+
+  unless($ARGV[2]) {
+    &usage();
+    die "<step pattern> is required but missing";
+  }
+
+  $cmd = "workflowstep -h $workflowDir -p $ARGV[2] $state";
+  $cmd = $cmd . " -u" if($ARGV[3] eq 'undo');
+
+} 
+else {
+  die "Whoops... You specified an incorrect command line action: $action";
+}
+
+
+#print $cmd . "\n";
+system($cmd);
+
+
+sub usage {
+  print "usage: 
+
+ra list [failed|done|ready|on_deck]
+  workflow -h <workflow dir> -s1 [FAILED|READY|DONE|ON_DECK] |sort
+
+---------------------------------------------------
+
+ra run [real|test]
+  workflow -h <workflow dir> [-t|-r]
+
+----------------------------------------------------
+
+ra undo [test|real] <step name>
+  workflow -h <workflow dir> [-t|-r] -u <step name>
+
+----------------------------------------------------
+
+ra reset test
+  workflow -h <workflow dir> -t -reset
+
+---------------------------------------------------
+
+ra set [ready|kill|offline|online|stopafter|resume] <stepname_pattern> [undo]
+  workflowstep -h workflow_dir -p stepname_pattern [ready|kill|offline|online|stopafter|resume] [-u]
+
+---------------------------------------------------
+
+";
+
+}
+
+sub checkValue {
+  my ($a, $t) = @_;
+
+  foreach(@$a) {
+    return 1 if($_ eq $t);
+  }
+
+  &usage();
+  die("Whoops... You specified an incorrect command line option: [$t].  Viable options are " . join(",", @$a));
+}
+
