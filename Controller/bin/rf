@@ -37,6 +37,7 @@ elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
   die "Mode must be 'test' for reset action" if($action eq "reset" && $modeVal ne "test");
   
   my $mode = $modeVal eq "test" ? "-t" : "-r";
+  $mode = '-reset' if($action eq 'reset');
 
   $cmd = "workflow -h $workflowDir $mode";
 
@@ -46,7 +47,6 @@ elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
   }
   
   $cmd = $cmd . " -u " . $ARGV[2] if($action eq 'undo');
-  $cmd = $cmd . " -reset" if($action eq 'reset');
 
 } 
 elsif($action eq "set") {
