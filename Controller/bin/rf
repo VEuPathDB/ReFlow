@@ -42,8 +42,10 @@ elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
   $cmd = "workflow -h $workflowDir $mode";
 
   if($action eq 'undo') {
-    &usage();
-    die "<step pattern> is required but missing" unless($ARGV[2]);
+    unless($ARGV[2]) {
+      &usage();
+      die "<step pattern> is required but missing";
+    }
   }
   
   $cmd = $cmd . " -u " . $ARGV[2] if($action eq 'undo');
