@@ -4,7 +4,7 @@ use strict;
 
 my $workflowDir = $ENV{WORKFLOW_DIR};
 unless($workflowDir) {
-  die "ra requires ENVIRONMENT Variable WORKFLOW_DIR";
+  die "rf requires ENVIRONMENT Variable WORKFLOW_DIR";
 }  
 
 my @actions = ("list", "run", "undo", "reset", "set");
@@ -37,16 +37,18 @@ elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
   die "Mode must be 'test' for reset action" if($action eq "reset" && $modeVal ne "test");
   
   my $mode = $modeVal eq "test" ? "-t" : "-r";
+  $mode = '-reset' if($action eq 'reset');
 
   $cmd = "workflow -h $workflowDir $mode";
 
   if($action eq 'undo') {
-    &usage();
-    die "<step pattern> is required but missing" unless($ARGV[2]);
+    unless($ARGV[2]) {
+      &usage();
+      die "<step pattern> is required but missing";
+    }
   }
   
   $cmd = $cmd . " -u " . $ARGV[2] if($action eq 'undo');
-  $cmd = $cmd . " -reset" if($action eq 'reset');
 
 } 
 elsif($action eq "set") {
@@ -74,27 +76,27 @@ system($cmd);
 sub usage {
   print "usage: 
 
-ra list [failed|done|ready|on_deck]
+rf list [failed|done|ready|on_deck]
   workflow -h <workflow dir> -s1 [FAILED|READY|DONE|ON_DECK] |sort
 
 ---------------------------------------------------
 
-ra run [real|test]
+rf run [real|test]
   workflow -h <workflow dir> [-t|-r]
 
 ----------------------------------------------------
 
-ra undo [test|real] <step name>
+rf undo [test|real] <step name>
   workflow -h <workflow dir> [-t|-r] -u <step name>
 
 ----------------------------------------------------
 
-ra reset test
+rf reset test
   workflow -h <workflow dir> -t -reset
 
 ---------------------------------------------------
 
-ra set [ready|kill|offline|online|stopafter|resume] <stepname_pattern> [undo]
+rf set [ready|kill|offline|online|stopafter|resume] <stepname_pattern> [undo]
   workflowstep -h workflow_dir -p stepname_pattern [ready|kill|offline|online|stopafter|resume] [-u]
 
 ---------------------------------------------------
