@@ -488,7 +488,7 @@ public class Workflow<T extends WorkflowStep> {
 
         for (String dirName : homeDirSubDirs) {
             File dir = new File(getHomeDir() + "/" + dirName);
-            IoUtil.deleteDir(dir);
+            IoUtil.deleteDirectory(dir);
             System.out.println("rm -rf " + dir);
         }
 
