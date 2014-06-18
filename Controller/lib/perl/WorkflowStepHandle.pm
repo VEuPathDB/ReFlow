@@ -204,7 +204,7 @@ sub runSqlFetchOneRow {
     }
     my @output = ("just", "testing");
     my $testmode = $test? " (in test mode, so only pretending) " : "";
-    $self->log("running$testmode:  $sql\n\n");
+    $self->log("Running SQL$testmode:  $sql\n\n");
     @output = $self->{workflow}->_runSqlQuery_single_array($sql) unless $test;
     return @output;
 }
@@ -230,7 +230,7 @@ sub runCmdSub {
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
     my $testmode = $test? " (in test mode, so only pretending) " : "";
-    $self->log("running$testmode:  $cmd\n\n");
+    $self->log("Running command$testmode:  $cmd\n\n");
 
     my $output;
 
