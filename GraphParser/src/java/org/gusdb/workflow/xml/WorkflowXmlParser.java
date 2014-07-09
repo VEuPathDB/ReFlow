@@ -70,7 +70,9 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         Map<String, String> properties = new HashMap<String, String>();
         //Map<String, String> properties = getPropMap(modelPropURL);
 
-	      S workflowGraph = parseXml(doc, properties);
+	System.err.println("Parsing " + xmlFileName);
+	S workflowGraph = parseXml(doc, properties);
+
         workflowGraph.setXmlFileName(xmlFileName);
         return workflowGraph;
     }
