@@ -402,15 +402,16 @@ public class Workflow<T extends WorkflowStep> {
 
         Statement stmt = null;
         ResultSet rs = null;
+        Formatter formatter = null;
         try {
             stmt = getDbConnection().createStatement();
             rs = stmt.executeQuery(sql);
             StringBuilder sb = new StringBuilder();
-            Formatter formatter = new Formatter(sb);
+            formatter = new Formatter(sb);
             if (!oneColumnOutput) {
-                formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
-                        "STATUS", "STEP_ID", "NAME", "END_AT");
-                System.out.println(sb.toString());
+              formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
+                  "STATUS", "STEP_ID", "NAME", "END_AT");
+              System.out.println(sb.toString());
             }
             while (rs.next()) {
                 String nm = rs.getString("name");
@@ -444,6 +445,7 @@ public class Workflow<T extends WorkflowStep> {
         finally {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
+            if (formatter != null) formatter.close();
         }
     }
 
