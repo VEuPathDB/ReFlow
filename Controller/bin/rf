@@ -8,7 +8,7 @@ unless($workflowDir) {
 }  
 
 my @actions = ("list", "run", "undo", "reset", "set");
-my @listable = ("failed", "done", "ready", "on_deck");
+my @listable = ("failed", "done", "ready", "on_deck", "running");
 my @modes = ("real", "test");
 my @states = ("ready", "kill", "offline", "online", "stopafter", "resume");
 
