@@ -1,6 +1,7 @@
 package org.gusdb.workflow;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -485,13 +486,16 @@ public class Workflow<T extends WorkflowStep> {
     // config/
     void reset() throws SQLException, FileNotFoundException, IOException {
         getDbState();
-        if (!test_mode)
-            error("Cannot reset a workflow unless it was run in test mode (-t)");
+
+	if (!test_mode)
+	  error("Cannot reset a workflow unless it was run in test mode (-t)");
 
         for (String dirName : homeDirSubDirs) {
             File dir = new File(getHomeDir() + "/" + dirName);
-            IoUtil.deleteDirectory(dir);
-            System.out.println("rm -rf " + dir);
+	    if (dir.exists()) {
+	      IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
+	      System.out.println("rm -rf " + dir);
+	    }
         }
 
         String sql = "update " + workflowTable
