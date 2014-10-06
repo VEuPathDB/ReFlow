@@ -10,6 +10,8 @@ sub run {
 
   my $greeting = $self->getParamValue('greeting');
 
+  die "Please don't use the word 'down' in the greeting\n" if $greeting =~ /down/;
+
   $self->runCmd($test, "echo '$greeting' > underworld.out");
 
   if (!$test) {

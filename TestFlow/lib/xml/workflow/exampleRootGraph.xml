@@ -5,21 +5,19 @@
 
   <constant name="mood">happy</constant>
 
+  <step name="sayHello"
+        stepClass="ReFlow::TestFlow::HelloWorld" 
+	skipIfFile="/home/sfischer/junk/soso">
+    <paramValue name="msg">The sky is blue</paramValue>
+  </step>
+
   <subgraph name="doSomeStuff" 
 	    xmlFile="exampleGraph.xml"
-	    groupName="Step Group 1" 
 	    skipIfFile="/home/sfischer/junk/soso">
     <paramValue name="dance">$$mood$$ waltz</paramValue>
     <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
     <paramValue name="seqFile">$$seqFile$$</paramValue>
   </subgraph>
-
-  <step name="sayHello"
-        stepClass="ReFlow::TestFlow::HelloWorld" 
-	groupName="Step Group 1"
-	skipIfFile="/home/sfischer/junk/soso">
-    <paramValue name="msg">The sky is blue</paramValue>
-  </step>
 
   <step name="speakToPluto"
         stepClass="ReFlow::TestFlow::HelloUnderworld">
@@ -29,8 +27,7 @@
   </step>
 
   <subgraph name="doMoreStuff"
-	    xmlFile="anotherExampleGraph.xml"
-	    groupName="Step Group 2">
+	    xmlFile="anotherExampleGraph.xml">
     <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
   </subgraph>
 
