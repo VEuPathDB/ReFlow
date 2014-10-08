@@ -290,7 +290,7 @@ public class Workflow<T extends WorkflowStep> {
             ConnectionPoolConfig config =
                 SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
                     Utilities.getGusConfig("databasePassword"));
-            DatabaseInstance db = new DatabaseInstance(config);
+            DatabaseInstance db = new DatabaseInstance(config).initialize("DB");
             dbConnection = db.getDataSource().getConnection();
             log("Connected");
         }
