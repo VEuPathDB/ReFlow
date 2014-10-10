@@ -19,6 +19,9 @@ sub run {
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
   my $workflowDataDir = $self->getWorkflowDataDir();
 
+  my $rmParamsFile = 'rmParams';
+  my $localRmParamsFile = "$workflowDataDir/$taskInputDir/$rmParamsFile";
+
   if ($undo) {
     $self->runCmd(0,"rm -rf $workflowDataDir/$taskInputDir");
   }else {
@@ -36,12 +39,14 @@ sub run {
       open(F, ">$taskPropFile") || die "Can't open task prop file '$taskPropFile' for writing";
 
       print F 
-"rmPath=$rmPath
-inputFilePath=$clusterWorkflowDataDir/$seqsFile
+"inputFilePath=$clusterWorkflowDataDir/$seqsFile
 trimDangling=y
 dangleMax=5
+rmParamsFile=$rmParamsFile
 ";
       close(F);
+
+      system("touch $localRmParamsFile");
   }
 
 }
