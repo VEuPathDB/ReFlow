@@ -25,7 +25,6 @@ import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
-import org.gusdb.fgputil.db.pool.ConnectionPoolConfig;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 
@@ -287,10 +286,9 @@ public class Workflow<T extends WorkflowStep> {
             String dsn = Utilities.getGusConfig("jdbcDsn");
             String login = Utilities.getGusConfig("databaseLogin");
             log("Connecting to " + dsn + " (" + login + ")");
-            ConnectionPoolConfig config =
+            DatabaseInstance db = new DatabaseInstance(
                 SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
-                    Utilities.getGusConfig("databasePassword"));
-            DatabaseInstance db = new DatabaseInstance(config).initialize("DB");
+                    Utilities.getGusConfig("databasePassword")));
             dbConnection = db.getDataSource().getConnection();
             log("Connected");
         }
