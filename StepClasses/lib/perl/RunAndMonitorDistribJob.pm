@@ -29,7 +29,7 @@ sub run {
 
 
   my $propFile = "$clusterDataDir/$taskInputDir/controller.prop";
-  my $processIdFile = "$clusterDataDir/$taskInputDir/../master/distribjobProcessId";
+  my $jobInfoFile = "$clusterDataDir/$taskInputDir/distribjobJobInfo.txt";
   my $logFile = "$clusterTaskLogsDir/" . $self->getName() . ".log";
 
   if($undo){
@@ -39,7 +39,7 @@ sub run {
       $self->runCmdOnCluster(0, "rm -fr $logFile");
   }else{
       my $expectedTime = 0;  # don't provide any
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $processIdFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $jobInfoFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
       $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){

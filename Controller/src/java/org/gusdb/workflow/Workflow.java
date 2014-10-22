@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -18,14 +18,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import oracle.jdbc.driver.OracleDriver;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.db.platform.SupportedPlatform;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
+import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 
 /**
  * 
@@ -285,9 +286,10 @@ public class Workflow<T extends WorkflowStep> {
             String dsn = Utilities.getGusConfig("jdbcDsn");
             String login = Utilities.getGusConfig("databaseLogin");
             log("Connecting to " + dsn + " (" + login + ")");
-            DriverManager.registerDriver(new OracleDriver());
-            dbConnection = DriverManager.getConnection(dsn, login,
-                    Utilities.getGusConfig("databasePassword"));
+            DatabaseInstance db = new DatabaseInstance(
+                SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
+                    Utilities.getGusConfig("databasePassword")));
+            dbConnection = db.getDataSource().getConnection();
             log("Connected");
         }
         return dbConnection;
@@ -402,15 +404,16 @@ public class Workflow<T extends WorkflowStep> {
 
         Statement stmt = null;
         ResultSet rs = null;
+        Formatter formatter = null;
         try {
             stmt = getDbConnection().createStatement();
             rs = stmt.executeQuery(sql);
             StringBuilder sb = new StringBuilder();
-            Formatter formatter = new Formatter(sb);
+            formatter = new Formatter(sb);
             if (!oneColumnOutput) {
-                formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
-                        "STATUS", "STEP_ID", "NAME", "END_AT");
-                System.out.println(sb.toString());
+              formatter.format("%5$-17s %1$-6s %2$-8s %3$-12s  %4$s ", "SPENT",
+                  "STATUS", "STEP_ID", "NAME", "END_AT");
+              System.out.println(sb.toString());
             }
             while (rs.next()) {
                 String nm = rs.getString("name");
@@ -444,6 +447,7 @@ public class Workflow<T extends WorkflowStep> {
         finally {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
+            if (formatter != null) formatter.close();
         }
     }
 
@@ -483,13 +487,16 @@ public class Workflow<T extends WorkflowStep> {
     // config/
     void reset() throws SQLException, FileNotFoundException, IOException {
         getDbState();
-        if (!test_mode)
-            error("Cannot reset a workflow unless it was run in test mode (-t)");
+
+	if (!test_mode)
+	  error("Cannot reset a workflow unless it was run in test mode (-t)");
 
         for (String dirName : homeDirSubDirs) {
             File dir = new File(getHomeDir() + "/" + dirName);
-            IoUtil.deleteDirectory(dir);
-            System.out.println("rm -rf " + dir);
+	    if (dir.exists()) {
+	      IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
+	      System.out.println("rm -rf " + dir);
+	    }
         }
 
         String sql = "update " + workflowTable

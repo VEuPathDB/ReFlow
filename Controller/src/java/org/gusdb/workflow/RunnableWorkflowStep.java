@@ -204,10 +204,10 @@ public class RunnableWorkflowStep extends WorkflowStep {
 
     private void steplog(String col1, String col2) throws IOException {
         StringBuilder sb = new StringBuilder();
-        Formatter formatter = new Formatter(sb);
-        String u = getUndoing() ? "U " : "";
-        formatter.format(u + "%1$-8s %2$-10s %3$s", col1, col2, getFullName());
-
+        try (Formatter formatter = new Formatter(sb)) {
+          String u = getUndoing() ? "U " : "";
+          formatter.format(u + "%1$-8s %2$-10s %3$s", col1, col2, getFullName());
+        }
         workflowGraph.getWorkflow().log(sb.toString());
     }
 

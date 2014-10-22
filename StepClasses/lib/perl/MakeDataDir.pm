@@ -23,8 +23,10 @@ sub run {
       
       # otherwise assume regular dir and remove with rmdir
       }else{
-      # should be emtpy
-      $self->runCmd(0, "rmdir $workflowDataDir/$dataDir");
+      # should be empty - check it still exists
+        if (-e "$workflowDataDir/$dataDir"){
+            $self->runCmd(0, "rmdir $workflowDataDir/$dataDir");
+        }
       }
 
   }else{
