@@ -7,6 +7,7 @@ use ReFlow::Controller::LocalComputeCluster;
 use ReFlow::DatasetLoader::DatasetLoaders;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
+use File::Basename;
 
 
 #
@@ -341,7 +342,6 @@ sub getDistribJobLogsDir {
     return "$home/taskLogs";
 }
 
-# should be renamed/refactored to makeDistribJobControllerPropFile
 sub makeDistribJobControllerPropFile {
   my ($self, $taskInputDir, $slotsPerNode, $taskSize, $taskClass, $keepNode) = @_;
 
@@ -365,7 +365,7 @@ sub makeDistribJobControllerPropFile {
   my $controllerPropFileContent = "
 masterdir=$clusterWorkflowDataDir/$masterDir
 inputdir=$clusterWorkflowDataDir/$taskInputDir
-nodedir=$nodePath
+nodeWorkingDirsHome=$nodePath
 slotspernode=$slotsPerNode
 subtasksize=$taskSize
 taskclass=$taskClass
@@ -381,13 +381,27 @@ nodeclass=$nodeClass
   close(F);
 }
 
-sub runAndMonitorDistribJob {
-    my ($self, $test, $user, $server, $processIdFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
+sub getNodeClass {
+  my ($self) = @_;
 
+  if (!$self->{nodeClass}) {
+    # use node object static method to find the cmd to submit to a node (eg "bsub -Is")
+    my $clusterServer = $self->getSharedConfig('clusterServer');
+    my $nodeClass = $self->getSharedConfig("$clusterServer.nodeClass");
+    my $nodePath = $nodeClass;
+    $nodePath =~ s/::/\//g;       # work around perl 'require' weirdness
+    require "$nodePath.pm";
+    $self->{nodeClass} = $nodeClass;
+  }
+  return $self->{nodeClass};
+}
+
+sub runAndMonitorDistribJob {
+    my ($self, $test, $user, $server, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->_distribJobRunning($processIdFile, $user, $server)) {
+    if (!$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
@@ -395,34 +409,44 @@ sub runAndMonitorDistribJob {
 
 	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
-	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; nohup liniacsubmit $numNodes $time $propFile --memoryPerNode $maxMemoryGigs --queue $queue $ppn $p > $logFile < /dev/null";
+
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue);
+
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $ppn > $jobInfoFile";
+
 	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
 
     while (1) {
 	sleep(10);
-	last if !$self->_distribJobRunning($processIdFile,$user, $server);
+	last if !$self->_distribJobRunning($jobInfoFile,$user, $server, $self->getNodeClass());
     }
+
+    sleep(1);  # for mysterious reasons, need to wait a bit to ensure log file is done writing.
 
     my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
     return $done && $done =~ /Done/;
 }
 
 sub _distribJobRunning {
-    my ($self, $processIdFile, $user, $server) = @_;
+    my ($self, $jobSubmittedFile, $user, $server, $nodeClass) = @_;
 
-    my $processId = `ssh -2 $user\@$server 'if [ -a $processIdFile ];then cat $processIdFile; fi'`;
+    my $cmd = "ssh -2 $user\@$server 'if [ -a $jobSubmittedFile ];then cat $jobSubmittedFile; fi'";
+    my $jobSubmittedInfo = `$cmd`;
 
-    chomp $processId;
+    return 0 unless $jobSubmittedInfo;
 
-    my $status = 0;
-    if ($processId) {
-      system("ssh -2 $user\@$server 'ps -p $processId > /dev/null'");
-      $status = $? >> 8;
-      $status = !$status;
-    }
-    return $status;
+    my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedInfo);
+    die "Can't find job id in string '$jobSubmittedInfo'" unless $jobId;
+
+    my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
+
+    $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
+    my $jobStatusString = `$cmd`;
+    die "Empty job status string returned from command '$checkStatusCmd'" unless $jobStatusString;
+
+    return $nodeClass->checkJobStatus($jobStatusString);
 }
 
 sub getWorkflowConfig {

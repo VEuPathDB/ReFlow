@@ -1,12 +1,11 @@
 package org.gusdb.workflow;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -19,14 +18,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import oracle.jdbc.driver.OracleDriver;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.db.platform.SupportedPlatform;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
+import org.gusdb.fgputil.db.pool.SimpleDbConfig;
 
 /**
  * 
@@ -286,9 +286,10 @@ public class Workflow<T extends WorkflowStep> {
             String dsn = Utilities.getGusConfig("jdbcDsn");
             String login = Utilities.getGusConfig("databaseLogin");
             log("Connecting to " + dsn + " (" + login + ")");
-            DriverManager.registerDriver(new OracleDriver());
-            dbConnection = DriverManager.getConnection(dsn, login,
-                    Utilities.getGusConfig("databasePassword"));
+            DatabaseInstance db = new DatabaseInstance(
+                SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
+                    Utilities.getGusConfig("databasePassword")));
+            dbConnection = db.getDataSource().getConnection();
             log("Connected");
         }
         return dbConnection;

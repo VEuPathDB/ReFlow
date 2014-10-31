@@ -53,8 +53,6 @@ import java.util.Set;
 
 public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
-    final static String nl = System.getProperty("line.separator");
-
     public RunnableWorkflow(String homeDir) throws FileNotFoundException,
             IOException {
         super(homeDir);
