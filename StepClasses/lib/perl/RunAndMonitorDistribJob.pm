@@ -15,7 +15,7 @@ sub run {
   my $taskInputDir = $self->getParamValue("taskInputDir");
   my $numNodes = $self->getParamValue("numNodes");
   my $maxMemoryGigs = $self->getConfig("maxMemoryGigs", 1);
-  $maxMemoryGigs = $self->getParamValue("maxMemoryGigs") unless $maxMemoryGigs;
+  $maxMemoryGigs = $self->getParamValue("maxMemoryGigs") unless $maxMemoryGigs ;
   my $processorsPerNode = $self->getParamValue("processorsPerNode");
 
   $processorsPerNode = 1 unless $processorsPerNode;
