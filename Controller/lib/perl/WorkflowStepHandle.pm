@@ -71,31 +71,27 @@ sub getWorkflowHomeDir {
 }
 
 sub getConfig {
-  my ($self, $prop) = @_;
+  my ($self, $prop, $isOptional) = @_;
 
   my $homeDir = $self->getWorkflowHomeDir();
   my $propFile = "$homeDir/config/steps.prop";
+  my $optionalPropFile =  "$homeDir/config/" . $self->{workflow}->getName();
   my $className = ref($self);
   $className =~ s/\:\:/\//g;
 
   if (!$self->{stepConfig}) {
+    $self->{stepConfig} = FgpUtil::Util::PropertySet->new($propFile, [], 1);
 
-    # retire use of declarations.  they are not essential since test mode
-    # tests all properties.  they are a hassle to maintain (and are not
-    # in practice), and they prevent dynamically created property names,
-    # such as we use for the compute cluster
-
-    #my @rawDeclaration = $self->getConfigDeclaration();
-    #my $fullDeclaration = [];
-    #foreach my $rd (@rawDeclaration) {
-    #  my $fd = ["$self->{name}.$rd->[0]", $rd->[1], '', "$className.$rd->[0]"];
-    #  push(@$fullDeclaration,$fd);
-    #}
-
-    my $fullDeclaration = [];
-
-    $self->{stepConfig} =
-      FgpUtil::Util::PropertySet->new($propFile, $fullDeclaration, 1);
+    # this prop file is optional and is named after the workflow name.  it is 
+    # used to give this specific workflow a set of properties, if step.prop is
+    # shared across many workflows.
+    if (-e $optionalPropFile) {
+      my $optProps = FgpUtil::Util::PropertySet->new($optionalPropFile, [], 1);
+      foreach my $key (keys(%$optProps)) {
+	die "Optional property file $optionalPropFile contains the property '$key' which was already found in $propFile\n" if $self->{stepconfig}->{$key};
+	$self->{stepconfig}->{$key} = $optProps->{$key};
+      }
+    }
   }
 
   # first try explicit step property
@@ -104,8 +100,8 @@ sub getConfig {
     $value = $self->{stepConfig}->getPropRelaxed("$self->{name}.$prop");
   } elsif (defined($self->{stepConfig}->getPropRelaxed("$className.$prop"))) {
     $value = $self->{stepConfig}->getPropRelaxed("$className.$prop");
-  } else {
-    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile\n");
+  } elsif (!$isOptional) {
+    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile or $optionalPropFilex\n");
   }
   $self->log("accessing step property '$prop=$value'");
   return $value;
