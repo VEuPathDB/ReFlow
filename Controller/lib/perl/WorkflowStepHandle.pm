@@ -101,7 +101,7 @@ sub getConfig {
   } elsif (defined($self->{stepConfig}->getPropRelaxed("$className.$prop"))) {
     $value = $self->{stepConfig}->getPropRelaxed("$className.$prop");
   } elsif (!$isOptional) {
-    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile or $optionalPropFilex\n");
+    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile or $optionalPropFile\n");
   }
   $self->log("accessing step property '$prop=$value'");
   return $value;
@@ -324,8 +324,8 @@ sub copyToCluster {
 }
 
 sub copyFromCluster {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir);
+    my ($self, $fromDir, $fromFile, $toDir, $mainresult) = @_;
+    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir, $mainresult);
 }
 
 
