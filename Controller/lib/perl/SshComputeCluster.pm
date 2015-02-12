@@ -66,11 +66,11 @@ sub copyFrom {
     my @arr = glob("$toDir/$fromFile");
     $self->{mgr}->error("$toDir/$fromFile wasn't successfully copied from liniac\n") unless (@arr >= 1);
 
-    my @arr = glob("$toDir/$fromFile/$mainresult");
+    my @arr = glob("$toDir/$fromFile/$mainresult/*");
     my $cmd = qq{ssh -2 $ssh_target '/bin/bash -login -c "ls $fromDir/$fromFile/$mainresult"'};
     my $ls = $self->{mgr}->runCmd(0, $cmd);
     my @ls2 = split(/\s/, $ls);
-    $self->{mgr}->error("$toDir/$fromFile/$mainresult wasn't successfully copied from liniac\n") unless (@arr == @ls2)
+    $self->{mgr}->error("$toDir/$fromFile/$mainresult wasn't successfully copied from liniac.\n") unless (@arr == @ls2)
 }
 
 sub runCmdOnCluster {
