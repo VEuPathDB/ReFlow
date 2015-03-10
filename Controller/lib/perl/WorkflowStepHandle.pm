@@ -75,7 +75,7 @@ sub getConfig {
 
   my $homeDir = $self->getWorkflowHomeDir();
   my $propFile = "$homeDir/config/steps.prop";
-  my $optionalPropFile =  "$homeDir/config/" . $self->{workflow}->getName();
+  my $optionalPropFile =  "$homeDir/config/" . $self->{workflow}->getName() . ".prop";
   my $className = ref($self);
   $className =~ s/\:\:/\//g;
 
@@ -87,9 +87,9 @@ sub getConfig {
     # shared across many workflows.
     if (-e $optionalPropFile) {
       my $optProps = FgpUtil::Util::PropertySet->new($optionalPropFile, [], 1);
-      foreach my $key (keys(%$optProps)) {
+      foreach my $key (keys(%{$optProps->{props}})) {
 	die "Optional property file $optionalPropFile contains the property '$key' which was already found in $propFile\n" if $self->{stepconfig}->{$key};
-	$self->{stepconfig}->{$key} = $optProps->{$key};
+       $self->{stepConfig}->{props}->{$key} = $optProps->{props}->{$key};
       }
     }
   }
