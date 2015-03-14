@@ -40,6 +40,7 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ReFlow-Installation" depends="FgpUtil-Installation,
+                                            ReFlow-MavenInstallation,
                                             ReFlow/GraphParser-Installation,
                                             ReFlow/Controller-Installation,
                                             ReFlow/TestFlow-Installation,
@@ -53,6 +54,13 @@
     </ant>
 
   </target>  
+
+  <target name="ReFlow-MavenInstallation">
+    <ant target="mavenBuildProject">
+      <property name="project" value="ReFlow"/>
+    </ant>
+    <property name="alreadyBuilt" value="true"/>
+  </target>
    
 
   <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
