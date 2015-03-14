@@ -2,11 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/java/commons-digester-1.7.jar"/>
 	<classpathentry kind="lib" path="/ReFlow Controller/lib/java/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-cli-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/java/commons-logging-1.0.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/fgputil-util"/>
 	<classpathentry kind="lib" path="lib/java/jing-20091111.jar"/>
+	<classpathentry kind="lib" path="lib/java/commons-digester-1.8.1.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
