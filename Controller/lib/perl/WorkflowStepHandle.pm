@@ -397,7 +397,7 @@ sub runAndMonitorDistribJob {
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->__distribJobFileExists($jobInfoFile) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
+    if (!$self->_distribJobFileExists($jobInfoFile) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
