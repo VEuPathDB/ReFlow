@@ -431,7 +431,7 @@ sub _distribJobRunning {
     die "Job info file on cluster does not exist or is empty: $jobSubmittedFile\n" unless $self->_distribJobFileExists($jobSubmittedFile);
 
     my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedFile);
-    die "Can't find job id in string '$jobSubmittedInfo'" unless $jobId;
+    die "Can't find job id in string '$jobId'" unless $jobId;
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
