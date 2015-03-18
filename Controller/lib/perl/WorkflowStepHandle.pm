@@ -397,7 +397,7 @@ sub runAndMonitorDistribJob {
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->_distribJobFileExists($jobInfoFile) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
+    if (!$self->_distribJobFileExists($jobInfoFile, $user, $server) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
@@ -428,14 +428,14 @@ sub runAndMonitorDistribJob {
 sub _distribJobRunning {
     my ($self, $jobSubmittedFile, $user, $server, $nodeClass) = @_;
 
-    die "Job info file on cluster does not exist or is empty: $jobSubmittedFile\n" unless $self->_distribJobFileExists($jobSubmittedFile);
+    die "Job info file on cluster does not exist or is empty: $jobSubmittedFile\n" unless $self->_distribJobFileExists($jobSubmittedFile, $user, $server);
 
     my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedFile);
     die "Can't find job id in string '$jobId'" unless $jobId;
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
-    $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
+    my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
     my $jobStatusString = $self->runCmd(0, $cmd);
     die "Empty job status string returned from command '$checkStatusCmd'" unless $jobStatusString;
 
