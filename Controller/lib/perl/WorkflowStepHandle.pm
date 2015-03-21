@@ -430,18 +430,19 @@ sub _distribJobRunning {
 
     my $jobSubmittedInfo = $self->_distribJobReadInfoFile($jobInfoFile, $user, $server);
 
-    die "Job info file on cluster does not exist or is empty: $jobSubmittedFile\n" unless $jobSubmittedInfo; 
+    die "Job info file on cluster does not exist or is empty: $jobInfoFile\n" unless $jobSubmittedInfo; 
 
-    my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedFile);
-    die "Can't find job id in job submitted file '$jobSubmittedFile'\n" unless $jobId;
+    my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedInfo);
+    die "Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'\n" unless $jobId;
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
-    my $jobStatusString = $self->runCmd(0, $cmd);
-    die "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
+    my $jobStatusString = $self->runCmdNoError(0, $cmd);
 
-    return $nodeClass->checkJobStatus($jobStatusString);
+    print STDERR "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
+
+    return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString);
 }
 
 sub _distribJobReadInfoFile {
