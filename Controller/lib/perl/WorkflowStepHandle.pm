@@ -398,13 +398,15 @@ sub getNodeClass {
 
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $server, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
+    
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
+    if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $server)
+	|| !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
-	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+	my $done = $self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
 	return 1 if $done =~ /Done/;
 
 	# otherwise, start up a new run
@@ -414,7 +416,7 @@ sub runAndMonitorDistribJob {
 
 	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $ppn > $jobInfoFile";
 
-	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
+	$self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
 
@@ -425,28 +427,35 @@ sub runAndMonitorDistribJob {
 
     sleep(1);  # for mysterious reasons, need to wait a bit to ensure log file is done writing.
 
-    my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+    my $done = $self->runCmd(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
     return $done && $done =~ /Done/;
 }
 
 sub _distribJobRunning {
-    my ($self, $jobSubmittedFile, $user, $server, $nodeClass) = @_;
+    my ($self, $jobInfoFile, $user, $server, $nodeClass) = @_;
 
-    my $cmd = "ssh -2 $user\@$server 'if [ -a $jobSubmittedFile ];then cat $jobSubmittedFile; fi'";
-    my $jobSubmittedInfo = `$cmd`;
+    my $jobSubmittedInfo = $self->_distribJobReadInfoFile($jobInfoFile, $user, $server);
 
-    return 0 unless $jobSubmittedInfo;
+    die "Job info file on cluster does not exist or is empty: $jobInfoFile\n" unless $jobSubmittedInfo; 
 
     my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedInfo);
-    die "Can't find job id in string '$jobSubmittedInfo'" unless $jobId;
+    die "Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'\n" unless $jobId;
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
-    $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
-    my $jobStatusString = `$cmd`;
-    die "Empty job status string returned from command '$checkStatusCmd'" unless $jobStatusString;
+    my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
+    my $jobStatusString = $self->runCmd(0, $cmd);
 
-    return $nodeClass->checkJobStatus($jobStatusString);
+    print STDERR "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
+
+    return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString);
+}
+
+sub _distribJobReadInfoFile {
+    my ($self, $jobInfoFile, $user, $server) = @_;
+    my $cmd = "ssh -2 $user\@$server 'if [ -a $jobInfoFile ];then cat $jobInfoFile; fi'";
+    my $jobSubmittedInfo = $self->runCmd(0, $cmd);
+    return $jobSubmittedInfo;
 }
 
 sub getWorkflowConfig {
