@@ -136,7 +136,7 @@ sub expandPatterns {
     my $dependsPatternRegex = $dependsPatternValue;
     # replace * wild card with .+
     my $x = '.+';		# avoid syntax highlighting error
-    $dependsPatternRegex =~ s/\*/$x/g;
+    $dependsPatternRegex =~ s/\*/$x/;
 
     # find all step or subgraph names that match the pattern
     my @matchingStepNames = grep(/^${dependsPatternRegex}$/, @$stepNames);
