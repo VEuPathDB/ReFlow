@@ -394,13 +394,14 @@ sub getNodeClass {
 
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $server, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
+    
     return 1 if ($test);
 
     # if not already started, start it up 
     if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $server) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
-	my $done = $self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+	my $done = $self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
 	return 1 if $done =~ /Done/;
 
 	# otherwise, start up a new run
@@ -410,7 +411,7 @@ sub runAndMonitorDistribJob {
 
 	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $ppn > $jobInfoFile";
 
-	$self->runCmdNoError($test, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
+	$self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
 
@@ -421,7 +422,7 @@ sub runAndMonitorDistribJob {
 
     sleep(1);  # for mysterious reasons, need to wait a bit to ensure log file is done writing.
 
-    my $done = $self->runCmd($test, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+    my $done = $self->runCmd(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
     return $done && $done =~ /Done/;
 }
 
