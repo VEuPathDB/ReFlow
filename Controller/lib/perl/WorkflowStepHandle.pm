@@ -444,7 +444,7 @@ sub _distribJobRunning {
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
-    my $jobStatusString = $self->runCmd(0, $cmd);
+    my $jobStatusString = $self->runCmdNoError(0, $cmd);
 
     print STDERR "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
 
