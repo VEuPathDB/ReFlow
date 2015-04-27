@@ -39,9 +39,11 @@ sub copyTo {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyFrom {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
 
     $self->copyTo($fromDir, $fromFile, $toDir);
+
+    $self->{mgr}->runCmd(0, "cd $fromDir; rm -rf $fromFile") if $deleteAfterCopy;
 }
 
 sub runCmdOnCluster {

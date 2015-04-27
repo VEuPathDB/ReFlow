@@ -52,7 +52,7 @@ sub copyTo {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyFrom {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
 
     # workaround scp problems
     chdir $toDir || $self->{mgr}->error("Can't chdir $toDir\n");
@@ -60,9 +60,17 @@ sub copyFrom {
     my $user = "$self->{user}\@" if $self->{user};
     my $ssh_target = "$user$self->{server}";
 
-    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; tar cf - $fromFile | gzip -c' | gunzip -c | tar xf -");
+    my $remoteCmd = "cd $fromDir; tar cf - $fromFile | gzip -c | tee >(md5sum > sum)";
+    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target '$remoteCmd' | /bin/bash -c 'tee >(md5sum > sum) | gunzip -c | tar xf -'");
+    my $checksumOnCluster = $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; cat sum'");
+    my $checksumLocal = $self->{mgr}->runCmd(0, "cat sum");
 
-#    $self->runCmd("ssh $server 'cd $fromDir; tar cf - $fromFile' | tar xf -");
+    $self->{mgr}->error("It appears the copy from cluster of file '$fromDir/$fromFile' failed. Checksum on cluster '$checksumOnCluster' and local checksum '$checksumLocal' do not match.") unless $checksumOnCluster eq $checksumLocal;
+    
+    if ($deleteAfterCopy) {
+	$self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; rm -rf $fromFile'");
+    }
+
     my @arr = glob("$toDir/$fromFile");
     $self->{mgr}->error("$toDir/$fromFile wasn't successfully copied from liniac\n") unless (@arr >= 1);
 }
@@ -73,7 +81,7 @@ sub runCmdOnCluster {
   my $user = "$self->{user}\@" if $self->{user};
   my $ssh_target = "$user$self->{server}";
 
-  $self->{mgr}->runCmd($test, "ssh -2 $ssh_target '/bin/bash -login -c \"$cmd\"'");
+  $self->{mgr}->runCmd($test, "ssh -2 $ssh_target '/bin/bash -login -c \"$cmd\"' ");
 }
 
 1;
