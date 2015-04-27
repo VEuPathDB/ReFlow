@@ -324,8 +324,8 @@ sub copyToCluster {
 }
 
 sub copyFromCluster {
-    my ($self, $fromDir, $fromFile, $toDir, $mainresult) = @_;
-    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir, $mainresult);
+    my ($self, $fromDir, $fromFile, $toDir, $mainresult, $deleteAfterCopy) = @_;
+    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir, $mainresult, $deleteAfterCopy);
 }
 
 
