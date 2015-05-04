@@ -33,7 +33,7 @@ sub run {
 		  }
 	  };
       }else{
-	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir", $mainresult, $deleteFromCluster);
+	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir", $mainresult, $deleteAfterCopy);
       }
   }
 
