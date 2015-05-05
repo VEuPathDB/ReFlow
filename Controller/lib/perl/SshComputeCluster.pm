@@ -65,6 +65,8 @@ sub copyFrom {
     my $checksumOnCluster = $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; cat sum'");
     my $checksumLocal = $self->{mgr}->runCmd(0, "cat sum");
 
+    $self->{mgr}->runCmd(0, "rm sum");
+
     $self->{mgr}->error("It appears the copy from cluster of file '$fromDir/$fromFile' failed. Checksum on cluster '$checksumOnCluster' and local checksum '$checksumLocal' do not match.") unless $checksumOnCluster eq $checksumLocal;
     
     if ($deleteAfterCopy) {
