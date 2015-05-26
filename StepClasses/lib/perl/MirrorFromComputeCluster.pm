@@ -13,12 +13,12 @@ sub run {
   my $fileOrDirToMirror = $self->getParamValue('fileOrDirToMirror');
   my $outputDir = $self->getParamValue('outputDir');
   my $outputFiles = $self->getParamValue('outputFiles');
+  my $deleteAfterCopy = $self->getBooleanParamValue('deleteAfterCopy');
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
 
   my ($filename, $relativeDir) = fileparse($fileOrDirToMirror);
-  my ($mainresult) = fileparse($outputDir);
 
   if($undo){
       $self->runCmd(0, "rm -fr $workflowDataDir/$fileOrDirToMirror");
@@ -32,7 +32,7 @@ sub run {
 		  }
 	  };
       }else{
-	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir", $mainresult);
+	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir", $deleteAfterCopy);
       }
   }
 
