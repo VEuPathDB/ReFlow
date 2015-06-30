@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
 
 public class SimpleXmlGraph extends WorkflowXmlContainer<SimpleXmlNode> {
