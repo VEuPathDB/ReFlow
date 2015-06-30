@@ -8,7 +8,7 @@
         <element name="param">
           <attribute name="name" />
           <optional>
-            <attribute name="doNotValidate"/>
+            <attribute name="default"/>
           </optional>
           <text/>
         </element>

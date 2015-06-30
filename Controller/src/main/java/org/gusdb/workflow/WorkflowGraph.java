@@ -19,6 +19,7 @@ import java.util.Set;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
 import org.gusdb.workflow.xml.WorkflowXmlContainer;
+import org.gusdb.workflow.xml.ParamDeclaration;
 import org.xml.sax.SAXException;
 
 /*
@@ -48,7 +49,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
     public static final Character FLAG_DIVIDER = ':';
 
-    private List<String> paramDeclarations = new ArrayList<String>();
+    private List<ParamDeclaration> paramDeclarations = new ArrayList<ParamDeclaration>();
     private Map<String, String> constants = new LinkedHashMap<String, String>();
     private Map<String, String> globalConstants;
     private Map<String, String> tmpGlobalConstants = new LinkedHashMap<String, String>();
@@ -80,8 +81,8 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     }
 
     @Override
-    public void addParamDeclaration(Name paramName) {
-        paramDeclarations.add(paramName.getName());
+    public void addParamDeclaration(ParamDeclaration paramDecl) {
+        paramDeclarations.add(paramDecl);
     }
 
     public boolean getIsGlobal() {
@@ -394,16 +395,18 @@ public class WorkflowGraph<T extends WorkflowStep> extends
         // confirm that caller has values for each of this graph's declared
         // parameters. gather all such errors into fileErrorsMap for reporting
         // in total later
-        for (String decl : paramDeclarations) {
-            if (!paramValues.containsKey(decl)) {
+        for (ParamDeclaration decl : paramDeclarations) {
+	  if (!paramValues.containsKey(decl.getName()) && decl.getDefault() != null) 
+	      paramValues.put(decl.getName(), decl.getDefault());
+            if (!paramValues.containsKey(decl.getName())) {
                 if (!paramErrorsMap.containsKey(callerXmlFileName))
                     paramErrorsMap.put(callerXmlFileName,
                             new HashMap<String, List<String>>());
                 Map<String, List<String>> fileErrorsMap = paramErrorsMap.get(callerXmlFileName);
                 if (!fileErrorsMap.containsKey(stepBaseName))
                     fileErrorsMap.put(stepBaseName, new ArrayList<String>());
-                if (!fileErrorsMap.get(stepBaseName).contains(decl))
-                    fileErrorsMap.get(stepBaseName).add(decl);
+                if (!fileErrorsMap.get(stepBaseName).contains(decl.getName()))
+		  fileErrorsMap.get(stepBaseName).add(decl.getName());
             }
         }
 

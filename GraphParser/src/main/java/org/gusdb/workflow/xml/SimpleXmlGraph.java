@@ -15,7 +15,7 @@ import org.gusdb.fgputil.xml.NamedValue;
 public class SimpleXmlGraph extends WorkflowXmlContainer<SimpleXmlNode> {
 
   private File _xmlFileName;
-  private List<String> _paramDeclarations = new ArrayList<String>();
+  private List<ParamDeclaration> _paramDeclarations = new ArrayList<ParamDeclaration>();
   private Map<String, String> _constants = new HashMap<String, String>();
   private Map<String, String> _globalConstants = new HashMap<String, String>();
   private Map<String, SimpleXmlNode> _stepsByName = new LinkedHashMap<String, SimpleXmlNode>();
@@ -31,8 +31,8 @@ public class SimpleXmlGraph extends WorkflowXmlContainer<SimpleXmlNode> {
   }
 
   @Override
-  public void addParamDeclaration(Name name) {
-    _paramDeclarations.add(name.getName());
+  public void addParamDeclaration(ParamDeclaration paramDeclaration) {
+    _paramDeclarations.add(paramDeclaration);
   }
 
   @Override

@@ -8,7 +8,7 @@ import org.gusdb.fgputil.xml.NamedValue;
 public abstract class WorkflowXmlContainer <T extends WorkflowNode> {
 
   public abstract void setXmlFileName(String xmlFileName);
-  public abstract void addParamDeclaration(Name name);
+  public abstract void addParamDeclaration(ParamDeclaration paramDeclaration);
   public abstract void addConstant(NamedValue namedValue);
   public abstract void addGlobalConstant(NamedValue namedValue);
   public abstract void addStep(T step) throws IOException;
