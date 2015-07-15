@@ -467,6 +467,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
         // find all descendants of the undo root
         WorkflowStep undoRootStep = stepsByName.get(workflow.getUndoStepName());
+	if (undoRootStep == null) Utilities.error("Trying to undo an unrecognized step: " + undoRootStep);
         Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
         undoDescendants.add(undoRootStep);
 
