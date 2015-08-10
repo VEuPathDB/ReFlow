@@ -167,15 +167,15 @@ sub getExternalDbIdIsAnAlias {
 sub getScope {
     my ($self) = @_;
     my $l = $self->{scope};
-    $self->error("Invalid scope '$l'.  Must be global, species or organism")
-	unless $l eq 'global' || $l eq 'species' || $l eq 'organism';
+    $self->error("Invalid scope '$l'.  Must be global, species, organism or dontcare")
+	unless $l eq 'global' || $l eq 'species' || $l eq 'organism' || $l eq 'dontcare';
     return $self->{scope};
 }
 
 sub getOrganismAbbrev {
     my ($self) = @_;
     $self->error("Must provide an organismAbbrev= (because scope = '$self->{scope}'")
-	unless ($self->{organismAbbrev} || $self->{scope} eq 'global');
+	unless ($self->{organismAbbrev} || ($self->getScope() eq 'global' || $self->getScope() eq 'dontcare'));
     return $self->{organismAbbrev};
 }
 

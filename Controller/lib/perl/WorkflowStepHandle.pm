@@ -212,16 +212,16 @@ sub runSqlFetchOneRow {
 
 sub runCmd {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0);
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0, 0);
 }
 
 sub runCmdNoError {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1);
+    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1, 0);
 }
 
 sub runCmdSub {
-    my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure) = @_;
+    my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure, $doNotLog) = @_;
 
     my $className = ref($self);
     if ($test != 1 && $test != 0) {
@@ -231,7 +231,7 @@ sub runCmdSub {
     my $stepDir = $self->getStepDir();
     my $err = "$stepDir/step.err";
     my $testmode = $test? " (in test mode, so only pretending) " : "";
-    $self->log("Running command$testmode:  $cmd\n\n");
+    $self->log("Running command$testmode:  $cmd\n\n") unless $doNotLog;
 
     my $output;
 
@@ -438,23 +438,23 @@ sub _distribJobRunning {
 
     die "Job info file on cluster does not exist or is empty: $jobInfoFile\n" unless $jobSubmittedInfo; 
 
-    my $jobId = $nodeClass->getJobIdFromJobSubmittedFile($jobSubmittedInfo);
+    my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
     die "Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'\n" unless $jobId;
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
-    my $jobStatusString = $self->runCmd(0, $cmd);
+    my $jobStatusString = $self->runCmdSub(0, $cmd, undef, 1, 1);
 
     print STDERR "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
 
-    return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString);
+    return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
 }
 
 sub _distribJobReadInfoFile {
     my ($self, $jobInfoFile, $user, $server) = @_;
     my $cmd = "ssh -2 $user\@$server 'if [ -a $jobInfoFile ];then cat $jobInfoFile; fi'";
-    my $jobSubmittedInfo = $self->runCmd(0, $cmd);
+    my $jobSubmittedInfo = $self->runCmdSub(0, $cmd, undef, 0, 1);
     return $jobSubmittedInfo;
 }
 
