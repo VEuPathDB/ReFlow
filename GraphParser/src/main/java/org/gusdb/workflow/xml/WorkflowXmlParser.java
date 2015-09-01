@@ -92,7 +92,7 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         // Root -- WDK Model
         digester.addObjectCreate("workflowGraph", containerClass);
 
-        configureNode(digester, "workflowGraph/param", Name.class, "addParamDeclaration");
+        configureNode(digester, "workflowGraph/param", ParamDeclaration.class, "addParamDeclaration");
 
         configureNode(digester, "workflowGraph/constant", NamedValue.class, "addConstant");
         digester.addCallMethod("workflowGraph/constant", "setValue", 0);
