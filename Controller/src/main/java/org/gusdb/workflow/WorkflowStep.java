@@ -286,7 +286,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // parse string versions of includeIf and excludeIf, and return final combined value
     // this will be done only once inside getExcludeFromGraph, which saves the final state
     // (the xml schema prevents having both includeIf and excludeIf)
-    private boolean evalIncludeIfExcludeIf() throws Exception {
+    private boolean evalIncludeIfExcludeIf() {
 	boolean exclude = false;
 	String s = null;
 	try {
