@@ -299,37 +299,55 @@ sub getClusterWorkflowDataDir {
 }
 
 
-sub getCluster {
+sub getClusterServer {
     my ($self) = @_;
 
-    if (!$self->{cluster}) {
+    if (!$self->{clusterServer}) {
 	my $clusterServer = $self->getSharedConfig('clusterServer');
 	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterServer ne "none") {
-	    $self->{cluster} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
+	    $self->{clusterServer} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
 							      $clusterUser,
 							      $self);
 	} else {
-	    $self->{cluster} = ReFlow::Controller::LocalComputeCluster->new($self);
+	    $self->{clusterServer} = ReFlow::Controller::LocalComputeCluster->new($self);
 	}
     }
-    return $self->{cluster};
+    return $self->{clusterServer};
+}
+
+sub getClusterFiltTransferServer {
+    my ($self) = @_;
+
+    if (!$self->{clusterFileTransferServer}) {
+	my $clusterServer = $self->getSharedConfig('clusterServer');
+	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
+	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
+	if ($clusterFileTransferServer ne "none") {
+	    $self->{clusterFileTransferServer} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
+							      $clusterUser,
+							      $self);
+	} else {
+	    $self->{clusterFileTransferServer} = ReFlow::Controller::LocalComputeCluster->new($self);
+	}
+    }
+    return $self->{clusterFileTransferServer};
 }
 
 sub runCmdOnCluster {
   my ($self, $test, $cmd) = @_;
 
-  $self->getCluster()->runCmdOnCluster($test, $cmd);
+  $self->getClusterServer()->runCmdOnCluster($test, $cmd);
 }
 
 sub copyToCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getCluster()->copyTo($fromDir, $fromFile, $toDir);
+    $self->getClusterFileTransferServer()->copyTo($fromDir, $fromFile, $toDir);
 }
 
 sub copyFromCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getCluster()->copyFrom($fromDir, $fromFile, $toDir);
+    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir);
 }
 
 
