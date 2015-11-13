@@ -19,6 +19,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.digester.Digester;
 import org.apache.log4j.Logger;
+import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
 import org.gusdb.fgputil.xml.XmlParser;
@@ -33,10 +34,6 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
     private Class<T> stepClass;
     private Class<S> containerClass;
     
-    public WorkflowXmlParser() {
-    	super("lib/rng/workflow.rng");
-    }
-    	
     public S parseWorkflow(Class<T> stepClass, Class<S> containerClass, String xmlFileName, String callerXmlFileName)
         throws SAXException, IOException, Exception {
       return parseWorkflow(stepClass, containerClass, xmlFileName, callerXmlFileName, true);
@@ -49,12 +46,12 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
         this.stepClass = stepClass;
         this.containerClass = containerClass;
         
-        configure();
-        
         // construct urls to model file, prop file, and config file
-        URL modelURL = makeURL(useGusHome ? GUS_HOME + "/lib/xml/workflow/" + xmlFileName : xmlFileName);
+        URL modelURL = makeURL(useGusHome ?
+            GusHome.getGusHome() + "/lib/xml/workflow/" + xmlFileName : xmlFileName);
 
         try {
+            configureValidator(GusHome.getGusHome() + "/lib/rng/workflow.rng");
 		    if (!validate(modelURL)) {
 		    	System.err.println("Called from: " + callerXmlFileName);
 		    	System.exit(1);
@@ -81,7 +78,7 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
     private S parseXml(Document doc, Map<String, String> properties)
         throws TransformerException, IOException, SAXException {
       InputStream xmlStream = substituteProps(doc, properties);
-      return (S)digester.parse(xmlStream);
+      return (S)getDigester().parse(xmlStream);
     }
 
     @Override
