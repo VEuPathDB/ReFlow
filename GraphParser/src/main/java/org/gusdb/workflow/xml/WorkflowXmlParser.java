@@ -79,7 +79,6 @@ public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlCont
     digester.setValidating(false);
 
     // Root -- WDK Model
-    System.err.println("Class??? " + (containerClass == null ? null : containerClass.getName()));
     digester.addObjectCreate("workflowGraph", containerClass);
 
     configureNode(digester, "workflowGraph/param", ParamDeclaration.class, "addParamDeclaration");
