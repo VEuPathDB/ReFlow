@@ -27,10 +27,10 @@ public class DotFileBuilder {
     try {
       File inputFile = parseArgs(args);
 
-      WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph> parser = new WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph>();
+      WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph> parser =
+          new WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph>(SimpleXmlNode.class, SimpleXmlGraph.class);
 
-      SimpleXmlGraph graph = parser.parseWorkflow(SimpleXmlNode.class, SimpleXmlGraph.class,
-          inputFile.getAbsolutePath(), "", false);
+      SimpleXmlGraph graph = parser.parseWorkflow(inputFile.getAbsolutePath(), "", false);
 
       // build map of node groups and list of those not in a group
       Map<String, List<SimpleXmlNode>> groupingMap = new HashMap<String, List<SimpleXmlNode>>();

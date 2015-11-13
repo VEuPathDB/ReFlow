@@ -5,10 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -23,131 +24,121 @@ import org.gusdb.fgputil.runtime.GusHome;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
 import org.gusdb.fgputil.xml.XmlParser;
+import org.gusdb.fgputil.xml.XmlValidator;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 public class WorkflowXmlParser<T extends WorkflowNode, S extends WorkflowXmlContainer<T>> extends XmlParser {
 
-    @SuppressWarnings("unused")
-    private static final Logger logger = Logger.getLogger(WorkflowXmlParser.class);
-    
-    private Class<T> stepClass;
-    private Class<S> containerClass;
-    
-    public S parseWorkflow(Class<T> stepClass, Class<S> containerClass, String xmlFileName, String callerXmlFileName)
-        throws SAXException, IOException, Exception {
-      return parseWorkflow(stepClass, containerClass, xmlFileName, callerXmlFileName, true);
-    }
-    
-    public S parseWorkflow(Class<T> stepClass, Class<S> containerClass,
-        String xmlFileName, String callerXmlFileName, boolean useGusHome)
-            throws SAXException, IOException, Exception {
+  @SuppressWarnings("unused")
+  private static final Logger logger = Logger.getLogger(WorkflowXmlParser.class);
 
-        this.stepClass = stepClass;
-        this.containerClass = containerClass;
-        
-        // construct urls to model file, prop file, and config file
-        URL modelURL = makeURL(useGusHome ?
-            GusHome.getGusHome() + "/lib/xml/workflow/" + xmlFileName : xmlFileName);
+  private final Digester _digester;
 
-        try {
-            configureValidator(GusHome.getGusHome() + "/lib/rng/workflow.rng");
-		    if (!validate(modelURL)) {
-		    	System.err.println("Called from: " + callerXmlFileName);
-		    	System.exit(1);
-		    }
-        } catch ( Exception ex ) {
-        	System.err.println("Called from: " + callerXmlFileName);
-            throw ex;
-        }
+  public WorkflowXmlParser(Class<T> stepClass, Class<S> containerClass) {
+    _digester = configureDigester(stepClass, containerClass);
+  }
 
-        Document doc = buildDocument(modelURL);
+  public S parseWorkflow(String xmlFileName, String callerXmlFileName)
+      throws SAXException, IOException, ParserConfigurationException, TransformerException {
+    return parseWorkflow(xmlFileName, callerXmlFileName, true);
+  }
 
-        // load property map
-        Map<String, String> properties = new HashMap<String, String>();
-        //Map<String, String> properties = getPropMap(modelPropURL);
+  public S parseWorkflow(String xmlFileName, String callerXmlFileName, boolean useGusHome)
+      throws SAXException, IOException, ParserConfigurationException, TransformerException {
 
-	System.err.println("Parsing " + xmlFileName);
-	S workflowGraph = parseXml(doc, properties);
+    // construct urls to model file, prop file, and config file
+    URL modelURL = makeURL(useGusHome ? GusHome.getGusHome() + "/lib/xml/workflow/" + xmlFileName : xmlFileName);
 
-        workflowGraph.setXmlFileName(xmlFileName);
-        return workflowGraph;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private S parseXml(Document doc, Map<String, String> properties)
-        throws TransformerException, IOException, SAXException {
-      InputStream xmlStream = substituteProps(doc, properties);
-      return (S)getDigester().parse(xmlStream);
+    XmlValidator validator = new XmlValidator(GusHome.getGusHome() + "/lib/rng/workflow.rng");
+    if (!validator.validate(modelURL)) {
+      System.err.println("Called from: " + callerXmlFileName);
+      System.exit(1);
     }
 
-    @Override
-    protected Digester configureDigester() {
-        Digester digester = new Digester();
-        digester.setValidating(false);
-        
-        // Root -- WDK Model
-        digester.addObjectCreate("workflowGraph", containerClass);
+    Document doc = buildDocument(modelURL);
 
-        configureNode(digester, "workflowGraph/param", ParamDeclaration.class, "addParamDeclaration");
+    System.err.println("Parsing " + xmlFileName);
+    // currently there is no property substitution in ReFlow; leaving here in case we want to add later
+    Map<String,String> substitutionProperties = Collections.EMPTY_MAP;
+    S workflowGraph = parseXml(doc, substitutionProperties);
 
-        configureNode(digester, "workflowGraph/constant", NamedValue.class, "addConstant");
-        digester.addCallMethod("workflowGraph/constant", "setValue", 0);
+    workflowGraph.setXmlFileName(xmlFileName);
+    return workflowGraph;
+  }
 
-        configureNode(digester, "workflowGraph/globalConstant", NamedValue.class, "addGlobalConstant");
-        digester.addCallMethod("workflowGraph/globalConstant", "setValue", 0);
+  @SuppressWarnings("unchecked")
+  private S parseXml(Document doc, Map<String, String> properties) throws TransformerException, IOException,
+      SAXException {
+    InputStream xmlStream = substituteProps(doc, properties);
+    return (S) _digester.parse(xmlStream);
+  }
 
-        configureNode(digester, "workflowGraph/step", stepClass, "addStep");
-        
-        configureNode(digester, "workflowGraph/step/depends", Name.class, "addDependsName");
+  private Digester configureDigester(Class<T> stepClass, Class<S> containerClass) {
+    Digester digester = new Digester();
+    digester.setValidating(false);
 
-        configureNode(digester, "workflowGraph/step/dependsGlobal", Name.class, "addDependsGlobalName");
+    // Root -- WDK Model
+    System.err.println("Class??? " + (containerClass == null ? null : containerClass.getName()));
+    digester.addObjectCreate("workflowGraph", containerClass);
 
-        configureNode(digester, "workflowGraph/step/dependsExternal", Name.class, "addDependsExternalName");
+    configureNode(digester, "workflowGraph/param", ParamDeclaration.class, "addParamDeclaration");
 
-        configureNode(digester, "workflowGraph/step/paramValue", NamedValue.class, "addParamValue");
-        digester.addCallMethod("workflowGraph/step/paramValue", "setValue", 0);
-        
-        configureNode(digester, "workflowGraph/subgraph", stepClass, "addStep");
+    configureNode(digester, "workflowGraph/constant", NamedValue.class, "addConstant");
+    digester.addCallMethod("workflowGraph/constant", "setValue", 0);
 
-        configureNode(digester, "workflowGraph/subgraph/depends", Name.class, "addDependsName");
+    configureNode(digester, "workflowGraph/globalConstant", NamedValue.class, "addGlobalConstant");
+    digester.addCallMethod("workflowGraph/globalConstant", "setValue", 0);
 
-        configureNode(digester, "workflowGraph/subgraph/dependsGlobal", Name.class, "addDependsGlobalName");
+    configureNode(digester, "workflowGraph/step", stepClass, "addStep");
 
-        configureNode(digester, "workflowGraph/subgraph/dependsExternal", Name.class, "addDependsExternalName");
+    configureNode(digester, "workflowGraph/step/depends", Name.class, "addDependsName");
 
-        configureNode(digester, "workflowGraph/subgraph/paramValue", NamedValue.class, "addParamValue");
-        digester.addCallMethod("workflowGraph/subgraph/paramValue", "setValue", 0);
+    configureNode(digester, "workflowGraph/step/dependsGlobal", Name.class, "addDependsGlobalName");
 
-        configureNode(digester, "workflowGraph/globalSubgraph", stepClass, "addGlobalStep");
+    configureNode(digester, "workflowGraph/step/dependsExternal", Name.class, "addDependsExternalName");
 
-        configureNode(digester, "workflowGraph/globalSubgraph/paramValue", NamedValue.class, "addParamValue");
-        digester.addCallMethod("workflowGraph/globalSubgraph/paramValue", "setValue", 0);
+    configureNode(digester, "workflowGraph/step/paramValue", NamedValue.class, "addParamValue");
+    digester.addCallMethod("workflowGraph/step/paramValue", "setValue", 0);
 
-       return digester;
+    configureNode(digester, "workflowGraph/subgraph", stepClass, "addStep");
+
+    configureNode(digester, "workflowGraph/subgraph/depends", Name.class, "addDependsName");
+
+    configureNode(digester, "workflowGraph/subgraph/dependsGlobal", Name.class, "addDependsGlobalName");
+
+    configureNode(digester, "workflowGraph/subgraph/dependsExternal", Name.class, "addDependsExternalName");
+
+    configureNode(digester, "workflowGraph/subgraph/paramValue", NamedValue.class, "addParamValue");
+    digester.addCallMethod("workflowGraph/subgraph/paramValue", "setValue", 0);
+
+    configureNode(digester, "workflowGraph/globalSubgraph", stepClass, "addGlobalStep");
+
+    configureNode(digester, "workflowGraph/globalSubgraph/paramValue", NamedValue.class, "addParamValue");
+    digester.addCallMethod("workflowGraph/globalSubgraph/paramValue", "setValue", 0);
+
+    return digester;
+  }
+
+  private static InputStream substituteProps(Document masterDoc, Map<String, String> properties)
+      throws TransformerException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    // transform the DOM doc to a string
+    Source source = new DOMSource(masterDoc);
+    Result result = new StreamResult(out);
+    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    transformer.transform(source, result);
+    String content = new String(out.toByteArray());
+
+    // substitute prop macros
+    for (String propName : properties.keySet()) {
+      String propValue = properties.get(propName);
+      content = content.replaceAll("\\@" + propName + "\\@", Matcher.quoteReplacement(propValue));
     }
 
-    private InputStream substituteProps(Document masterDoc,
-            Map<String, String> properties)
-            throws TransformerException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        // transform the DOM doc to a string
-        Source source = new DOMSource(masterDoc);
-        Result result = new StreamResult(out);
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.transform(source, result);
-        String content = new String(out.toByteArray());
-
-        // substitute prop macros
-        for (String propName : properties.keySet()) {
-            String propValue = properties.get(propName);
-            content = content.replaceAll("\\@" + propName + "\\@",
-                    Matcher.quoteReplacement(propValue));
-        }
-
-        // construct input stream
-        return new ByteArrayInputStream(content.getBytes());
-    }
+    // construct input stream
+    return new ByteArrayInputStream(content.getBytes());
+  }
 
 }

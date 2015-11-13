@@ -43,9 +43,8 @@ public class WorkflowGraphUtil {
         // /////////////////////
 
         // parse XML into objects
-        WorkflowXmlParser<S, WorkflowGraph<S>> parser = new WorkflowXmlParser<S, WorkflowGraph<S>>();
-        WorkflowGraph<S> graph = parser.parseWorkflow(stepClass,
-                containerClass, xmlFileName, callerXmlFileName);
+        WorkflowXmlParser<S, WorkflowGraph<S>> parser = new WorkflowXmlParser<S, WorkflowGraph<S>>(stepClass, containerClass);
+        WorkflowGraph<S> graph = parser.parseWorkflow(xmlFileName, callerXmlFileName);
         graph.setWorkflow(workflow);
         graph.setIsGlobal(isGlobal);
         graph.setGlobalConstants(globalConstants);
