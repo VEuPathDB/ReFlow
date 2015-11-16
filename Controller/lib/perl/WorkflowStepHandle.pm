@@ -316,7 +316,7 @@ sub getClusterServer {
     return $self->{clusterServer};
 }
 
-sub getClusterFiltTransferServer {
+sub getClusterFileTransferServer {
     my ($self) = @_;
 
     if (!$self->{clusterFileTransferServer}) {
