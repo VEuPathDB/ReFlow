@@ -1,4 +1,4 @@
-package ReFlow::Controller::SshComputeCluster;
+package FgpUtil::Util::SshComputeCluster;
 
 use strict;
 use File::Basename;
@@ -25,7 +25,7 @@ sub new {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyTo {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $gzipFlag) = @_;
           # buildDIr, release/speciesNickname, serverPath
 
     chdir $fromDir || $self->{mgr}->error("Can't chdir $fromDir\n" . __FILE__ . " line " . __LINE__ . "\n\n");
@@ -33,12 +33,14 @@ sub copyTo {
     my @arr = glob("$fromFile");
     $self->{mgr}->error("origin directory $fromDir/$fromFile doesn't exist\n" . __FILE__ . " line " . __LINE__ . "\n\n") unless (@arr >= 1);
 
-
     my $user = "$self->{user}\@" if $self->{user};
     my $ssh_to = "$user$self->{server}";
 
+    my $gzip = $gzipFlag? 'gzip -c |' : '';
+    my $gunzip = $gzipFlag? 'gunzip -c |' : '';
+
     # workaround scp problems
-    $self->{mgr}->runCmd(0, "tar cfh - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
+    $self->{mgr}->runCmd(0, "tar cfh - $fromFile | $gzip ssh -2 $ssh_to 'cd $toDir; $gunzip tar xf -'");
 
     # ensure it got there
     my $cmd = qq{ssh -2 $ssh_to '/bin/bash -login -c "ls $toDir"'};
@@ -52,7 +54,7 @@ sub copyTo {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyFrom {
-    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag) = @_;
 
     # workaround scp problems
     chdir $toDir || $self->{mgr}->error("Can't chdir $toDir\n");
@@ -60,8 +62,12 @@ sub copyFrom {
     my $user = "$self->{user}\@" if $self->{user};
     my $ssh_target = "$user$self->{server}";
 
-    my $remoteCmd = "cd $fromDir; tar cf - $fromFile | gzip -c | tee >(md5sum > sum)";
-    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target '$remoteCmd' | /bin/bash -c 'tee >(md5sum > sum) | gunzip -c | tar xf -'");
+    my $gzip = $gzipFlag? 'gzip -c |' : '';
+    my $gunzip = $gzipFlag? 'gunzip -c |' : '';
+
+
+    my $remoteCmd = "cd $fromDir; tar cf - $fromFile | $gzip tee >(md5sum > sum)";
+    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target '$remoteCmd' | /bin/bash -c 'tee >(md5sum > sum) | $gunzip tar xf -'");
     my $checksumOnCluster = $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; cat sum'");
     my $checksumLocal = $self->{mgr}->runCmd(0, "cat sum");
 

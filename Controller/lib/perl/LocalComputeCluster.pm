@@ -1,4 +1,4 @@
-package ReFlow::Controller::LocalComputeCluster;
+package FgpUtil::Util::LocalComputeCluster;
 
 use strict;
 use File::Basename;
@@ -24,7 +24,7 @@ sub new {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyTo {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $gzipFlag) = @_;
         # buildDir, release/speciesNickname, serverPath
 
     chdir $fromDir || $self->{mgr}->error("Can't chdir $fromDir\n" . __FILE__ . " line " . __LINE__ . "\n\n");
@@ -39,7 +39,7 @@ sub copyTo {
 #  param fromDir  - the directory in which fromFile resides
 #  param fromFile - the basename of the file or directory to copy
 sub copyFrom {
-    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag) = @_;
 
     $self->copyTo($fromDir, $fromFile, $toDir);
 

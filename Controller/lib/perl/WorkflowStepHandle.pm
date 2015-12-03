@@ -2,8 +2,8 @@ package ReFlow::Controller::WorkflowStepHandle;
 
 use strict;
 use FgpUtil::Util::PropertySet;
-use ReFlow::Controller::SshComputeCluster;
-use ReFlow::Controller::LocalComputeCluster;
+use FgpUtil::Util::SshComputeCluster;
+use FgpUtil::Util::LocalComputeCluster;
 use ReFlow::DatasetLoader::DatasetLoaders;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
@@ -306,11 +306,11 @@ sub getClusterServer {
 	my $clusterServer = $self->getSharedConfig('clusterServer');
 	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterServer ne "none") {
-	    $self->{clusterServer} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
+	    $self->{clusterServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
 							      $clusterUser,
 							      $self);
 	} else {
-	    $self->{clusterServer} = ReFlow::Controller::LocalComputeCluster->new($self);
+	    $self->{clusterServer} = FgpUtil::Util::LocalComputeCluster->new($self);
 	}
     }
     return $self->{clusterServer};
@@ -324,11 +324,11 @@ sub getClusterFileTransferServer {
 	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterFileTransferServer ne "none") {
-	    $self->{clusterFileTransferServer} = ReFlow::Controller::SshComputeCluster->new($clusterServer,
+	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
 							      $clusterUser,
 							      $self);
 	} else {
-	    $self->{clusterFileTransferServer} = ReFlow::Controller::LocalComputeCluster->new($self);
+	    $self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
 	}
     }
     return $self->{clusterFileTransferServer};
@@ -342,12 +342,28 @@ sub runCmdOnCluster {
 
 sub copyToCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getClusterFileTransferServer()->copyTo($fromDir, $fromFile, $toDir);
+
+    my $clusterServer = $self->getSharedConfig('clusterServer');
+    my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
+    $self->{mgr}->error("Invalid property in shared properties file: $clusterServer.gzipOnCopyToCluster.  Must be 'true' or 'false'")
+      if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
+    $gzipFlag = $gzipProp && gzipProp eq 'true';
+
+    $self->getClusterFileTransferServer()->copyTo($fromDir, $fromFile, $toDir, $gzipFlag);
 }
 
 sub copyFromCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
-    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir);
+
+    my $clusterServer = $self->getSharedConfig('clusterServer');
+    my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
+    $self->{mgr}->error("Invalid property in shared properties file: $clusterServer.gzipOnCopyFromCluster.  Must be 'true' or 'false'")
+      if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
+    $gzipFlag = $gzipProp && gzipProp eq 'true';
+
+    my $deleteAfterCopyFlag = 0;
+
+    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopyFlag, $gzipFlag);
 }
 
 
