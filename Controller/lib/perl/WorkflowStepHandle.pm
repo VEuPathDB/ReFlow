@@ -347,7 +347,7 @@ sub copyToCluster {
     my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
     $self->{mgr}->error("Invalid property in shared properties file: $clusterServer.gzipOnCopyToCluster.  Must be 'true' or 'false'")
       if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
-    $gzipFlag = $gzipProp && gzipProp eq 'true';
+    my $gzipFlag = $gzipProp && gzipProp eq 'true';
 
     $self->getClusterFileTransferServer()->copyTo($fromDir, $fromFile, $toDir, $gzipFlag);
 }
@@ -359,7 +359,7 @@ sub copyFromCluster {
     my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
     $self->{mgr}->error("Invalid property in shared properties file: $clusterServer.gzipOnCopyFromCluster.  Must be 'true' or 'false'")
       if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
-    $gzipFlag = $gzipProp && gzipProp eq 'true';
+    my $gzipFlag = $gzipProp && gzipProp eq 'true';
 
     my $deleteAfterCopyFlag = 0;
 
