@@ -38,7 +38,7 @@ sub copyTo {
     my $ssh_to = "$user$self->{server}";
 
     # workaround scp problems
-    $self->{mgr}->runCmd(0, "tar cfh - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
+    $self->{mgr}->runCmd(0, "tar cfh - $fromFile | ssh -2 $ssh_to 'cd $toDir;  tar xf -'");
 
     # ensure it got there
     my $cmd = qq{ssh -2 $ssh_to '/bin/bash -login -c "ls $toDir"'};
@@ -60,7 +60,7 @@ sub copyFrom {
     my $user = "$self->{user}\@" if $self->{user};
     my $ssh_target = "$user$self->{server}";
 
-    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; tar cf - $fromFile | gzip -c' | gunzip -c | tar xf -");
+    $self->{mgr}->runCmd(0, "ssh -2 $ssh_target 'cd $fromDir; tar cf - $fromFile ' | tar xf -");
 
 #    $self->runCmd("ssh $server 'cd $fromDir; tar cf - $fromFile' | tar xf -");
     my @arr = glob("$toDir/$fromFile");
