@@ -349,7 +349,6 @@ sub copyToCluster {
 }
 
 sub copyFromCluster {
-<<<<<<< .working
     my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
 
     my $clusterServer = $self->getSharedConfig('clusterServer');
