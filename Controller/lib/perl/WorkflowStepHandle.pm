@@ -357,7 +357,7 @@ sub copyFromCluster {
       if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
     my $gzipFlag = $gzipProp && $gzipProp eq 'true';
 
-    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopyFlag, $gzipFlag);
+    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
 
 
