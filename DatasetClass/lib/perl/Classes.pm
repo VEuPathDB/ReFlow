@@ -115,6 +115,13 @@ sub getDatasetPropertiesText {
     my $project = $dataset->{prop}->{projectName}->{content};
     my @props = ("datasetLoaderName=$project:$name");
 
+    my $type = $class->{datasetLoader}->[0]->{type};
+    my $subType = $class->{datasetLoader}->[0]->{subType};
+
+    push @props, "_type=$type";
+    push @props, "_subtype=$subType";
+
+
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
       push(@props, "$propKey=$propValue");
