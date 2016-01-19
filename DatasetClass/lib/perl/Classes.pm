@@ -113,7 +113,9 @@ sub getDatasetPropertiesText {
     }
 
     my $project = $dataset->{prop}->{projectName}->{content};
-    my @props = ("datasetLoaderName=$project:$name");
+    my $fullName = defined $project ? "$project:$name" : $name;
+
+    my @props = ("datasetLoaderName=$fullName");
 
     my $datasetClassCategory = $datasetClassCategories->{$className};
     push @props, "datasetClassCategory=$datasetClassCategory";
