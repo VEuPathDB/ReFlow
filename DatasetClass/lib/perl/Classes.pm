@@ -123,7 +123,7 @@ sub getDatasetPropertiesText {
 
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
-      push(@props, "$propKey=$propValue");
+      push(@props, "$propKey=$propValue") unless($propKey eq 'projectName' && !$propValue);
     }
     return join("\n", @props);
 }
