@@ -202,6 +202,11 @@ and version = '$self->{version}'
   }
 }
 
+sub getName {
+  my ($self) = @_;
+  return $self->getWorkflowConfig('name');
+}
+
 sub getStepNamesFromPattern {
     my ($self, $stepNamePattern) = @_;
 

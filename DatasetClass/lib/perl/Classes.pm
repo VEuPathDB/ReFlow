@@ -96,10 +96,10 @@ sub getDatasetLoaderText {
 
 
 sub getDatasetPropertiesText {
-    my ($self, $dataset) = @_;
+    my ($self, $dataset, $datasetClassCategories) = @_;
     my $class = $self->getClass($dataset->{class});
 
-    my $isOrganism = $dataset->{class};
+    my $className = $dataset->{class};
 
     return "" unless $class->{datasetLoader};
 
@@ -113,11 +113,17 @@ sub getDatasetPropertiesText {
     }
 
     my $project = $dataset->{prop}->{projectName}->{content};
-    my @props = ("datasetLoaderName=$project:$name");
+    my $fullName = defined $project ? "$project:$name" : $name;
+
+    my @props = ("datasetLoaderName=$fullName");
+
+    my $datasetClassCategory = $datasetClassCategories->{$className};
+    push @props, "datasetClassCategory=$datasetClassCategory";
+
 
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
-      push(@props, "$propKey=$propValue");
+      push(@props, "$propKey=$propValue") unless($propKey eq 'projectName' && !$propValue);
     }
     return join("\n", @props);
 }

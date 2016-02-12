@@ -71,31 +71,27 @@ sub getWorkflowHomeDir {
 }
 
 sub getConfig {
-  my ($self, $prop) = @_;
+  my ($self, $prop, $isOptional) = @_;
 
   my $homeDir = $self->getWorkflowHomeDir();
   my $propFile = "$homeDir/config/steps.prop";
+  my $optionalPropFile =  "$homeDir/config/" . $self->{workflow}->getName() . ".prop";
   my $className = ref($self);
   $className =~ s/\:\:/\//g;
 
   if (!$self->{stepConfig}) {
+    $self->{stepConfig} = FgpUtil::Util::PropertySet->new($propFile, [], 1);
 
-    # retire use of declarations.  they are not essential since test mode
-    # tests all properties.  they are a hassle to maintain (and are not
-    # in practice), and they prevent dynamically created property names,
-    # such as we use for the compute cluster
-
-    #my @rawDeclaration = $self->getConfigDeclaration();
-    #my $fullDeclaration = [];
-    #foreach my $rd (@rawDeclaration) {
-    #  my $fd = ["$self->{name}.$rd->[0]", $rd->[1], '', "$className.$rd->[0]"];
-    #  push(@$fullDeclaration,$fd);
-    #}
-
-    my $fullDeclaration = [];
-
-    $self->{stepConfig} =
-      FgpUtil::Util::PropertySet->new($propFile, $fullDeclaration, 1);
+    # this prop file is optional and is named after the workflow name.  it is 
+    # used to give this specific workflow a set of properties, if step.prop is
+    # shared across many workflows.
+    if (-e $optionalPropFile) {
+      my $optProps = FgpUtil::Util::PropertySet->new($optionalPropFile, [], 1);
+      foreach my $key (keys(%{$optProps->{props}})) {
+	die "Optional property file $optionalPropFile contains the property '$key' which was already found in $propFile\n" if $self->{stepconfig}->{$key};
+       $self->{stepConfig}->{props}->{$key} = $optProps->{props}->{$key};
+      }
+    }
   }
 
   # first try explicit step property
@@ -104,8 +100,8 @@ sub getConfig {
     $value = $self->{stepConfig}->getPropRelaxed("$self->{name}.$prop");
   } elsif (defined($self->{stepConfig}->getPropRelaxed("$className.$prop"))) {
     $value = $self->{stepConfig}->getPropRelaxed("$className.$prop");
-  } else {
-    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile\n");
+  } elsif (!$isOptional) {
+    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile or $optionalPropFile\n");
   }
   $self->log("accessing step property '$prop=$value'");
   return $value;
@@ -353,7 +349,7 @@ sub copyToCluster {
 }
 
 sub copyFromCluster {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
 
     my $clusterServer = $self->getSharedConfig('clusterServer');
     my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
@@ -361,9 +357,7 @@ sub copyFromCluster {
       if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
     my $gzipFlag = $gzipProp && $gzipProp eq 'true';
 
-    my $deleteAfterCopyFlag = 0;
-
-    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopyFlag, $gzipFlag);
+    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
 
 
@@ -436,8 +430,7 @@ sub runAndMonitorDistribJob {
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $server)
-	|| !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
+    if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $server) || !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	my $done = $self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
@@ -475,6 +468,7 @@ sub _distribJobRunning {
     my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
     die "Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'\n" unless $jobId;
 
+
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
@@ -491,6 +485,7 @@ sub _distribJobReadInfoFile {
     my $jobSubmittedInfo = $self->runCmdSub(0, $cmd, undef, 0, 1);
     return $jobSubmittedInfo;
 }
+
 
 sub getWorkflowConfig {
     my ($self, $key) = @_;

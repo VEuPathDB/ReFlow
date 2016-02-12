@@ -13,6 +13,7 @@ sub run {
   my $fileOrDirToMirror = $self->getParamValue('fileOrDirToMirror');
   my $outputDir = $self->getParamValue('outputDir');
   my $outputFiles = $self->getParamValue('outputFiles');
+  my $deleteAfterCopy = $self->getBooleanParamValue('deleteAfterCopy');
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
@@ -31,7 +32,7 @@ sub run {
 		  }
 	  };
       }else{
-	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir");
+	  $self->copyFromCluster("$clusterWorkflowDataDir/$relativeDir", $filename, "$workflowDataDir/$relativeDir", $deleteAfterCopy);
       }
   }
 
