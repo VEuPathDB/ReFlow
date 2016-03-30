@@ -11,9 +11,9 @@ use Data::Dumper;
 use File::Path;
 use File::Copy;
 
-usage() unless scalar(@ARGV) == 3 ||  scalar(@ARGV) == 4;
+usage() unless scalar(@ARGV) == 5 ||  scalar(@ARGV) == 4;
 
-my ($datasetFile, $classesFile, $datasetClassCategoriesFile, $doNotValidateXml) = @ARGV;
+my ($datasetFile, $classesFile, $datasetClassCategoriesFile, $categoryNamesFile, $doNotValidateXml) = @ARGV;
 
 if (!$doNotValidateXml) {
     system("validateXmlWithRng  $ENV{GUS_HOME}/lib/rng/datasetClass.rng $classesFile") && exit(1);
@@ -26,13 +26,26 @@ my $classes = ReFlow::DatasetClass::Classes->new($classesFile);
 my $datasets = ReFlow::DatasetClass::Datasets->new($datasetFile, $classes);
 my $classNamesUsed = $datasets->getClassNamesUsed();
 
+
+
+# parse categoryNamesFile
+open(ANNOT, $categoryNamesFile) or die "Cannot open categoryNames file $categoryNamesFile for reading:$!";
+my %categoryNames;
+while(<ANNOT>) {
+  chomp;
+  my @annot = split(/\t/, $_);
+  next unless($annot[1]);
+  $categoryNames{$annot[1]} = $annot[2];
+}
+close ANNOT;
+
 # parse datasetCategories file
 open(FILE, $datasetClassCategoriesFile) or die "Cannot open datasetClassCategories file $datasetClassCategoriesFile for reading:$!";
 my %datasetClassCategories;
 while(<FILE>) {
   chomp;
   my @dcc = split(/\t/, $_);
-  $datasetClassCategories{$dcc[0]} = $dcc[1];
+  $datasetClassCategories{$dcc[0]} = $categoryNames{$dcc[1]} ? $categoryNames{$dcc[1]} : $dcc[1];
 }
 close FILE;
 
