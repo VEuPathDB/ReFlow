@@ -117,9 +117,11 @@ sub getDatasetPropertiesText {
 
     my @props = ("datasetLoaderName=$fullName");
 
-    my $datasetClassCategory = $datasetClassCategories->{$className};
+    my $datasetClassCategory = $datasetClassCategories->{$className}->{categoryDisplayName};
     push @props, "datasetClassCategory=$datasetClassCategory";
 
+    my $datasetClassCategoryIri = $datasetClassCategories->{$className}->{categoryIri};
+    push @props, "datasetClassCategoryIri=$datasetClassCategoryIri";
 
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
