@@ -45,7 +45,8 @@ my %datasetClassCategories;
 while(<FILE>) {
   chomp;
   my @dcc = split(/\t/, $_);
-  $datasetClassCategories{$dcc[0]} = $categoryNames{$dcc[1]} ? $categoryNames{$dcc[1]} : $dcc[1];
+  $datasetClassCategories{$dcc[0]}->{categoryDisplayName} = $categoryNames{$dcc[1]} ? $categoryNames{$dcc[1]} : $dcc[1];
+  $datasetClassCategories{$dcc[0]}->{categoryIri} = $dcc[1];
 }
 close FILE;
 
