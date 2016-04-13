@@ -441,7 +441,7 @@ sub runAndMonitorDistribJob {
 
 	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue);
 
-	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $ppn > $jobInfoFile";
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $p > $jobInfoFile";
 
 	$self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
