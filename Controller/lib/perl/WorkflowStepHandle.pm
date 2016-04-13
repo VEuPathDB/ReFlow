@@ -336,6 +336,12 @@ sub runCmdOnCluster {
   $self->getClusterServer()->runCmdOnCluster($test, $cmd);
 }
 
+sub runCmdOnClusterTransferServer {
+  my ($self, $test, $cmd) = @_;
+
+  $self->getClusterFileTransferServer()->runCmdOnCluster($test, $cmd);
+}
+
 sub copyToCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
 
