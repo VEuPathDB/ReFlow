@@ -10,6 +10,7 @@ sub run {
   my ($self, $test, $undo) = @_;
 
   my $clusterServer = $self->getSharedConfig('clusterServer');
+  my $clusterTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 
   # get parameters
   my $taskInputDir = $self->getParamValue("taskInputDir");
@@ -40,7 +41,7 @@ sub run {
       $self->runCmdOnCluster(0, "rm -fr $logFile");
   }else{
       my $expectedTime = 0;  # don't provide any
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $jobInfoFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
       $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){
