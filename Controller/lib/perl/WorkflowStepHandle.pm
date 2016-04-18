@@ -452,7 +452,7 @@ sub runAndMonitorDistribJob {
 
 	$self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
     }
-    $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   Will commmence probing to see if it is alive.");
+    $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
 
     while (1) {
 	sleep(10);
@@ -480,7 +480,7 @@ sub _distribJobRunning {
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
     my $jobStatusString = $self->runCmdSub(0, $cmd, undef, 1, 1);
 
-    print STDERR "Empty job status string returned from command '$checkStatusCmd'\n" unless $jobStatusString;
+    print STDERR "Empty job status string returned from command '$cmd'\n" unless $jobStatusString;
 
     return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
 }
