@@ -23,6 +23,7 @@ sub run {
 
   # get global properties
   my $clusterQueue = $self->getSharedConfig("$clusterServer.clusterQueue");
+  my $maxTimeMins = $self->getSharedConfig("$clusterServer.maxAllowedRuntimeDays") * 24 * 60;
 
   my $clusterTaskLogsDir = $self->getDistribJobLogsDir();
   my $clusterDataDir = $self->getClusterWorkflowDataDir();
@@ -40,8 +41,7 @@ sub run {
       $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
       $self->runCmdOnCluster(0, "rm -fr $logFile");
   }else{
-      my $expectedTime = 0;  # don't provide any
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $maxTimeMins, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
       $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){
