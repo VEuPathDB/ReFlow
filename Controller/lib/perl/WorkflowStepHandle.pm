@@ -446,7 +446,7 @@ sub runAndMonitorDistribJob {
 	my $p = $ppn ? "--ppn $ppn " : "";
 
 	my $distribjobCmd = "\$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $p";
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $distribJobCmd);
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $distribjobCmd);
 
 	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd ";
 
