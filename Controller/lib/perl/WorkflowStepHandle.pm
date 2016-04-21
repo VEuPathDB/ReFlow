@@ -445,9 +445,10 @@ sub runAndMonitorDistribJob {
 	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
 
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue);
+	my $distribjobCmd = "\$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $p";
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $distribJobCmd);
 
-	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $p";
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd ";
 
 	# do the submit on submit server, and capture its output
 	my $jobInfo = $self->runCmdNoError(0, "ssh -2 $user\@$submitServer '/bin/bash -login -c \"$cmd\"'");
