@@ -320,7 +320,9 @@ sub getClusterFileTransferServer {
 	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterFileTransferServer ne "none") {
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	    #need to verify
+	    #$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
 							      $clusterUser,
 							      $self);
 	} else {
