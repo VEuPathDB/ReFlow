@@ -37,9 +37,9 @@ sub run {
 
   if($undo){
       my ($relativeTaskInputDir, $relativeDir) = fileparse($taskInputDir);
-      $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/master");
-      $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
-      $self->runCmdOnCluster(0, "rm -fr $logFile");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterDataDir/$relativeDir/master");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $logFile");
   }else{
       my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $maxTimeMins, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
