@@ -827,35 +827,45 @@ public class WorkflowGraph<T extends WorkflowStep> extends
 
     void setCallingStep(T callingStep) {
         String[] loadTypes = null;
-
+        String[] failTypes = null;
+        
         // validate that since calling step is always the entry point of a
         // sub-graph,
         // tags assigned to calling step has to have path in it.
         if (callingStep != null) {
             loadTypes = callingStep.getLoadTypes();
-            for (String loadType : loadTypes) {
-                // skip the default type
-                if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
-
-                if (loadType.indexOf(FLAG_DIVIDER) < 0)
-                    Utilities.error("Error: <subgraph name=\""
-                            + callingStep.getBaseName()
-                            + "\">"
-                            + " in file "
-                            + callingStep.getSourceXmlFileName()
-                            + " has a stepLoadTypes=\""
-                            + loadType
-                            + "\"."
-                            + " The stepLoadType of a <subgraph> must have a path that leads to a <step>.  For example, stepLoadType=\"genome.blast.runOnCluster:"
-                            + loadType
-                            + "\" where runOnCluster is a <step> in a nested subgraph.");
-            }
+            for (String loadType : loadTypes) validateLoadType(callingStep, "Load", loadType);
+            failTypes = callingStep.getFailTypes();
+            for (String failType : failTypes) validateLoadType(callingStep, "Fail", failType);
+                
         }
 
         for (T step : getSteps()) {
-            if (callingStep != null) step.addLoadTypes(loadTypes);
+            if (callingStep != null) {
+              step.addLoadTypes(loadTypes);
+              step.addFailTypes(failTypes);
+            }
             step.setCallingStep(callingStep);
         }
+    }
+    
+    private void validateLoadType(T callingStep, String loadOrFail, String type) {
+      // skip the default type
+      if (type.equals(WorkflowStep.defaultLoadType)) return;
+
+      if (type.indexOf(FLAG_DIVIDER) < 0)
+          Utilities.error("Error: <subgraph name=\""
+                  + callingStep.getBaseName()
+                  + "\">"
+                  + " in file "
+                  + callingStep.getSourceXmlFileName()
+                  + " has a step" + loadOrFail + "Types=\""
+                  + type
+                  + "\"."
+                  + " The step" + loadOrFail + "Type of a <subgraph> must have a path that leads to a <step>.  For example, step" + loadOrFail + "Type=\"genome.blast.runOnCluster:"
+                  + type
+                  + "\" where runOnCluster is a <step> in a nested subgraph.");
+      
     }
 
     // attach the roots of this graph to a step in a parent graph that is

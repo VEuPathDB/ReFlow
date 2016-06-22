@@ -81,6 +81,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     private String paramsDigest;
     private int depthFirstOrder;
     private Set<String> loadTypes;
+    private Set<String> failTypes;
     private String includeIf_string;
     private String excludeIf_string;
     private String excludeIfNoXml_string;
@@ -117,6 +118,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public WorkflowStep() {
         loadTypes = new LinkedHashSet<String>();
         loadTypes.add(defaultLoadType);
+        failTypes = new LinkedHashSet<String>();
+        failTypes.add(defaultLoadType);
     }
 
     @Override
@@ -136,6 +139,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         this.invokerClassName = invokerClassName;
     }
 
+    // called by digester
     public void setStepLoadTypes(String loadTypes) {
         String[] tmp = loadTypes.split(",\\s*");
         this.loadTypes = new LinkedHashSet<String>();
@@ -143,45 +147,57 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         this.loadTypes.addAll(Arrays.asList(tmp));
     }
 
-    public void addLoadTypes(String[] loadTypes) {
+    // called by digester
+    public void setStepFailTypes(String failTypes) {
+        String[] tmp = failTypes.split(",\\s*");
+        this.failTypes = new LinkedHashSet<String>();
+        this.failTypes.add(defaultLoadType);
+        this.failTypes.addAll(Arrays.asList(tmp));
+    }
+
+    public void addLoadTypes(String[] loadTypes) { 
+      addLoadOrFailTypes(loadTypes, this.loadTypes);
+    }
+    
+    public void addFailTypes(String[] failTypes) { 
+      addLoadOrFailTypes(failTypes, this.failTypes);
+    }
+    
+    private void addLoadOrFailTypes(String[] loadOrFailTypesSource, Set<String> loadOrFailTypesTarget) {
         // check if a tag should be applied to this step. if so, remove
         // the step name from the path, and add the remaining tag to the
         // step.
         String name = baseName + PATH_DIVIDER;
-        for (String loadType : loadTypes) {
+        for (String loadOrFailType : loadOrFailTypesSource) {
             // skip the default type
-            if (loadType.equals(WorkflowStep.defaultLoadType)) continue;
+            if (loadOrFailType.equals(WorkflowStep.defaultLoadType)) continue;
 
-            String[] parts = loadType.split("\\" + WorkflowGraph.FLAG_DIVIDER,
+            String[] parts = loadOrFailType.split("\\" + WorkflowGraph.FLAG_DIVIDER,
                     2);
             if (getIsSubgraphCall()) { // a sub-graph node;
                 if (parts[0].equals(getBaseName())) {
                     throw new RuntimeException("The path points to "
                             + "sub-graph [" + getFullName() + "], "
-                            + "but no step specified: " + loadType);
-                } else if (loadType.startsWith(name)) {
+                            + "but no step specified: " + loadOrFailType);
+                } else if (loadOrFailType.startsWith(name)) {
                     // remove the name from path, and attach
                     // the rest to the step.
-                    String type = loadType.substring(name.length());
-                    addLoadType(type);
+                    String type = loadOrFailType.substring(name.length());
+                    loadOrFailTypesTarget.add(type.trim());
                 }
             } else { // a normal step,
                 // the path has to match the exact name
                 if (parts[0].equals(getBaseName())) {
-                    addLoadType(parts[1]);
-                } else if (loadType.startsWith(name)) {
+                    loadOrFailTypesTarget.add(parts[1].trim());
+                } else if (loadOrFailType.startsWith(name)) {
                     // a normal step cannot have children, the path is bad
                     throw new RuntimeException("The step [" + getFullName()
                             + "] is not a sub-graph,"
-                            + " the path in load type is wrong: '" + loadType
+                            + " the path in load type is wrong: '" + loadOrFailType
                             + "'");
                 }
             }
         }
-    }
-
-    public void addLoadType(String loadType) {
-        loadTypes.add(loadType.trim());
     }
 
     /**
@@ -194,6 +210,10 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public String[] getLoadTypes() {
         return loadTypes.toArray(new String[0]);
     }
+
+    public String[] getFailTypes() {
+      return failTypes.toArray(new String[0]);
+  }
 
     public void setUndoRoot(String undoRoot) {
         this.undoRoot = undoRoot;

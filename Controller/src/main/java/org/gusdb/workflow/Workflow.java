@@ -55,7 +55,8 @@ public class Workflow<T extends WorkflowStep> {
     private Connection dbConnection;
     private String homeDir;
     private Properties workflowProps; // from workflow config file
-    private Properties loadBalancingConfig;
+    protected Properties loadBalancingConfig;
+    protected Properties failThrottleConfig;
     private String[] homeDirSubDirs = { "logs", "steps", "data", "backups" };
     protected String name;
     protected String version;
@@ -63,6 +64,8 @@ public class Workflow<T extends WorkflowStep> {
     protected String workflowStepTable;
     protected String workflowStepParamValTable;
     protected String workflowStepTrackingTable;
+    protected int maxRunningPerStepClass;
+    protected int maxFailedPerStepClass;
 
     // persistent state
     protected Integer workflow_id;
@@ -73,8 +76,10 @@ public class Workflow<T extends WorkflowStep> {
     protected Boolean test_mode;
 
     // derived from persistent state
-    protected Map<String, Integer> runningLoadTypes = new HashMap<String, Integer>(); // running
-                                                                                      // steps
+    protected Map<String, Integer> runningLoadTypeCounts = new HashMap<String, Integer>(); // running steps, by type tag
+    protected Map<String, Integer> runningStepClassCounts = new HashMap<String, Integer>(); // running steps, by step class
+    protected Map<String, Integer> failedFailTypeCounts = new HashMap<String, Integer>(); // failed steps, by type tag
+    protected Map<String, Integer> failedStepClassCounts = new HashMap<String, Integer>(); // failed steps, by step class
 
     // input
     protected WorkflowGraph<T> workflowGraph; // the graph
@@ -91,6 +96,8 @@ public class Workflow<T extends WorkflowStep> {
         workflowStepTable = getWorkflowConfig("workflowStepTable");
         workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
         workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
+        maxRunningPerStepClass = Integer.parseInt(getWorkflowConfig("maxRunningPerStepClass")); 
+        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass")); 
     }
 
     // ///////////////////////////////////////////////////////////////////////
@@ -209,8 +216,9 @@ public class Workflow<T extends WorkflowStep> {
         // stuff each row into the snapshot, keyed on step name
         Statement stmt = null;
         ResultSet rs = null;
-        for (String category : runningLoadTypes.keySet())
-            runningLoadTypes.put(category, 0);
+        
+        resetStepCounts();
+        
         try {
             stmt = getDbConnection().createStatement();
             rs = stmt.executeQuery(sql);
@@ -227,13 +235,9 @@ public class Workflow<T extends WorkflowStep> {
                     }
                 }
                 step.setFromDbSnapshot(rs);
-                if (step.getOperativeState() != null
-                        && step.getOperativeState().equals(RUNNING)) {
-                    for (String loadType : step.getLoadTypes()) {
-                        Integer f = runningLoadTypes.get(loadType);
-                        f = f == null ? 0 : f;
-                        runningLoadTypes.put(loadType, f + 1);
-                    }
+                if (step.getOperativeState() != null) {
+                   if (step.getOperativeState().equals(RUNNING)) updateRunningStepCounts(step, 1);
+                   else if (step.getOperativeState().equals(FAILED)) updateFailedStepCounts(step, 1);
                 }
             }
         }
@@ -243,6 +247,35 @@ public class Workflow<T extends WorkflowStep> {
         }
     }
 
+    private void resetStepCounts() {
+      runningLoadTypeCounts = new HashMap<String, Integer>(); // running steps
+      runningStepClassCounts = new HashMap<String, Integer>(); // running steps
+      failedFailTypeCounts = new HashMap<String, Integer>(); // running steps
+      failedStepClassCounts = new HashMap<String, Integer>(); // running steps
+    }
+    
+    protected void updateRunningStepCounts(WorkflowStep step, int increment) {
+      updateStepCounts(runningStepClassCounts, runningLoadTypeCounts, step.getLoadTypes(), step, increment);     
+    }
+    
+    private void updateFailedStepCounts(WorkflowStep step, int increment) {
+      updateStepCounts(failedStepClassCounts, failedFailTypeCounts, step.getFailTypes(), step, increment);     
+    }
+    
+    private void updateStepCounts(Map<String, Integer> stepClassCounts, Map<String, Integer> typeCounts, String[] stepLoadTypes, WorkflowStep step, int increment) {
+      // update step class count
+      Integer s = stepClassCounts.get(step.getStepClassName());
+      s = s == null? 0 : s;
+      stepClassCounts.put(step.getStepClassName(), s + increment);
+
+      // and each tag
+      for (String loadType : stepLoadTypes) {
+        Integer f = runningLoadTypeCounts.get(loadType);
+        f = f == null ? 0 : f;
+        runningLoadTypeCounts.put(loadType, f + increment);
+      }      
+    }
+    
     protected boolean workflowTableInitialized() throws FileNotFoundException,
             IOException, SQLException {
 
@@ -322,15 +355,24 @@ public class Workflow<T extends WorkflowStep> {
     }
 
     Integer getLoadBalancingConfig(String key) throws FileNotFoundException,
+    IOException {
+       return getThrottleConfig(key, loadBalancingConfig, "loadBalance.prop");
+    }
+    
+    Integer getFailThrottleConfig(String key) throws FileNotFoundException, IOException {
+      return getThrottleConfig(key, failThrottleConfig, "failThrottle.prop");
+   }
+
+      Integer getThrottleConfig(String key, Properties config, String file) throws FileNotFoundException,
             IOException {
-        if (loadBalancingConfig == null) {
-            loadBalancingConfig = new Properties();
-            loadBalancingConfig.load(new FileInputStream(getHomeDir()
-                    + "/config/loadBalance.prop"));
+        if (config == null) {
+            config = new Properties();
+            config.load(new FileInputStream(getHomeDir()
+                    + "/config/" + file));
         }
-        String value = loadBalancingConfig.getProperty(key);
+        String value = config.getProperty(key);
         if (value == null) return null;
-        return new Integer(loadBalancingConfig.getProperty(key));
+        return new Integer(config.getProperty(key));
     }
 
     void error(String msg) {

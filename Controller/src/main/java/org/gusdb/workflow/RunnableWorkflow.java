@@ -14,6 +14,8 @@ import java.sql.Statement;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /*
@@ -343,33 +345,57 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         }
     }
 
-    private void fillOpenSlots(boolean testOnly) throws IOException,
-            SQLException {
-        for (RunnableWorkflowStep step : workflowGraph.getSortedSteps()) {
-            String[] loadTypes = step.getLoadTypes();
-            boolean okToRun = true;
-            for (String loadType : loadTypes) {
-                // if a tag has path in it, it should be ignored, since it has
-                // been assigned to the sub graph.
-                if (loadType.indexOf(WorkflowGraph.FLAG_DIVIDER) >= 0)
-                    continue;
+  private void fillOpenSlots(boolean testOnly) throws IOException, SQLException {
 
-                if (runningLoadTypes.get(loadType) != null
-                        && runningLoadTypes.get(loadType) >= getLoadBalancingConfig(loadType)) {
-                    okToRun = false;
-                    break;
-                }
-            }
-            if (okToRun) {
-                int slotsUsed = step.runOnDeckStep(this, testOnly);
-                for (String loadType : loadTypes) {
-                    Integer f = runningLoadTypes.get(loadType);
-                    f = f == null ? 0 : f;
-                    runningLoadTypes.put(loadType, f + slotsUsed);
-                }
-            }
-        }
+    for (RunnableWorkflowStep step : workflowGraph.getSortedSteps()) {
+
+      boolean okToRun = okToRun(step, step.getLoadTypes(), runningLoadTypeCounts, runningStepClassCounts,
+          loadBalancingConfig, "loadBalance.prop", maxRunningPerStepClass, testOnly);
+      if (okToRun) okToRun = okToRun(step, step.getFailTypes(), failedFailTypeCounts, failedStepClassCounts,
+          failThrottleConfig, "failThrottle.prop", maxFailedPerStepClass, testOnly);
+
+      if (okToRun) {
+        int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1
+        updateRunningStepCounts(step, slotsUsed);
+      }
     }
+  }
+
+  private boolean okToRun(RunnableWorkflowStep step, String[] types,
+      Map<String, Integer> typeCounts, Map<String, Integer> stepClassCounts, Properties config,
+      String configFile, int maxStepClassCount, boolean testOnly) throws FileNotFoundException, IOException, SQLException {
+    
+    boolean okToRun = true;
+    
+    // if this step declares loadTypes, use them
+    if (types.length != 0) {
+      for (String type : types) {
+        // if a tag has path in it, it should be ignored, since it has
+        // been assigned to the sub graph.
+        if (type.indexOf(WorkflowGraph.FLAG_DIVIDER) >= 0)
+          continue;
+
+        if (typeCounts.get(type) != null && typeCounts.get(type) >= getThrottleConfig(type, config, configFile)) {
+          okToRun = false;
+          break;
+        }
+      }
+    }
+
+    // otherwise, use its step class
+    else {
+      if (stepClassCounts.get(step.getStepClassName()) != null &&
+          stepClassCounts.get(step.getStepClassName()) >= maxStepClassCount) {
+        okToRun = false;
+      }
+
+      if (okToRun) {
+        int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1
+        updateRunningStepCounts(step, slotsUsed);
+      }
+    }
+    return okToRun;
+  }
 
     private void readOfflineFile() throws IOException,
             java.lang.InterruptedException {
