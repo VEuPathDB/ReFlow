@@ -50,12 +50,15 @@ public class Workflow<T extends WorkflowStep> {
     public static final String RUNNING = "RUNNING";
     public static final String ALL = "ALL";
     final static String nl = System.getProperty("line.separator");
+    
+    public static final String LOAD_THROTTLE_FILE = "loadThrottle.prop";
+    public static final String FAIL_THROTTLE_FILE = "failThrottle.prop";
 
     // configuration
     private Connection dbConnection;
     private String homeDir;
     private Properties workflowProps; // from workflow config file
-    protected Properties loadBalancingConfig;
+    protected Properties loadThrottleConfig;
     protected Properties failThrottleConfig;
     private String[] homeDirSubDirs = { "logs", "steps", "data", "backups" };
     protected String name;
@@ -76,10 +79,10 @@ public class Workflow<T extends WorkflowStep> {
     protected Boolean test_mode;
 
     // derived from persistent state
-    protected Map<String, Integer> runningLoadTypeCounts = new HashMap<String, Integer>(); // running steps, by type tag
-    protected Map<String, Integer> runningStepClassCounts = new HashMap<String, Integer>(); // running steps, by step class
-    protected Map<String, Integer> failedFailTypeCounts = new HashMap<String, Integer>(); // failed steps, by type tag
-    protected Map<String, Integer> failedStepClassCounts = new HashMap<String, Integer>(); // failed steps, by step class
+    protected Map<String, Integer> runningLoadTypeCounts; // running steps, by type tag
+    protected Map<String, Integer> runningStepClassCounts; // running steps, by step class
+    protected Map<String, Integer> failedFailTypeCounts; // failed steps, by type tag
+    protected Map<String, Integer> failedStepClassCounts; // failed steps, by step class
 
     // input
     protected WorkflowGraph<T> workflowGraph; // the graph
@@ -217,7 +220,7 @@ public class Workflow<T extends WorkflowStep> {
         Statement stmt = null;
         ResultSet rs = null;
         
-        resetStepCounts();
+        resetStepCounts();  // used for throttling
         
         try {
             stmt = getDbConnection().createStatement();
@@ -248,10 +251,10 @@ public class Workflow<T extends WorkflowStep> {
     }
 
     private void resetStepCounts() {
-      runningLoadTypeCounts = new HashMap<String, Integer>(); // running steps
-      runningStepClassCounts = new HashMap<String, Integer>(); // running steps
-      failedFailTypeCounts = new HashMap<String, Integer>(); // running steps
-      failedStepClassCounts = new HashMap<String, Integer>(); // running steps
+      runningLoadTypeCounts = new HashMap<String, Integer>();
+      runningStepClassCounts = new HashMap<String, Integer>(); 
+      failedFailTypeCounts = new HashMap<String, Integer>();
+      failedStepClassCounts = new HashMap<String, Integer>();
     }
     
     protected void updateRunningStepCounts(WorkflowStep step, int increment) {
@@ -262,17 +265,17 @@ public class Workflow<T extends WorkflowStep> {
       updateStepCounts(failedStepClassCounts, failedFailTypeCounts, step.getFailTypes(), step, increment);     
     }
     
-    private void updateStepCounts(Map<String, Integer> stepClassCounts, Map<String, Integer> typeCounts, String[] stepLoadTypes, WorkflowStep step, int increment) {
+    private void updateStepCounts(Map<String, Integer> stepClassCounts, Map<String, Integer> typeCounts, String[] types, WorkflowStep step, int increment) {
       // update step class count
       Integer s = stepClassCounts.get(step.getStepClassName());
       s = s == null? 0 : s;
       stepClassCounts.put(step.getStepClassName(), s + increment);
 
       // and each tag
-      for (String loadType : stepLoadTypes) {
-        Integer f = runningLoadTypeCounts.get(loadType);
+      for (String type : types) {
+        Integer f = typeCounts.get(type);
         f = f == null ? 0 : f;
-        runningLoadTypeCounts.put(loadType, f + increment);
+        typeCounts.put(type, f + increment);
       }      
     }
     
@@ -354,26 +357,25 @@ public class Workflow<T extends WorkflowStep> {
         return value;
     }
 
-    Integer getLoadBalancingConfig(String key) throws FileNotFoundException,
-    IOException {
-       return getThrottleConfig(key, loadBalancingConfig, "loadBalance.prop");
-    }
-    
-    Integer getFailThrottleConfig(String key) throws FileNotFoundException, IOException {
-      return getThrottleConfig(key, failThrottleConfig, "failThrottle.prop");
-   }
+  Integer getLoadThrottleConfig(String key) throws FileNotFoundException, IOException {
+    return getThrottleConfig(key, loadThrottleConfig, LOAD_THROTTLE_FILE);
+  }
 
-      Integer getThrottleConfig(String key, Properties config, String file) throws FileNotFoundException,
-            IOException {
-        if (config == null) {
-            config = new Properties();
-            config.load(new FileInputStream(getHomeDir()
-                    + "/config/" + file));
-        }
-        String value = config.getProperty(key);
-        if (value == null) return null;
-        return new Integer(config.getProperty(key));
+  Integer getFailThrottleConfig(String key) throws FileNotFoundException, IOException {
+    return getThrottleConfig(key, failThrottleConfig, FAIL_THROTTLE_FILE);
+  }
+
+  Integer getThrottleConfig(String key, Properties config, String file)
+      throws FileNotFoundException, IOException {
+    if (config == null) {
+      config = new Properties();
+      config.load(new FileInputStream(getHomeDir() + "/config/" + file));
     }
+    String value = config.getProperty(key);
+    if (value == null)
+      return null;
+    return new Integer(config.getProperty(key));
+  }
 
     void error(String msg) {
         Utilities.error(msg);
@@ -730,7 +732,9 @@ public class Workflow<T extends WorkflowStep> {
                 + nl
                 + "     initOfflineSteps   (steps to take offline at startup)"
                 + nl
-                + "     loadBalance.prop   (configure load balancing)"
+                + "     loadThrottle.prop   (configure load throttling)"
+                + nl
+                + "     failThrottle.prop   (configure fail throttling)"
                 + nl
                 + "     rootParams.prop    (root parameter values)"
                 + nl

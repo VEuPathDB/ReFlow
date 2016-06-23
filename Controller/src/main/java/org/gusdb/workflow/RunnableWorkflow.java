@@ -350,9 +350,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     for (RunnableWorkflowStep step : workflowGraph.getSortedSteps()) {
 
       boolean okToRun = okToRun(step, step.getLoadTypes(), runningLoadTypeCounts, runningStepClassCounts,
-          loadBalancingConfig, "loadBalance.prop", maxRunningPerStepClass, testOnly);
-      if (okToRun) okToRun = okToRun(step, step.getFailTypes(), failedFailTypeCounts, failedStepClassCounts,
-          failThrottleConfig, "failThrottle.prop", maxFailedPerStepClass, testOnly);
+          loadThrottleConfig, LOAD_THROTTLE_FILE, maxRunningPerStepClass, testOnly) &&
+          okToRun(step, step.getFailTypes(), failedFailTypeCounts, failedStepClassCounts, failThrottleConfig,
+              FAIL_THROTTLE_FILE, maxFailedPerStepClass, testOnly);
 
       if (okToRun) {
         int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1

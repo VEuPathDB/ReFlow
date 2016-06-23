@@ -260,20 +260,33 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         this.workflowGraph = workflowGraph;
     }
 
-    void checkLoadTypes() throws FileNotFoundException, IOException {
-        if (isSubgraphCall) return;
-        for (String loadType : loadTypes) {
-            Integer val = workflowGraph.getWorkflow().getLoadBalancingConfig(
-                    loadType);
-            if (val == null) {
-                if (loadType.equals(defaultLoadType)) error("Config file loadBalancing.prop must have a line with "
-                        + defaultLoadType
-                        + "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
+  void checkLoadTypes() throws FileNotFoundException, IOException {
+    if (isSubgraphCall)
+      return;
+    for (String loadType : loadTypes) {
+      Integer val = workflowGraph.getWorkflow().getLoadThrottleConfig(loadType);
+      if (val == null) {
+        if (loadType.equals(defaultLoadType))
+          error("Config file " + Workflow.LOAD_THROTTLE_FILE + " must have a line with " + defaultLoadType +
+              "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 100.");
 
-                else error("Unknown stepLoadType: " + loadType);
-            }
-        }
+        else
+          error("Unknown stepLoadType: " + loadType);
+      }
     }
+    
+    for (String failType : failTypes) {
+      Integer val = workflowGraph.getWorkflow().getFailThrottleConfig(failType);
+      if (val == null) {
+        if (failType.equals(defaultLoadType))
+          error("Config file " + Workflow.FAIL_THROTTLE_FILE + " must have a line with " + defaultLoadType +
+              "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
+
+        else
+          error("Unknown stepFailType: " + failType);
+      }
+    }
+  }
 
     public void setIncludeIf(String includeIf_str) {
         includeIf_string = includeIf_str;
