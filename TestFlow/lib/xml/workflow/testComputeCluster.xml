@@ -33,7 +33,6 @@
     <paramValue name="taskInputDir">$$dataDir$$/input</paramValue>
     <paramValue name="numNodes">20</paramValue>
     <paramValue name="processorsPerNode">1</paramValue>
-    <paramValue name="maxMemoryGigs">2</paramValue>
     <depends name="mirrorToCluster"/>
   </step>
 
