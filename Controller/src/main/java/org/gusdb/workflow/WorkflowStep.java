@@ -58,7 +58,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     // static
     private static final String nl = System.getProperty("line.separator");
-    static final String defaultLoadType = "total";
+    static final String totalLoadType = "total";
     private static final JavaScript javaScriptInterpreter = new JavaScript();
 
     // from construction and configuration
@@ -117,9 +117,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     public WorkflowStep() {
         loadTypes = new LinkedHashSet<String>();
-        loadTypes.add(defaultLoadType);
         failTypes = new LinkedHashSet<String>();
-        failTypes.add(defaultLoadType);
     }
 
     @Override
@@ -143,7 +141,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public void setStepLoadTypes(String loadTypes) {
         String[] tmp = loadTypes.split(",\\s*");
         this.loadTypes = new LinkedHashSet<String>();
-        this.loadTypes.add(defaultLoadType);
         this.loadTypes.addAll(Arrays.asList(tmp));
     }
 
@@ -151,7 +148,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public void setStepFailTypes(String failTypes) {
         String[] tmp = failTypes.split(",\\s*");
         this.failTypes = new LinkedHashSet<String>();
-        this.failTypes.add(defaultLoadType);
         this.failTypes.addAll(Arrays.asList(tmp));
     }
 
@@ -169,8 +165,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         // step.
         String name = baseName + PATH_DIVIDER;
         for (String loadOrFailType : loadOrFailTypesSource) {
-            // skip the default type
-            if (loadOrFailType.equals(WorkflowStep.defaultLoadType)) continue;
 
             String[] parts = loadOrFailType.split("\\" + WorkflowGraph.FLAG_DIVIDER,
                     2);
@@ -266,8 +260,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     for (String loadType : loadTypes) {
       Integer val = workflowGraph.getWorkflow().getLoadThrottleConfig(loadType);
       if (val == null) {
-        if (loadType.equals(defaultLoadType))
-          error("Config file " + Workflow.LOAD_THROTTLE_FILE + " must have a line with " + defaultLoadType +
+        if (loadType.equals(totalLoadType))
+          error("Config file " + Workflow.LOAD_THROTTLE_FILE + " must have a line with " + totalLoadType +
               "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 100.");
 
         else
@@ -278,8 +272,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     for (String failType : failTypes) {
       Integer val = workflowGraph.getWorkflow().getFailThrottleConfig(failType);
       if (val == null) {
-        if (failType.equals(defaultLoadType))
-          error("Config file " + Workflow.FAIL_THROTTLE_FILE + " must have a line with " + defaultLoadType +
+        if (failType.equals(totalLoadType))
+          error("Config file " + Workflow.FAIL_THROTTLE_FILE + " must have a line with " + totalLoadType +
               "=xxxxx where xxxxx is your choice for the total number of steps that can run at one time.  A reasonable default would be 10.");
 
         else

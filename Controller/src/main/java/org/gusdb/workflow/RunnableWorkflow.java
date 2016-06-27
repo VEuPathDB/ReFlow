@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+    import java.util.List;
+    import java.util.ArrayList;
 
 /*
  to do
@@ -346,7 +348,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
 
   private void fillOpenSlots(boolean testOnly) throws IOException, SQLException {
-
+    List<String> notOk = new ArrayList<String>();
     for (RunnableWorkflowStep step : workflowGraph.getSortedSteps()) {
 
       boolean okToRun = okToRun(step, step.getLoadTypes(), runningLoadTypeCounts, runningStepClassCounts,
@@ -357,15 +359,17 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
       if (okToRun) {
         int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1
         updateRunningStepCounts(step, slotsUsed);
-      }
+      } else notOk.add(step.getFullName());
     }
+    log(notOk.toString());
   }
 
   private boolean okToRun(RunnableWorkflowStep step, String[] types,
       Map<String, Integer> typeCounts, Map<String, Integer> stepClassCounts, Properties config,
       String configFile, int maxStepClassCount, boolean testOnly) throws FileNotFoundException, IOException, SQLException {
     
-    boolean okToRun = true;
+    // not ok to run if we've used up the total allowed
+    boolean okToRun = typeCounts.get(WorkflowStep.totalLoadType) == null || typeCounts.get(WorkflowStep.totalLoadType) < getThrottleConfig(WorkflowStep.totalLoadType, config, configFile);
     
     // if this step declares loadTypes, use them
     if (types.length != 0) {
@@ -387,11 +391,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
       if (stepClassCounts.get(step.getStepClassName()) != null &&
           stepClassCounts.get(step.getStepClassName()) >= maxStepClassCount) {
         okToRun = false;
-      }
-
-      if (okToRun) {
-        int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1
-        updateRunningStepCounts(step, slotsUsed);
       }
     }
     return okToRun;

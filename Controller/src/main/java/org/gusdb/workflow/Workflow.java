@@ -266,8 +266,13 @@ public class Workflow<T extends WorkflowStep> {
     }
     
     private void updateStepCounts(Map<String, Integer> stepClassCounts, Map<String, Integer> typeCounts, String[] types, WorkflowStep step, int increment) {
+      // update total
+      Integer s = typeCounts.get(WorkflowStep.totalLoadType);
+      s = s == null? 0 : s;
+      typeCounts.put(WorkflowStep.totalLoadType, s + increment);
+
       // update step class count
-      Integer s = stepClassCounts.get(step.getStepClassName());
+      s = stepClassCounts.get(step.getStepClassName());
       s = s == null? 0 : s;
       stepClassCounts.put(step.getStepClassName(), s + increment);
 

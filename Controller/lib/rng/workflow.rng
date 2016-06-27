@@ -61,6 +61,9 @@
               <attribute name="stepLoadTypes"/>
             </optional>
             <optional>
+              <attribute name="LoadTypes"/>
+            </optional>
+            <optional>
               <attribute name="undoRoot"/>
             </optional>
             <zeroOrMore>

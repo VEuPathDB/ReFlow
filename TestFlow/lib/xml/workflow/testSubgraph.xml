@@ -1,21 +1,26 @@
 <workflowGraph name="sub">
 
-  <param name="dance"/>
+  <param name="prefix"/>
   <param name="testComputeCluster"/>
   <param name="seqFile"/>
 
-  <step name="tellTheWorld"
-        stepClass="ReFlow::TestFlow::HelloWorld">
-    <paramValue name="msg">I dance a $$dance$$ to announce running repeatMasker</paramValue>
+
+  <step name="firstStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">$$prefix$$/purple</paramValue>
+  </step>
+
+  <step name="secondStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">black</paramValue>
+    <depends name="firstStep"/>
   </step>
 
   <!--  test compute cluster by calling the repeatMasker program on the cluster -->
-  <subgraph name="testComputeCluster" 
-	    xmlFile="testComputeCluster.xml"
-	    includeIf="$$testComputeCluster$$"
-	    externalName="testCC">
+
+  <subgraph name="testComputeCluster" xmlFile="testComputeCluster.xml" includeIf="$$testComputeCluster$$" externalName="testCC">
     <paramValue name="seqFile">$$seqFile$$</paramValue>
-    <depends name="tellTheWorld"/>
+    <depends name="firstStep"/>
   </subgraph>
 
 

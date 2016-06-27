@@ -1,34 +1,31 @@
 <workflowGraph name="root">
-  <param name="person"/>
+  <param name="shape"/>
   <param name="testComputeCluster"/>
   <param name="seqFile"/>
 
-  <constant name="mood">happy</constant>
+  <constant name="shape">rectangle</constant>
 
-  <step name="sayHello"
-        stepClass="ReFlow::TestFlow::HelloWorld" 
-	skipIfFile="/home/sfischer/junk/soso">
-    <paramValue name="msg">The sky is blue</paramValue>
-  </step>
+  <constant name="blue">very blue</constant>
 
-  <subgraph name="doSomeStuff" 
-	    xmlFile="exampleGraph.xml"
-	    skipIfFile="/home/sfischer/junk/soso">
-    <paramValue name="dance">$$mood$$ waltz</paramValue>
+  <subgraph name="firstStep" xmlFile="testSubgraph.xml" groupName="Step Group 1">
+    <paramValue name="prefix">$$blue$$</paramValue>
     <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
     <paramValue name="seqFile">$$seqFile$$</paramValue>
   </subgraph>
 
-  <step name="speakToPluto"
-        stepClass="ReFlow::TestFlow::HelloUnderworld">
-    <paramValue name="greeting">Hello down there $$person$$</paramValue>
-    <depends name="doSomeStuff"/>
-    <depends name="sayHello"/>
+  <step name="secondStep"
+        stepClass="ReFlow::TestFlow::TestStep" groupName="Step Group 1">
+    <paramValue name="msg">green</paramValue>
   </step>
 
+  <step name="thirdStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+    <paramValue name="msg">$$shape$$</paramValue>
+    <depends name="firstStep"/>
+    <depends name="secondStep"/>
+  </step>
 
-  <subgraph name="doMoreStuff"
-	    xmlFile="anotherExampleGraph.xml">
+  <subgraph name="whateverStep" xmlFile="anotherTestGraph.xml" groupName="Step Group 2">
     <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
   </subgraph>
 

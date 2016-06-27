@@ -850,8 +850,6 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     }
     
     private void validateLoadType(T callingStep, String loadOrFail, String type) {
-      // skip the default type
-      if (type.equals(WorkflowStep.defaultLoadType)) return;
 
       if (type.indexOf(FLAG_DIVIDER) < 0)
           Utilities.error("Error: <subgraph name=\""
