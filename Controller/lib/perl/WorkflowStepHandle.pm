@@ -480,10 +480,20 @@ sub _distribJobRunning {
     my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
     my $jobStatusString = $self->runCmdSub(0, $cmd, undef, 1, 1);
 
-    print STDERR "Empty job status string returned from command '$cmd'\n" unless $jobStatusString;
+    my $emptyErr = "Empty job status string returned from command '$cmd'\n";
+    $jobStatusString = $self->_retryCheckStatus($cmd, 30, $emptyErr) unless $jobStatusString;
+    $jobStatusString = $self->_retryCheckStatus($cmd, 60, $emptyErr) unless $jobStatusString;
+    print STDERR "$emptyErr Giving up" unless $jobStatusString;
 
     return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
 }
+
+sub _retryCheckStatus {
+  my ($self, $cmd, $wait, $emptyErr) = @_;
+      print STDERR $emptyErr;
+      print STDERR "Will retry after $wait seconds\n";
+      return $self->runCmdSub(0, $cmd, undef, 1, 1);
+ }
 
 sub _distribJobReadInfoFile {
     my ($self, $jobInfoFile, $user, $server) = @_;
