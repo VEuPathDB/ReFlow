@@ -361,7 +361,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         updateRunningStepCounts(step, slotsUsed);
       } else notOk.add(step.getFullName());
     }
-    log(notOk.toString());
   }
 
   private boolean okToRun(RunnableWorkflowStep step, String[] types,

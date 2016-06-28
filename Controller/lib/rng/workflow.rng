@@ -61,7 +61,7 @@
               <attribute name="stepLoadTypes"/>
             </optional>
             <optional>
-              <attribute name="LoadTypes"/>
+              <attribute name="stepFailTypes"/>
             </optional>
             <optional>
               <attribute name="undoRoot"/>
@@ -108,6 +108,9 @@
             </optional>
             <optional>
               <attribute name="stepLoadTypes"/>
+            </optional>
+            <optional>
+              <attribute name="stepFailTypes"/>
             </optional>
             <optional>
               <attribute name="excludeIfXmlFileDoesNotExist"/>
