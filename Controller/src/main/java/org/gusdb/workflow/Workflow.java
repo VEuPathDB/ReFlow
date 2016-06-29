@@ -58,8 +58,8 @@ public class Workflow<T extends WorkflowStep> {
     private Connection dbConnection;
     private String homeDir;
     private Properties workflowProps; // from workflow config file
-    protected Properties loadThrottleConfig;
-    protected Properties failThrottleConfig;
+    protected Properties loadThrottleConfig = new Properties();
+    protected Properties failThrottleConfig = new Properties();
     private String[] homeDirSubDirs = { "logs", "steps", "data", "backups" };
     protected String name;
     protected String version;
@@ -372,9 +372,13 @@ public class Workflow<T extends WorkflowStep> {
 
   Integer getThrottleConfig(String key, Properties config, String file)
       throws FileNotFoundException, IOException {
-    if (config == null) {
+    if (config.size() == 0) {
+      FileInputStream f = new FileInputStream(getHomeDir() + "/config/" + file);
       config = new Properties();
-      config.load(new FileInputStream(getHomeDir() + "/config/" + file));
+      config.load(f);
+      f.close();
+      if (config.getProperty(WorkflowStep.totalLoadType) == null)
+        error("File " + file + " must contain a property for " + WorkflowStep.totalLoadType);
     }
     String value = config.getProperty(key);
     if (value == null)
