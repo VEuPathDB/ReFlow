@@ -155,6 +155,8 @@ sub getWorkflowConfig {
 	 ['workflowStepTable', "", ""],
 	 ['workflowStepParamValueTable', "", ""],
 	 ['workflowStepTrackingTable', "", ""],
+	 ['maxRunningPerStepClass', "", ""],
+	 ['maxFailedPerStepClass', "", ""],
 	);
 
     if (!$self->{workflowConfig}) {

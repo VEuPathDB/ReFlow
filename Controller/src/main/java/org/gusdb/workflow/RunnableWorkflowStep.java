@@ -149,6 +149,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
     // try to run a single ON_DECK step
     int runOnDeckStep(Workflow<RunnableWorkflowStep> workflow, boolean testOnly)
             throws IOException, SQLException {
+
         if (getOperativeState().equals(Workflow.ON_DECK) && !off_line) {
             if (invokerClassName == null) {
                 if (subgraphXmlFileName != null) steplog(Workflow.DONE,
