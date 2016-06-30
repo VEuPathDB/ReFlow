@@ -1,0 +1,32 @@
+<workflowGraph name="root">
+  <param name="shape"/>
+  <param name="testComputeCluster"/>
+  <param name="seqFile"/>
+
+  <constant name="shape">rectangle</constant>
+
+  <constant name="blue">very blue</constant>
+
+  <subgraph name="firstStep" xmlFile="testSubgraph.xml" groupName="Step Group 1">
+    <paramValue name="prefix">$$blue$$</paramValue>
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+    <paramValue name="seqFile">$$seqFile$$</paramValue>
+  </subgraph>
+
+  <step name="secondStep"
+        stepClass="ReFlow::TestFlow::TestStep" groupName="Step Group 1">
+    <paramValue name="msg">green</paramValue>
+  </step>
+
+  <step name="thirdStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+    <paramValue name="msg">$$shape$$</paramValue>
+    <depends name="firstStep"/>
+    <depends name="secondStep"/>
+  </step>
+
+  <subgraph name="whateverStep" xmlFile="anotherTestGraph.xml" groupName="Step Group 2">
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+  </subgraph>
+
+</workflowGraph>

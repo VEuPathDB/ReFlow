@@ -3,12 +3,12 @@
   <param name="testComputeCluster"/>
 
   <step name="mickeyStep"
-        stepClass="ReFlow::TestFlow::HelloWorld">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">i am mickey</paramValue>
   </step>
 
   <step name="mouseStep" includeIf="$$testComputeCluster$$" 
-        stepClass="ReFlow::TestFlow::HelloWorld">
+        stepClass="ReFlow::TestFlow::TestStep">
       <paramValue name="msg">i am a mouse</paramValue>
     <depends name="mickeyStep"/>
     <dependsExternal name="testCC"/>
