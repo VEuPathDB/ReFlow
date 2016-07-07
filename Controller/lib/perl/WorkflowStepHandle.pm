@@ -185,10 +185,10 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
-    self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
+    $self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
-    self->logErr("Done parsing resource file: $dataSourcesXmlFile\n");
+    $self->logErr("Done parsing resource file: $dataSourcesXmlFile\n");
   return $self->{dataSources}->getDatasetLoader($dataSourceName);
 }
 
@@ -250,7 +250,7 @@ produce bogus output, or if you run an UNDO it might fail.
 	my $status = $? >> 8;
 	if ($status) {
 	  if ($allowFailure) {
-	    self->logErr("WARNING: command failed, but we will ignore:\n$cmd\n\n");
+	    $self->logErr("WARNING: command failed, but we will ignore:\n$cmd\n\n");
 	  } else {
 	    $self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg");
 	  }
@@ -510,7 +510,7 @@ sub _distribJobRunning {
     my $emptyErr = "Empty job status string returned from command '$cmd'\n";
     $jobStatusString = $self->_retryCheckStatus($cmd, 30, $emptyErr) unless $jobStatusString;
     $jobStatusString = $self->_retryCheckStatus($cmd, 60, $emptyErr) unless $jobStatusString;
-    self->logErr("$emptyErr Giving up.") unless $jobStatusString;
+    $self->logErr("$emptyErr Giving up.") unless $jobStatusString;
 
     return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
 }
