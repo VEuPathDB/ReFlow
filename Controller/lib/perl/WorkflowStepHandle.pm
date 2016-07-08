@@ -185,10 +185,10 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
-    print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n";
+    $self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
-    print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
+    $self->logErr("Done parsing resource file: $dataSourcesXmlFile\n");
   return $self->{dataSources}->getDatasetLoader($dataSourceName);
 }
 
@@ -248,17 +248,31 @@ produce bogus output, or if you run an UNDO it might fail.
 	$output = `$cmd 2>> $err`;
 	chomp $output;
 	my $status = $? >> 8;
-	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status && !$allowFailure);
+	if ($status) {
+	  if ($allowFailure) {
+	    $self->logErr("WARNING: command failed, but we will ignore:\n$cmd\n\n");
+	  } else {
+	    $self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg");
+	  }
+	}
     }
     return $output;
 }
-
 
 sub log {
   my ($self, $msg) = @_;
 
     my $stepDir = $self->getStepDir();
   open(F, ">>$stepDir/step.log");
+  print F localtime() . "\t$msg\n\n";
+  close(F);
+}
+
+sub logErr {
+  my ($self, $msg) = @_;
+
+    my $stepDir = $self->getStepDir();
+  open(F, ">>$stepDir/step.err");
   print F localtime() . "\t$msg\n\n";
   close(F);
 }
@@ -496,17 +510,17 @@ sub _distribJobRunning {
     my $emptyErr = "Empty job status string returned from command '$cmd'\n";
     $jobStatusString = $self->_retryCheckStatus($cmd, 30, $emptyErr) unless $jobStatusString;
     $jobStatusString = $self->_retryCheckStatus($cmd, 60, $emptyErr) unless $jobStatusString;
-    print STDERR "$emptyErr Giving up" unless $jobStatusString;
+    $self->logErr("$emptyErr Giving up.") unless $jobStatusString;
 
     return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
 }
 
 sub _retryCheckStatus {
   my ($self, $cmd, $wait, $emptyErr) = @_;
-      print STDERR $emptyErr;
-      print STDERR "Will retry after $wait seconds\n";
-      return $self->runCmdSub(0, $cmd, undef, 1, 1);
- }
+  $self->logErr($emptyErr);
+  $self->logErr("Will retry after $wait seconds\n");
+  return $self->runCmdSub(0, $cmd, undef, 1, 0);
+}
 
 sub _distribJobReadInfoFile {
     my ($self, $jobInfoFile, $user, $server) = @_;
@@ -514,7 +528,6 @@ sub _distribJobReadInfoFile {
     my $jobSubmittedInfo = $self->runCmdSub(0, $cmd, undef, 0, 1);
     return $jobSubmittedInfo;
 }
-
 
 sub getWorkflowConfig {
     my ($self, $key) = @_;

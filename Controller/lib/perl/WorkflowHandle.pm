@@ -179,8 +179,9 @@ sub getWorkflowConfig {
 sub error {
     my ($self, $msg) = @_;
 
-   ## confess "$msg\n\n";
-    die "$msg\n\n";  # i don't think we need the stack trace.
+    ## confess "$msg\n\n"; # i don't think we need the stack trace.
+    my $t = localtime();
+    die "$t $msg\n\n";
 }
 
 
