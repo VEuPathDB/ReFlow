@@ -496,8 +496,7 @@ sub runAndMonitorDistribJob {
 	last if !$self->_distribJobRunning($jobInfoFile,$user, $submitServer, $transferServer, $self->getNodeClass());
     }
 
-    $self->logErr("Waiting 30 seconds before checking tail of task log for 'Done', needed for mysterious reasons");
-    sleep(30);
+    sleep(1); # wait for log file (though DJob's new wait should be sufficient)
 
     return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 }
