@@ -1,0 +1,68 @@
+<workflowGraph name="root">
+  <param name="shape"/>
+  <param name="testComputeCluster"/>
+  <param name="seqFile"/>
+
+  <constant name="shape">rectangle</constant>
+
+  <constant name="blue">very blue</constant>
+
+  <subgraph name="firstSubgraph" xmlFile="testSubgraph.xml" groupName="Step Group 1" skipIfFile="/home/sfischer/junk/soso">
+    <paramValue name="prefix">$$blue$$</paramValue>
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+    <paramValue name="seqFile">$$seqFile$$</paramValue>
+  </subgraph>
+
+  <subgraph name="whateverStep" xmlFile="anotherTestGraph.xml" groupName="Step Group 2">
+    <paramValue name="testComputeCluster">$$testComputeCluster$$</paramValue>
+    <depends name="firstSubgraph"/>
+  </subgraph>
+
+  <step name="secondStep"
+        stepClass="ReFlow::TestFlow::TestStep" groupName="Step Group 1" skipIfFile="/home/sfischer/junk/soso">
+    <paramValue name="msg">green</paramValue>
+  </step>
+
+  <step name="thirdStep"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep0"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep1"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep2"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep3"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep4"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+  <step name="thirdStep5"
+        stepClass="ReFlow::TestFlow::AnotherTestStep" stepFailTypes="hooky">
+    <paramValue name="size">$$shape$$</paramValue>
+    <depends name="secondStep"/>
+  </step>
+
+</workflowGraph>
