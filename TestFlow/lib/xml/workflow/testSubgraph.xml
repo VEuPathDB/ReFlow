@@ -1,0 +1,27 @@
+<workflowGraph name="sub">
+
+  <param name="prefix"/>
+  <param name="testComputeCluster"/>
+  <param name="seqFile"/>
+
+
+  <step name="firstStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">$$prefix$$/purple</paramValue>
+  </step>
+
+  <step name="secondStep"
+        stepClass="ReFlow::TestFlow::TestStep">
+      <paramValue name="msg">black</paramValue>
+    <depends name="firstStep"/>
+  </step>
+
+  <!--  test compute cluster by calling the repeatMasker program on the cluster -->
+
+  <subgraph name="testComputeCluster" xmlFile="testComputeCluster.xml" includeIf="$$testComputeCluster$$" externalName="testCC">
+    <paramValue name="seqFile">$$seqFile$$</paramValue>
+    <depends name="firstStep"/>
+  </subgraph>
+
+
+</workflowGraph>
