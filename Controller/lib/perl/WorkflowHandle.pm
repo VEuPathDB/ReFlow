@@ -179,8 +179,9 @@ sub getWorkflowConfig {
 sub error {
     my ($self, $msg) = @_;
 
-   ## confess "$msg\n\n";
-    die "$msg\n\n";  # i don't think we need the stack trace.
+    ## confess "$msg\n\n"; # i don't think we need the stack trace.
+    my $t = localtime();
+    die "$t $msg\n\n";
 }
 
 
@@ -202,6 +203,11 @@ and version = '$self->{version}'
     $self->error("workflow '$self->{name}' version '$self->{version}' not in database")
       unless $self->{workflow_id};
   }
+}
+
+sub getName {
+  my ($self) = @_;
+  return $self->getWorkflowConfig('name');
 }
 
 sub getStepNamesFromPattern {

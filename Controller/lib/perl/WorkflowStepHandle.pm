@@ -71,31 +71,27 @@ sub getWorkflowHomeDir {
 }
 
 sub getConfig {
-  my ($self, $prop) = @_;
+  my ($self, $prop, $isOptional) = @_;
 
   my $homeDir = $self->getWorkflowHomeDir();
   my $propFile = "$homeDir/config/steps.prop";
+  my $optionalPropFile =  "$homeDir/config/" . $self->{workflow}->getName() . ".prop";
   my $className = ref($self);
   $className =~ s/\:\:/\//g;
 
   if (!$self->{stepConfig}) {
+    $self->{stepConfig} = FgpUtil::Util::PropertySet->new($propFile, [], 1);
 
-    # retire use of declarations.  they are not essential since test mode
-    # tests all properties.  they are a hassle to maintain (and are not
-    # in practice), and they prevent dynamically created property names,
-    # such as we use for the compute cluster
-
-    #my @rawDeclaration = $self->getConfigDeclaration();
-    #my $fullDeclaration = [];
-    #foreach my $rd (@rawDeclaration) {
-    #  my $fd = ["$self->{name}.$rd->[0]", $rd->[1], '', "$className.$rd->[0]"];
-    #  push(@$fullDeclaration,$fd);
-    #}
-
-    my $fullDeclaration = [];
-
-    $self->{stepConfig} =
-      FgpUtil::Util::PropertySet->new($propFile, $fullDeclaration, 1);
+    # this prop file is optional and is named after the workflow name.  it is 
+    # used to give this specific workflow a set of properties, if step.prop is
+    # shared across many workflows.
+    if (-e $optionalPropFile) {
+      my $optProps = FgpUtil::Util::PropertySet->new($optionalPropFile, [], 1);
+      foreach my $key (keys(%{$optProps->{props}})) {
+	$self->error("Optional property file $optionalPropFile contains the property '$key' which was already found in $propFile") if $self->{stepconfig}->{$key};
+       $self->{stepConfig}->{props}->{$key} = $optProps->{props}->{$key};
+      }
+    }
   }
 
   # first try explicit step property
@@ -104,8 +100,8 @@ sub getConfig {
     $value = $self->{stepConfig}->getPropRelaxed("$self->{name}.$prop");
   } elsif (defined($self->{stepConfig}->getPropRelaxed("$className.$prop"))) {
     $value = $self->{stepConfig}->getPropRelaxed("$className.$prop");
-  } else {
-    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile\n");
+  } elsif (!$isOptional) {
+    $self->error("Can't find step property '$self->{name}.$prop' or step class property '${className}.$prop' in file $propFile or $optionalPropFile\n");
   }
   $self->log("accessing step property '$prop=$value'");
   return $value;
@@ -169,7 +165,7 @@ sub getInputFiles{
   my @inputFiles;
 
   if (-d $fileOrDir) {
-    opendir(DIR, $fileOrDir) || die "Can't open directory '$fileOrDir'";
+    opendir(DIR, $fileOrDir) || $self->error("Can't open directory '$fileOrDir'");
     my @noDotFiles = grep { $_ ne '.' && $_ ne '..' } readdir(DIR);
     @inputFiles = map { "$fileOrDir/$_" } @noDotFiles;
     @inputFiles = grep(/.*\.$inputFileNameExtension/, @inputFiles) if $inputFileNameExtension;
@@ -189,10 +185,10 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
-    print STDERR "Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n";
+    $self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
-    print STDERR "Done parsing resource file: $dataSourcesXmlFile\n";
+    $self->logErr("Done parsing resource file: $dataSourcesXmlFile\n");
   return $self->{dataSources}->getDatasetLoader($dataSourceName);
 }
 
@@ -212,15 +208,17 @@ sub runSqlFetchOneRow {
 
 sub runCmd {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 0, 0);
+    my ($output, $status) = $self->_runCmdSub($test, $cmd, $optionalMsgForErr, 0, 0);
+    return $output;
 }
 
 sub runCmdNoError {
     my ($self, $test, $cmd, $optionalMsgForErr) = @_;
-    return $self->runCmdSub($test, $cmd, $optionalMsgForErr, 1, 0);
+    my ($output, $status) = $self->_runCmdSub($test, $cmd, $optionalMsgForErr, 1, 0);
+    return $output;
 }
 
-sub runCmdSub {
+sub _runCmdSub {
     my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure, $doNotLog) = @_;
 
     my $className = ref($self);
@@ -245,24 +243,42 @@ produce bogus output, or if you run an UNDO it might fail.
 ";
 
     $errMsg = "$optionalMsgForErr" if $optionalMsgForErr;
-
+    my $status = 0;
     if ($test) {
 	$output = `echo just testing 2>> $err`;
     } else {
 	$output = `$cmd 2>> $err`;
 	chomp $output;
-	my $status = $? >> 8;
-	$self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg") if ($status && !$allowFailure);
+	$status = $? >> 8;
+	$self->_handleCmdFailure($cmd, $allowFailure, $errMsg, $status) if ($status);
     }
-    return $output;
+    return ($output, $status);
 }
 
+sub _handleCmdFailure {
+  my ($self, $cmd, $allowFailure, $errMsg, $status) = @_;
+
+  if ($allowFailure) {
+    $self->logErr("WARNING: command failed, but we don't die for this type of failure:\n$cmd\n\n");
+  } else {
+    $self->error("\nFailed with status $status running: \n\n$cmd\n\n$errMsg");
+  }
+}
 
 sub log {
   my ($self, $msg) = @_;
 
     my $stepDir = $self->getStepDir();
   open(F, ">>$stepDir/step.log");
+  print F localtime() . "\t$msg\n\n";
+  close(F);
+}
+
+sub logErr {
+  my ($self, $msg) = @_;
+
+    my $stepDir = $self->getStepDir();
+  open(F, ">>$stepDir/step.err");
   print F localtime() . "\t$msg\n\n";
   close(F);
 }
@@ -324,7 +340,9 @@ sub getClusterFileTransferServer {
 	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
 	if ($clusterFileTransferServer ne "none") {
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	    #need to verify
+	    #$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
 							      $clusterUser,
 							      $self);
 	} else {
@@ -340,6 +358,12 @@ sub runCmdOnCluster {
   $self->getClusterServer()->runCmdOnCluster($test, $cmd);
 }
 
+sub runCmdOnClusterTransferServer {
+  my ($self, $test, $cmd) = @_;
+
+  $self->getClusterFileTransferServer()->runCmdOnCluster($test, $cmd);
+}
+
 sub copyToCluster {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
 
@@ -353,7 +377,7 @@ sub copyToCluster {
 }
 
 sub copyFromCluster {
-    my ($self, $fromDir, $fromFile, $toDir) = @_;
+    my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy) = @_;
 
     my $clusterServer = $self->getSharedConfig('clusterServer');
     my $gzipProp = $self->getSharedConfig("$clusterServer.gzipOnCopyToCluster");
@@ -361,9 +385,7 @@ sub copyFromCluster {
       if $gzipProp && ($gzipProp ne 'true' && $gzipProp ne 'false');
     my $gzipFlag = $gzipProp && $gzipProp eq 'true';
 
-    my $deleteAfterCopyFlag = 0;
-
-    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopyFlag, $gzipFlag);
+    $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
 
 
@@ -431,74 +453,119 @@ sub getNodeClass {
 }
 
 sub runAndMonitorDistribJob {
-    my ($self, $test, $user, $server, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
+    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
     
     return 1 if ($test);
 
     # if not already started, start it up 
-    if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $server)
-	|| !$self->_distribJobRunning($jobInfoFile, $user, $server, $self->getNodeClass())) {
+    if (!$self->_distribJobReadInfoFile($jobInfoFile, $user, $transferServer) || !$self->_distribJobRunning($jobInfoFile, $user, $submitServer, $transferServer, $self->getNodeClass())) {
 
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
-	my $done = $self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
-	return 1 if $done =~ /Done/;
+	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
 	# otherwise, start up a new run
 	my $p = $ppn ? "--ppn $ppn " : "";
 
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue);
+	my $distribjobCmd = "\$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $p";
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $distribjobCmd);
 
-	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd \$GUS_HOME/bin/distribjobSubmit $logFile --numNodes $numNodes --runTime $time --propFile $propFile --parallelInit 4 --mpn $maxMemoryGigs --q $queue $ppn > $jobInfoFile";
+	my $cmd = "mkdir -p distribjobRuns; cd distribjobRuns; $submitCmd ";
 
-	$self->runCmdNoError(0, "ssh -2 $user\@$server '/bin/bash -login -c \"$cmd\"'");
+	# do the submit on submit server, and capture its output
+        my $jobInfo = $self->_runSshCmdWithRetries(0, "/bin/bash -login -c \"$cmd\"", "", 1, 0, $user, $submitServer, "");
+
+	$self->error("Did not get jobInfo back from command:\n $cmd") unless $jobInfo;
+
+	# now write the output of submit into jobInfoFile on transfer server
+	my $writeCmd = "cat > $jobInfoFile";
+
+	open(F, "| ssh -2 $user\@$transferServer '/bin/bash -login -c \"$writeCmd\"'") || $self->error("Can't open file handle to write job info to transfer server");
+	print F $jobInfo;
+	close(F);
+
+	# read it back to confirm it got there safely
+	my $jobInfoRead = $self->_distribJobReadInfoFile($jobInfoFile, $user, $transferServer);
+	chomp $jobInfoRead;
+	$self->error("Failed writing job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
+
     }
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
 
     while (1) {
 	sleep(10);
-	last if !$self->_distribJobRunning($jobInfoFile,$user, $server, $self->getNodeClass());
+	last if !$self->_distribJobRunning($jobInfoFile,$user, $submitServer, $transferServer, $self->getNodeClass());
     }
 
-    sleep(1);  # for mysterious reasons, need to wait a bit to ensure log file is done writing.
+    sleep(1); # wait for log file (though DJob's new wait should be sufficient)
 
-    my $done = $self->runCmd(0, "ssh -2 $user\@$server '/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"'");
+    return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
+}
+
+sub _checkClusterTaskLogForDone {
+  my ($self, $logFile, $user, $transferServer) = @_;
+
+    my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"";
+
+    my $done = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 0, $user, $transferServer, "");
+
+    $self->logErr("tail of cluster log file is: '$done'");
+
     return $done && $done =~ /Done/;
 }
 
 sub _distribJobRunning {
-    my ($self, $jobInfoFile, $user, $server, $nodeClass) = @_;
+    my ($self, $jobInfoFile, $user, $submitServer, $transferServer, $nodeClass) = @_;
 
-    my $jobSubmittedInfo = $self->_distribJobReadInfoFile($jobInfoFile, $user, $server);
+    my $jobSubmittedInfo = $self->_distribJobReadInfoFile($jobInfoFile, $user, $transferServer);
 
-    die "Job info file on cluster does not exist or is empty: $jobInfoFile\n" unless $jobSubmittedInfo; 
+    $self->error("Job info file on cluster does not exist or is empty: $jobInfoFile") unless $jobSubmittedInfo;
 
     my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
-    die "Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'\n" unless $jobId;
+    $self->error("Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'") unless $jobId;
+
 
     my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
 
-    my $cmd = "ssh -2 $user\@$server '$checkStatusCmd' 2>&1";
-    my $jobStatusString = $self->runCmdSub(0, $cmd, undef, 1, 1);
+    my $jobStatusString = $self->_runSshCmdWithRetries(0, $checkStatusCmd, undef, 1, 1, $user, $submitServer, "2>&1");
 
-    my $emptyErr = "Empty job status string returned from command '$cmd'\n";
-    $jobStatusString = $self->_retryCheckStatus($cmd, 30, $emptyErr) unless $jobStatusString;
-    $jobStatusString = $self->_retryCheckStatus($cmd, 60, $emptyErr) unless $jobStatusString;
-    print STDERR "$emptyErr Giving up" unless $jobStatusString;
-
-    return $jobStatusString && $nodeClass->checkJobStatus($jobStatusString, $jobId);
+    if ($jobStatusString) {
+      my ($running, $msg) = $nodeClass->checkJobStatus($jobStatusString, $jobId);
+      $self->logErr($msg) unless $running;
+      return $running;
+    } else {
+      $self->logErr("Empty job status string returned from command '$checkStatusCmd'\n");
+      return 0;
+    }
 }
 
-sub _retryCheckStatus {
-  my ($self, $cmd, $wait, $emptyErr) = @_;
-      print STDERR $emptyErr;
-      print STDERR "Will retry after $wait seconds\n";
-      return $self->runCmdSub(0, $cmd, undef, 1, 1);
- }
+sub _runSshCmdWithRetries {
+    my ($self, $test, $cmd, $optionalMsgForErr, $allowFailure, $doNotLog, $user, $server, $redirect) = @_;
+
+    my $sshCmd = "ssh -2 $user\@$server '$cmd' $redirect";
+
+    my ($output, $status) = $self->_runCmdSub($test, $sshCmd, undef, 1, $doNotLog);
+    ($output, $status) = $self->_retryCmd($test, $sshCmd, $doNotLog, 30) if ($status);
+    ($output, $status) = $self->_retryCmd($test, $sshCmd, $doNotLog, 60) if ($status);
+
+    if ($status) {
+      my $msg = "Retries didn't work.  Giving up.";
+      $allowFailure? $self->logErr($msg) : $self->error($msg);
+    }
+    return $output;
+}
+
+sub _retryCmd {
+    my ($self, $test, $cmd, $doNotLog, $wait) = @_;
+
+      $self->logErr("Failed running: $cmd\nWill retry in $wait seconds.");
+      sleep($wait);
+      return $self->_runCmdSub($test, $cmd, "", 1, $doNotLog);
+}
 
 sub _distribJobReadInfoFile {
     my ($self, $jobInfoFile, $user, $server) = @_;
-    my $cmd = "ssh -2 $user\@$server 'if [ -a $jobInfoFile ];then cat $jobInfoFile; fi'";
-    my $jobSubmittedInfo = $self->runCmdSub(0, $cmd, undef, 0, 1);
+    my $cmd = "if [ -a $jobInfoFile ];then cat $jobInfoFile; fi";
+    my $jobSubmittedInfo = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 1, $user, $server, "");
     return $jobSubmittedInfo;
 }
 
@@ -645,7 +712,7 @@ sub maybeSendAlert {
 
     my $maillist = join(",", @whoToMail);
     print STDERR "Sending email alert to ($maillist)\n";
-    open(SENDMAIL, "|/usr/sbin/sendmail -t") or die "Cannot open sendmail: $!\n";
+    open(SENDMAIL, "|/usr/sbin/sendmail -t") or $self->error("Cannot open sendmail: $!\n");
     print SENDMAIL "Subject: step $self->{name} is done\n";
     print SENDMAIL "To: $maillist\n";
     print SENDMAIL "From: reflow\@eupathdb.org\n";

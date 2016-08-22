@@ -217,9 +217,11 @@ sub getUnpacks {
 
     if (!$self->{fixedUnpacks}) {
       my $version = $self->getVersion();
+      my $datasetName = $self->getName();
       my @unpacks2;
       foreach my $unpacker (@{$self->{unpacks}}) {
 	$unpacker =~ s/\%DATASET_VERSION\%/$version/g;
+	$unpacker =~ s/\%DATASET_NAME\%/$datasetName/g;
 	push(@unpacks2, $unpacker);
       }
       $self->{fixedUnpacks} = \@unpacks2;

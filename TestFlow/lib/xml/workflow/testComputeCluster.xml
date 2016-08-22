@@ -41,6 +41,7 @@
     <paramValue name="fileOrDirToMirror">$$dataDir$$/master</paramValue>
     <paramValue name="outputDir">$$dataDir$$/master/mainresult</paramValue>
     <paramValue name="outputFiles">blocked.err,blocked.seq</paramValue>
+    <paramValue name="deleteAfterCopy">true</paramValue>
     <depends name="runClusterTask"/>
   </step>
 

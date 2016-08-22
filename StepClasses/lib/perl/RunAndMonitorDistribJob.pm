@@ -10,17 +10,20 @@ sub run {
   my ($self, $test, $undo) = @_;
 
   my $clusterServer = $self->getSharedConfig('clusterServer');
+  my $clusterTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 
   # get parameters
   my $taskInputDir = $self->getParamValue("taskInputDir");
   my $numNodes = $self->getParamValue("numNodes");
-  my $maxMemoryGigs = $self->getParamValue("maxMemoryGigs");
+  my $maxMemoryGigs = $self->getConfig("maxMemoryGigs", 1);
+  $maxMemoryGigs = $self->getParamValue("maxMemoryGigs") unless $maxMemoryGigs ;
   my $processorsPerNode = $self->getParamValue("processorsPerNode");
 
   $processorsPerNode = 1 unless $processorsPerNode;
 
   # get global properties
   my $clusterQueue = $self->getSharedConfig("$clusterServer.clusterQueue");
+  my $maxTimeMins = $self->getSharedConfig("$clusterServer.maxAllowedRuntimeDays") * 24 * 60;
 
   my $clusterTaskLogsDir = $self->getDistribJobLogsDir();
   my $clusterDataDir = $self->getClusterWorkflowDataDir();
@@ -34,12 +37,11 @@ sub run {
 
   if($undo){
       my ($relativeTaskInputDir, $relativeDir) = fileparse($taskInputDir);
-      $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/master");
-      $self->runCmdOnCluster(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
-      $self->runCmdOnCluster(0, "rm -fr $logFile");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterDataDir/$relativeDir/master");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterDataDir/$relativeDir/input/subtasks");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $logFile");
   }else{
-      my $expectedTime = 0;  # don't provide any
-      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $jobInfoFile, $logFile, $propFile, $numNodes, $expectedTime, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
+      my $success=$self->runAndMonitorDistribJob($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $maxTimeMins, $clusterQueue, $processorsPerNode, $maxMemoryGigs);
       my $masterDir = $propFile;
       $masterDir =~ s|/input/.*|/master|;  # remove all of the path after input/ and change it to master
       if (!$success){
