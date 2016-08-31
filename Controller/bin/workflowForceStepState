@@ -30,7 +30,7 @@ if ($processId) {
   die "Error: Step '$stepName' is running." unless $? >> 8;
 }
 
-$workflowStep->setDbState($state, 0, $undo, "'RUNNING', 'FAILED'");
+$workflowStep->setDbState($state, 0, $undo, "'RUNNING', 'FAILED', 'ON_DECK'");
 
 print STDERR "Step $stepName set to $state\n";
 
@@ -43,7 +43,7 @@ can introduce errors into your workflow.
 
 Rules:
   1) the step must not be running.
-  2) if the controller is stopped, you can change a RUNNING step to DONE or FAILED.
+  2) if the controller is stopped, you can change a RUNNING or ON_DECK step to DONE or FAILED.
   3) if the controller is running or stopped you can change a FAILED step to DONE.
 
 If you change a step to DONE you should have positive evidence that it has really
