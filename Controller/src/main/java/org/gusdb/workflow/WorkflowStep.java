@@ -20,9 +20,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.gusdb.fgputil.EncryptionUtil;
+import org.gusdb.fgputil.script.JavaScript;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
-import org.gusdb.fgputil.JavaScript;
+
 import javax.script.ScriptException;
 import org.gusdb.workflow.xml.WorkflowNode;
 
