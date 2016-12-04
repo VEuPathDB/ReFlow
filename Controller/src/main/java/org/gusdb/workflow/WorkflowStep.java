@@ -340,9 +340,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
             } else if (evalIncludeIfExcludeIf()) {
                 efg = true;
                 String gr = isSubgraphCall ? "SUBGRAPH " : "";
-                if (!isSubgraphReturn)
-                    workflowGraph.getWorkflow().log(
-                            "Excluding " + gr + getFullName());
+             //   if (!isSubgraphReturn) workflowGraph.getWorkflow().log("Excluding " + gr + getFullName());
             } else if (isSubgraphCall && excludeIfNoXml_string != null
                     && excludeIfNoXml_string.equals("true")) {
                 String gusHome = System.getProperty("GUS_HOME");
@@ -350,12 +348,14 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
                         + subgraphXmlFileName);
                 if (!xmlFile.exists()) {
                     efg = true;
+                    /* debbie asked us not to log these.
                     workflowGraph.getWorkflow().log(
                             "Excluding SUBGRAPH "
                                     + getFullName()
                                     + ": optional xml file "
                                     + subgraphXmlFileName
                                     + " is absent from $GUS_HOME/lib/xml/workflow");
+                                    */
                 }
             }
             excludeFromGraph = new Boolean(efg);
