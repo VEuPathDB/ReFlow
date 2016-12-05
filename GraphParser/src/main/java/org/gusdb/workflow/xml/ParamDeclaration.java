@@ -1,10 +1,13 @@
 package org.gusdb.workflow.xml;
 
 public class ParamDeclaration {
-  String name;
-  String deflt = null;
-  public void setName(String n) { name = n; }
-  public void setDefault(String d) { deflt = d; }
-  public String getName() { return name; }
-  public String getDefault() { return deflt; }
+
+  private String _name;
+  private String _default = null;
+
+  public void setName(String name) { _name = name; }
+  public void setDefault(String defaultValue) { _default = defaultValue; }
+  public String getName() { return _name; }
+  public String getDefault() { return _default; }
+
 }

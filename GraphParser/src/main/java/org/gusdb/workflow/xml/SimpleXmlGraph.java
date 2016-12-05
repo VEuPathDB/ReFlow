@@ -11,7 +11,12 @@ import java.util.Map;
 
 import org.gusdb.fgputil.xml.NamedValue;
 
-public class SimpleXmlGraph extends WorkflowXmlContainer<SimpleXmlNode> {
+public class SimpleXmlGraph implements WorkflowXmlContainer<SimpleXmlNode> {
+
+  public static class SimpleWorkflowClassFactory implements WorkflowClassFactory<SimpleXmlNode, SimpleXmlGraph> {
+    @Override public Class<SimpleXmlGraph> getContainerClass() { return SimpleXmlGraph.class; }
+    @Override public Class<SimpleXmlNode> getStepClass() { return SimpleXmlNode.class; }
+  }
 
   private File _xmlFileName;
   private List<ParamDeclaration> _paramDeclarations = new ArrayList<ParamDeclaration>();

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.gusdb.workflow.xml.WorkflowClassFactory;
 import org.gusdb.workflow.xml.WorkflowXmlParser;
 import org.xml.sax.SAXException;
 
@@ -27,8 +28,7 @@ public class WorkflowGraphUtil {
      * through its calls
      */
     static <S extends WorkflowStep> WorkflowGraph<S> createExpandedGraph(
-            Class<S> stepClass, Class<WorkflowGraph<S>> containerClass,
-            Workflow<S> workflow,
+            WorkflowClassFactory<S,WorkflowGraph<S>> classFactory, Workflow<S> workflow,
             Map<String, Map<String, List<String>>> paramErrorsMap,
             Map<String, S> globalSteps, Map<String, String> globalConstants,
             String xmlFileName, String callerXmlFileName, 
@@ -43,7 +43,7 @@ public class WorkflowGraphUtil {
         // /////////////////////
 
         // parse XML into objects
-        WorkflowXmlParser<S, WorkflowGraph<S>> parser = new WorkflowXmlParser<S, WorkflowGraph<S>>(stepClass, containerClass);
+        WorkflowXmlParser<S, WorkflowGraph<S>> parser = new WorkflowXmlParser<>(classFactory);
         WorkflowGraph<S> graph = parser.parseWorkflow(xmlFileName, callerXmlFileName);
         graph.setWorkflow(workflow);
         graph.setIsGlobal(isGlobal);
@@ -67,8 +67,8 @@ public class WorkflowGraphUtil {
         // set the caller step of its unexpanded steps, since we now know it now
         graph.setCallingStep(subgraphCallerStep);
 
-	// must happen before instantiation.  
-	graph.setStepsSkipIfFileName(skipIfFileName);
+        // must happen before instantiation.  
+        graph.setStepsSkipIfFileName(skipIfFileName);
 
         // instantiate local macros before expanding subgraphs
         graph.instantiateMacros(macroValuesMap);
@@ -85,9 +85,8 @@ public class WorkflowGraphUtil {
         List<String> newXmlFileNamesStack = new ArrayList<String>(
                 xmlFileNamesStack);
         newXmlFileNamesStack.add(xmlFileName);
-        graph.expandSubgraphs(path, newXmlFileNamesStack, stepClass,
-                containerClass, paramErrorsMap, globalSteps, globalConstants,
-                macroValuesMap);
+        graph.expandSubgraphs(path, newXmlFileNamesStack, classFactory, paramErrorsMap,
+            globalSteps, globalConstants, macroValuesMap);
 
         // delete excluded steps
         graph.deleteExcludedSteps();
@@ -96,9 +95,8 @@ public class WorkflowGraphUtil {
     }
 
     public static <S extends WorkflowStep> WorkflowGraph<S> constructFullGraph(
-            Class<S> stepClass, Class<WorkflowGraph<S>> containerClass,
-            Workflow<S> workflow) throws FileNotFoundException, SAXException,
-            IOException, Exception {
+        WorkflowClassFactory<S,WorkflowGraph<S>> classFactory, Workflow<S> workflow)
+            throws FileNotFoundException, SAXException, IOException, Exception {
 
         // create structures to hold global steps and constants
         Map<String, S> globalSteps = new HashMap<String, S>();
@@ -109,9 +107,9 @@ public class WorkflowGraphUtil {
 
         List<String> xmlFileNamesStack = new ArrayList<String>();
 
-        WorkflowGraph<S> graph = createExpandedGraph(stepClass, containerClass,
+        WorkflowGraph<S> graph = createExpandedGraph(classFactory,
                 workflow, paramErrorsMap, globalSteps, globalConstants,
-		workflow.getWorkflowXmlFileName(), "rootParams.prop", null, false,
+                workflow.getWorkflowXmlFileName(), "rootParams.prop", null, false,
                 "", "root", getRootGraphParamValues(workflow),
                 getGlobalPropValues(workflow), null, xmlFileNamesStack);
 

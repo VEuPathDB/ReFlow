@@ -1,10 +1,10 @@
 package org.gusdb.workflow;
 
-import java.io.InputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
@@ -13,12 +13,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-    import java.util.List;
-    import java.util.ArrayList;
+
+import org.gusdb.workflow.xml.WorkflowClassFactory;
 
 /*
  to do
@@ -56,6 +58,18 @@ import java.util.Set;
  */
 
 public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
+
+  public static class RunnableWorkflowGraphClassFactory implements WorkflowClassFactory<RunnableWorkflowStep, WorkflowGraph<RunnableWorkflowStep>> {
+    @SuppressWarnings("unchecked")
+    @Override
+    public Class<WorkflowGraph<RunnableWorkflowStep>> getContainerClass() {
+      return (Class<WorkflowGraph<RunnableWorkflowStep>>)(Class<?>)WorkflowGraph.class;
+    }
+    @Override
+    public Class<RunnableWorkflowStep> getStepClass() {
+      return RunnableWorkflowStep.class;
+    }
+  }
 
     public RunnableWorkflow(String homeDir) throws FileNotFoundException,
             IOException {

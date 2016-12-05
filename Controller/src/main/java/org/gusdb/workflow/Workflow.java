@@ -27,6 +27,8 @@ import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
+import org.gusdb.workflow.xml.WorkflowClassFactory;
+import org.gusdb.workflow.RunnableWorkflow.RunnableWorkflowGraphClassFactory;
 
 /**
  * 
@@ -39,6 +41,18 @@ import org.gusdb.fgputil.db.pool.SimpleDbConfig;
  *            does that).
  */
 public class Workflow<T extends WorkflowStep> {
+
+    public static class WorkflowGraphClassFactory implements WorkflowClassFactory<WorkflowStep, WorkflowGraph<WorkflowStep>> {
+      @SuppressWarnings("unchecked")
+      @Override
+      public Class<WorkflowGraph<WorkflowStep>> getContainerClass() {
+        return (Class<WorkflowGraph<WorkflowStep>>)(Class<?>)WorkflowGraph.class;
+      }
+      @Override
+      public Class<WorkflowStep> getStepClass() {
+        return WorkflowStep.class;
+      }
+    }
 
     // static
     // my parents are not done yet -- default state
@@ -621,29 +635,21 @@ public class Workflow<T extends WorkflowStep> {
         // runnable workflow, either test or run mode
         if (cmdLine.hasOption("r") || cmdLine.hasOption("t") || (cmdLine.hasOption("u") && cmdLine.hasOption("c"))) {
             System.err.println("Initializing...");
-            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(
-                    homeDirName);
-
-            // get references to the Class types we'll be using
-            Class<RunnableWorkflowStep> stepClass = RunnableWorkflowStep.class;
-            @SuppressWarnings("unchecked")
-            Class<WorkflowGraph<RunnableWorkflowStep>> containerClass = Utilities.getXmlContainerClass(
-                    RunnableWorkflowStep.class, WorkflowGraph.class);
-
+            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
-                    stepClass, containerClass, runnableWorkflow);
+                new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
-            runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u")
-                    : null;
+            runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u") : null;
             boolean testOnly = cmdLine.hasOption("t");
-	    if (cmdLine.hasOption("c")) {
-		runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
-  		rootGraph.convertToUndo();
-		System.out.println("Steps in the Undo Graph:");
-		System.out.println(rootGraph.getStepsAsString());
-	    } else {
-		runnableWorkflow.run(testOnly);
-	    }
+            if (cmdLine.hasOption("c")) {
+                runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
+                rootGraph.convertToUndo();
+                System.out.println("Steps in the Undo Graph:");
+                System.out.println(rootGraph.getStepsAsString());
+            }
+            else {
+              runnableWorkflow.run(testOnly);
+            }
         }
 
         // quick workflow report
@@ -680,17 +686,9 @@ public class Workflow<T extends WorkflowStep> {
 
         // compile check or detailed step report
         else if (cmdLine.hasOption("c") || cmdLine.hasOption("d")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
-
-            // get references to the Class types we'll be using
-            Class<WorkflowStep> stepClass = WorkflowStep.class;
-            @SuppressWarnings("unchecked")
-            Class<WorkflowGraph<WorkflowStep>> containerClass = Utilities.getXmlContainerClass(
-                    WorkflowStep.class, WorkflowGraph.class);
-
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
             WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
-                    stepClass, containerClass, workflow);
+                    new WorkflowGraphClassFactory(), workflow);
             workflow.setWorkflowGraph(rootGraph);
             if (cmdLine.hasOption("d")) {
                 String[] desiredStates = getDesiredStates(cmdLine, "d");

@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 
-import org.gusdb.workflow.xml.WorkflowNode;
-import org.gusdb.workflow.xml.WorkflowXmlContainer;
-
 public class Utilities {
 
     private final static String NL = System.getProperty("line.separator");
@@ -62,14 +59,6 @@ public class Utilities {
                     Matcher.quoteReplacement(variableValue));
         }
         return newString;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends WorkflowNode, S extends WorkflowXmlContainer<T>> Class<S> getXmlContainerClass(
-            Class<T> nodeClass, Class<S> containerClass)
-            throws InstantiationException, IllegalAccessException {
-        S instance = containerClass.newInstance();
-        return (Class<S>) instance.getClass();
     }
 
     public static void setDatabase(String dbString)

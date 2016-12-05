@@ -13,6 +13,7 @@ import org.gusdb.fgputil.FormatUtil;
 import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.workflow.xml.SimpleXmlGraph;
+import org.gusdb.workflow.xml.SimpleXmlGraph.SimpleWorkflowClassFactory;
 import org.gusdb.workflow.xml.SimpleXmlNode;
 import org.gusdb.workflow.xml.WorkflowXmlParser;
 
@@ -28,7 +29,7 @@ public class DotFileBuilder {
       File inputFile = parseArgs(args);
 
       WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph> parser =
-          new WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph>(SimpleXmlNode.class, SimpleXmlGraph.class);
+          new WorkflowXmlParser<SimpleXmlNode, SimpleXmlGraph>(new SimpleWorkflowClassFactory());
 
       SimpleXmlGraph graph = parser.parseWorkflow(inputFile.getAbsolutePath(), "", false);
 

@@ -20,6 +20,7 @@ import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
 import org.gusdb.workflow.xml.WorkflowXmlContainer;
 import org.gusdb.workflow.xml.ParamDeclaration;
+import org.gusdb.workflow.xml.WorkflowClassFactory;
 import org.xml.sax.SAXException;
 
 /*
@@ -44,8 +45,7 @@ import org.xml.sax.SAXException;
  *  (3) in a final pass, set the path of each of the steps (top down recursion)
  */
 
-public class WorkflowGraph<T extends WorkflowStep> extends
-        WorkflowXmlContainer<T> {
+public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContainer<T> {
 
     public static final Character FLAG_DIVIDER = ':';
 
@@ -750,7 +750,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
     // subgraph expansion
     // ///////////////////////////////////////////////////////////////////////
     void expandSubgraphs(String path, List<String> xmlFileNamesStack,
-            Class<T> stepClass, Class<WorkflowGraph<T>> containerClass,
+            WorkflowClassFactory<T, WorkflowGraph<T>> classFactory,
             Map<String, Map<String, List<String>>> paramErrorsMap,
             Map<String, T> globalSteps, Map<String, String> globalConstants,
             Map<String, String> macroValuesMap) throws SAXException, Exception {
@@ -783,7 +783,7 @@ public class WorkflowGraph<T extends WorkflowStep> extends
             String newPath = path + subgraphCallerStep.getBaseName() + ".";
 
             WorkflowGraph<T> subgraph = WorkflowGraphUtil.createExpandedGraph(
-                    stepClass, containerClass, workflow, paramErrorsMap,
+                    classFactory, workflow, paramErrorsMap,
                     globalSteps, globalConstants, subgraphXmlFileName,
                     xmlFileName, subgraphCallerStep.getSkipIfFileName(),
                     subgraphCallerStep.getIsGlobal(), newPath,

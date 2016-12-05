@@ -3,6 +3,7 @@ package org.gusdb.workflow;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
+import org.gusdb.workflow.Workflow.WorkflowGraphClassFactory;
 
 public class WorkflowParser {
 
@@ -18,17 +19,9 @@ public class WorkflowParser {
         String homeDirName = cmdLine.getOptionValue("h");
 
         // create a parser, and parse the model file
-        Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                homeDirName);
-        Class<WorkflowStep> stepClass = WorkflowStep.class;
-
-        WorkflowGraph<WorkflowStep> rootGraph = new WorkflowGraph<WorkflowStep>();
-
-        @SuppressWarnings("unchecked")
-        Class<WorkflowGraph<WorkflowStep>> containerClass = (Class<WorkflowGraph<WorkflowStep>>) rootGraph.getClass();
-
-        rootGraph = WorkflowGraphUtil.constructFullGraph(stepClass,
-                containerClass, workflow);
+        Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
+        WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
+            new WorkflowGraphClassFactory(), workflow);
         workflow.setWorkflowGraph(rootGraph);
 
         // print out the model content
