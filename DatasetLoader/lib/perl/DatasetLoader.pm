@@ -140,7 +140,7 @@ sub getExternalDbIdUrl {
 
     my $url = $self->{externalDbIdUrl};
     if ($url) {
-	$self->error("externalDbIdUrl must start with http://") unless $url =~ m|http://|;
+	$self->error("externalDbIdUrl must start with http:// or https://") unless ($url =~ m|http://| || $url =~ m|https://|);
 	$self->error("externalDbIdUrl must contain the macro EXTERNAL_ID_HERE") unless $url =~ /EXTERNAL_ID_HERE/;
     }
     return $url;
