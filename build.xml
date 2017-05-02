@@ -19,7 +19,7 @@
 
   <target name="FgpUtil-Checkout" unless="FgpUtil.present">
     <ant target="defaultProjectCheckout" inheritAll="false">
-      <property name="svnurl" value="https://www.cbil.upenn.edu/svn/gus/FgpUtil"/>
+      <property name="svnurl" value="https://cbilsvn.pmacs.upenn.edu/svn/gus/FgpUtil"/>
       <property name="project" value="FgpUtil"/>
     </ant>
   </target>
