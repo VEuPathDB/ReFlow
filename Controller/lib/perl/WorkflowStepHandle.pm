@@ -246,7 +246,8 @@ produce bogus output, or if you run an UNDO it might fail.
     my $status = 0;
     if ($test) {
 	$output = `echo just testing 2>> $err`;
-    } else {
+      } else {
+	chomp $cmd;
 	$output = `$cmd 2>> $err`;
 	chomp $output;
 	$status = $? >> 8;
