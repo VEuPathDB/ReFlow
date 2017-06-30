@@ -317,40 +317,48 @@ sub getClusterWorkflowDataDir {
 
 
 sub getClusterServer {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    if (!$self->{clusterServer}) {
-	my $clusterServer = $self->getSharedConfig('clusterServer');
-	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
-	if ($clusterServer ne "none") {
-	    $self->{clusterServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
-							      $clusterUser,
-							      $self);
-	} else {
-	    $self->{clusterServer} = FgpUtil::Util::LocalComputeCluster->new($self);
-	}
+  if (!$self->{clusterServer}) {
+    if ($self->getSharedConfig('masterWorkflowDataDi')) {
+	$self->{clusterServer} = ReFlow::Controller::SlaveComputeCluster->new($self);
+    } else {
+      my $clusterServer = $self->getSharedConfig('clusterServer');
+      my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
+      if ($clusterServer ne "none") {
+	$self->{clusterServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+								       $clusterUser,
+								       $self);
+      } else {
+	$self->{clusterServer} = FgpUtil::Util::LocalComputeCluster->new($self);
+      }
     }
-    return $self->{clusterServer};
+  }
+  return $self->{clusterServer};
 }
 
 sub getClusterFileTransferServer {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    if (!$self->{clusterFileTransferServer}) {
-	my $clusterServer = $self->getSharedConfig('clusterServer');
-	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
-	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
-	if ($clusterFileTransferServer ne "none") {
-	    #need to verify
-	    #$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
-							      $clusterUser,
-							      $self);
-	} else {
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
-	}
+  if (!$self->{clusterFileTransferServer}) {
+    if ($self->getSharedConfig('masterWorkflowDataDir')) {
+      $self->{clusterFileTransferServer} = ReFlow::Controller::SlaveComputeCluster->new($self);
+    } else {
+      my $clusterServer = $self->getSharedConfig('clusterServer');
+      my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
+      my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
+      if ($clusterFileTransferServer ne "none") {
+	#need to verify
+	#$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
+										   $clusterUser,
+										   $self);
+      } else {
+	$self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
+      }
     }
     return $self->{clusterFileTransferServer};
+  }
 }
 
 sub runCmdOnCluster {
