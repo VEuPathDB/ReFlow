@@ -5,6 +5,7 @@ use FgpUtil::Util::PropertySet;
 use FgpUtil::Util::SshComputeCluster;
 use FgpUtil::Util::LocalComputeCluster;
 use ReFlow::DatasetLoader::DatasetLoaders;
+use ReFlow::Controller::SlaveComputeNode;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
@@ -321,7 +322,7 @@ sub getClusterServer {
 
   if (!$self->{clusterServer}) {
     if ($self->getSharedConfig('masterWorkflowDataDi')) {
-	$self->{clusterServer} = ReFlow::Controller::SlaveComputeCluster->new($self);
+	$self->{clusterServer} = ReFlow::Controller::SlaveComputeNode->new($self);
     } else {
       my $clusterServer = $self->getSharedConfig('clusterServer');
       my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
@@ -342,7 +343,7 @@ sub getClusterFileTransferServer {
 
   if (!$self->{clusterFileTransferServer}) {
     if ($self->getSharedConfig('masterWorkflowDataDir')) {
-      $self->{clusterFileTransferServer} = ReFlow::Controller::SlaveComputeCluster->new($self);
+      $self->{clusterFileTransferServer} = ReFlow::Controller::SlaveComputeNode->new($self);
     } else {
       my $clusterServer = $self->getSharedConfig('clusterServer');
       my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
