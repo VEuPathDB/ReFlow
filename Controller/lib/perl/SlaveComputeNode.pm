@@ -1,4 +1,4 @@
-package ReFlow::Controller::SlaveComputeCluster;
+package ReFlow::Controller::SlaveComputeNode;
 
 use File::Copy;
 use strict;
