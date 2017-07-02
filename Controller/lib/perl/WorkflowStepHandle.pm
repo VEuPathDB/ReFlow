@@ -321,7 +321,7 @@ sub getClusterServer {
   my ($self) = @_;
 
   if (!$self->{clusterServer}) {
-    if ($self->getSharedConfig('masterWorkflowDataDi')) {
+    if ($self->getSharedConfig('masterWorkflowDataDir')) {
 	$self->{clusterServer} = ReFlow::Controller::SlaveComputeNode->new($self);
     } else {
       my $clusterServer = $self->getSharedConfig('clusterServer');
