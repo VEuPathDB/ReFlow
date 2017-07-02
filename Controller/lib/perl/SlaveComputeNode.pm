@@ -1,6 +1,5 @@
 package ReFlow::Controller::SlaveComputeNode;
 
-use File::Copy;
 use strict;
 
 # A compute cluster server that does no work, and does not communicate with the cluster. Instead, it steals
@@ -25,6 +24,7 @@ sub copyTo {
   my ($self, $fromDir, $fromFile, $toDir, $gzipFlag) = @_;
 
   # Do Nothing!  Don't touch the master's directory.
+  $self->{mgr}->log("Slave copy $fromDir/$fromFile to $toDir -- Do Nothing!  Slaves do not copy to cluster.");
 }
 
 sub copyFrom {
@@ -38,13 +38,15 @@ sub copyFrom {
 
   my $masterFromDir = "$masterWorkflowDataDir/data/$dataPath";
 
-  copy("$masterFromDir/$fromFile", $toDir) or $self->{mgr}->error("Copy from '$masterFromDir/$fromFile' to '$toDir' failed");
+  $self->{mgr}->runCmd("cp $masterFromDir/$fromFile $toDir");
 }
 
 sub runCmdOnCluster {
   my ($self, $test, $cmd) = @_;
 
   # Do Nothing!  Don't touch the master's directory.
+  $self->{mgr}->log("Slave node: ignore command '$cmd'.  Slaves do not run commands on the cluster");
+
 }
 
 1;
