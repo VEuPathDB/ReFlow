@@ -464,7 +464,12 @@ sub getNodeClass {
 
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
-    
+
+    if ($self->getSharedConfig('masterWorkflowDataDir')) {
+      $self->log("Skipping runAndMonitorDistibJob -- slave workflows don't run distribJob");
+      return 1;
+    }
+
     return 1 if ($test);
 
     # if not already started, start it up 
