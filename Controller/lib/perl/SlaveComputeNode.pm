@@ -15,7 +15,7 @@ sub new {
   $self->{mgr} = $mgr;
   bless $self, $class;
 
-  $self->{mgr}->error("SlaveComputeNode requires a shared config property 'masterWorkflowDataDir") unless $self->{mgr}->getSharedConfig('masterWorkflowDataDir');
+  $self->{mgr}->error("SlaveComputeNode requires a shared config property 'masterWorkflowDataDir") unless $self->{mgr}->getSharedConfigRelaxed('masterWorkflowDataDir');
   return $self;
 }
 

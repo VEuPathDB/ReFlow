@@ -115,6 +115,14 @@ sub getSharedConfig {
     return $self->{globalStepsConfig}->getProp($key);
 }
 
+# don't throw error if config property is absent
+sub getSharedConfigRelaxed {
+    my ($self, $key) = @_;
+
+    $self->getSharedConfigProperties();
+    return $self->{globalStepsConfig}->getPropRelaxed($key);
+}
+
 sub getSharedConfigProperties {
     my ($self) = @_;
 
@@ -321,7 +329,7 @@ sub getClusterServer {
   my ($self) = @_;
 
   if (!$self->{clusterServer}) {
-    if ($self->getSharedConfig('masterWorkflowDataDir')) {
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
 	$self->{clusterServer} = ReFlow::Controller::SlaveComputeNode->new($self);
     } else {
       my $clusterServer = $self->getSharedConfig('clusterServer');
@@ -342,7 +350,7 @@ sub getClusterFileTransferServer {
   my ($self) = @_;
 
   if (!$self->{clusterFileTransferServer}) {
-    if ($self->getSharedConfig('masterWorkflowDataDir')) {
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
       $self->{clusterFileTransferServer} = ReFlow::Controller::SlaveComputeNode->new($self);
     } else {
       my $clusterServer = $self->getSharedConfig('clusterServer');
@@ -465,7 +473,7 @@ sub getNodeClass {
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
 
-    if ($self->getSharedConfig('masterWorkflowDataDir')) {
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
       $self->log("Skipping runAndMonitorDistibJob -- slave workflows don't run distribJob");
       return 1;
     }
