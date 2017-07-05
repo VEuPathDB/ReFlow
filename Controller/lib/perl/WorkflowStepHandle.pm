@@ -5,6 +5,7 @@ use FgpUtil::Util::PropertySet;
 use FgpUtil::Util::SshComputeCluster;
 use FgpUtil::Util::LocalComputeCluster;
 use ReFlow::DatasetLoader::DatasetLoaders;
+use ReFlow::Controller::SlaveComputeNode;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
@@ -112,6 +113,14 @@ sub getSharedConfig {
 
     $self->getSharedConfigProperties();
     return $self->{globalStepsConfig}->getProp($key);
+}
+
+# don't throw error if config property is absent
+sub getSharedConfigRelaxed {
+    my ($self, $key) = @_;
+
+    $self->getSharedConfigProperties();
+    return $self->{globalStepsConfig}->getPropRelaxed($key);
 }
 
 sub getSharedConfigProperties {
@@ -317,40 +326,48 @@ sub getClusterWorkflowDataDir {
 
 
 sub getClusterServer {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    if (!$self->{clusterServer}) {
-	my $clusterServer = $self->getSharedConfig('clusterServer');
-	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
-	if ($clusterServer ne "none") {
-	    $self->{clusterServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
-							      $clusterUser,
-							      $self);
-	} else {
-	    $self->{clusterServer} = FgpUtil::Util::LocalComputeCluster->new($self);
-	}
+  if (!$self->{clusterServer}) {
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
+	$self->{clusterServer} = ReFlow::Controller::SlaveComputeNode->new($self);
+    } else {
+      my $clusterServer = $self->getSharedConfig('clusterServer');
+      my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
+      if ($clusterServer ne "none") {
+	$self->{clusterServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+								       $clusterUser,
+								       $self);
+      } else {
+	$self->{clusterServer} = FgpUtil::Util::LocalComputeCluster->new($self);
+      }
     }
-    return $self->{clusterServer};
+  }
+  return $self->{clusterServer};
 }
 
 sub getClusterFileTransferServer {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    if (!$self->{clusterFileTransferServer}) {
-	my $clusterServer = $self->getSharedConfig('clusterServer');
-	my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
-	my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
-	if ($clusterFileTransferServer ne "none") {
-	    #need to verify
-	    #$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
-							      $clusterUser,
-							      $self);
-	} else {
-	    $self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
-	}
+  if (!$self->{clusterFileTransferServer}) {
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
+      $self->{clusterFileTransferServer} = ReFlow::Controller::SlaveComputeNode->new($self);
+    } else {
+      my $clusterServer = $self->getSharedConfig('clusterServer');
+      my $clusterFileTransferServer = $self->getSharedConfig('clusterFileTransferServer');
+      my $clusterUser = $self->getSharedConfig("$clusterServer.clusterLogin");
+      if ($clusterFileTransferServer ne "none") {
+	#need to verify
+	#$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterServer,
+	$self->{clusterFileTransferServer} = FgpUtil::Util::SshComputeCluster->new($clusterFileTransferServer,
+										   $clusterUser,
+										   $self);
+      } else {
+	$self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
+      }
     }
     return $self->{clusterFileTransferServer};
+  }
 }
 
 sub runCmdOnCluster {
@@ -455,7 +472,12 @@ sub getNodeClass {
 
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
-    
+
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
+      $self->log("Skipping runAndMonitorDistibJob -- slave workflows don't run distribJob");
+      return 1;
+    }
+
     return 1 if ($test);
 
     # if not already started, start it up 
