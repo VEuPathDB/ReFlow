@@ -366,8 +366,8 @@ sub getClusterFileTransferServer {
 	$self->{clusterFileTransferServer} = FgpUtil::Util::LocalComputeCluster->new($self);
       }
     }
-    return $self->{clusterFileTransferServer};
   }
+  return $self->{clusterFileTransferServer};
 }
 
 sub runCmdOnCluster {
