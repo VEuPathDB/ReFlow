@@ -3,7 +3,6 @@ package org.gusdb.workflow;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -19,12 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.script.ScriptException;
+
 import org.gusdb.fgputil.EncryptionUtil;
 import org.gusdb.fgputil.script.JavaScript;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
-
-import javax.script.ScriptException;
 import org.gusdb.workflow.xml.WorkflowNode;
 
 /*
@@ -339,8 +338,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
                 efg = true;
             } else if (evalIncludeIfExcludeIf()) {
                 efg = true;
-                String gr = isSubgraphCall ? "SUBGRAPH " : "";
-             //   if (!isSubgraphReturn) workflowGraph.getWorkflow().log("Excluding " + gr + getFullName());
+                //String gr = isSubgraphCall ? "SUBGRAPH " : "";
+                //if (!isSubgraphReturn) workflowGraph.getWorkflow().log("Excluding " + gr + getFullName());
             } else if (isSubgraphCall && excludeIfNoXml_string != null
                     && excludeIfNoXml_string.equals("true")) {
                 String gusHome = System.getProperty("GUS_HOME");
@@ -557,7 +556,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return workflowGraph.getXmlFileName();
     }
 
-    String getParamsDigest() throws NoSuchAlgorithmException, Exception {
+    String getParamsDigest() {
         if (paramsDigest == null)
             paramsDigest = EncryptionUtil.encrypt(paramValues.toString());
         return paramsDigest;
@@ -618,8 +617,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // write this step to the db, if not already there.
     // called during workflow initialization
     void initializeStepTable(Set<String> stepNamesInDb,
-			     PreparedStatement insertStepTableStmt, PreparedStatement updateStepTableStmt, PreparedStatement insertStepTableParamValStmt)
-            throws SQLException, NoSuchAlgorithmException, Exception {
+        PreparedStatement insertStepTableStmt, PreparedStatement updateStepTableStmt, PreparedStatement insertStepTableParamValStmt)
+            throws SQLException {
         if (stepNamesInDb.contains(getFullName())) {
             updateStepTableStmt.setString(1, getDependsString());
             updateStepTableStmt.setInt(2, getDepthFirstOrder());
