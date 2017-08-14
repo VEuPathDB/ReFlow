@@ -5,7 +5,7 @@ use strict;
 my $workflowDir = $ENV{WORKFLOW_DIR};
 unless($workflowDir) {
   die "rf requires ENVIRONMENT Variable WORKFLOW_DIR";
-}  
+}
 
 my @actions = ("list", "run", "undo", "reset", "set");
 my @listable = ("failed", "done", "ready", "on_deck", "running");
@@ -18,7 +18,6 @@ unless($action) {
   exit;
 }
 
-
 &checkValue(\@actions, $action);
 
 my $cmd;
@@ -29,13 +28,13 @@ if($action eq "list") {
 
   $listVal = uc($listVal);
   $cmd = "workflow -h $workflowDir -s1 $listVal |sort";
-} 
+}
 elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
   my $modeVal = $ARGV[1];
   &checkValue(\@modes, $modeVal);
 
   die "Mode must be 'test' for reset action" if($action eq "reset" && $modeVal ne "test");
-  
+
   my $mode = $modeVal eq "test" ? "-t" : "-r";
   $mode = '-reset' if($action eq 'reset');
 
@@ -47,10 +46,10 @@ elsif($action eq "run" || $action eq "undo" || $action eq "reset") {
       die "<step pattern> is required but missing";
     }
   }
-  
+
   $cmd = $cmd . " -u " . $ARGV[2] if($action eq 'undo');
 
-} 
+}
 elsif($action eq "set") {
   my $state = $ARGV[1];
   &checkValue(\@states, $state);
@@ -63,21 +62,20 @@ elsif($action eq "set") {
   $cmd = "workflowstep -h $workflowDir -p $ARGV[2] $state";
   $cmd = $cmd . " -u" if($ARGV[3] eq 'undo');
 
-} 
+}
 else {
   die "Whoops... You specified an incorrect command line action: $action";
 }
-
 
 #print $cmd . "\n";
 system($cmd);
 
 
 sub usage {
-  print "usage: 
+  print "usage:
 
-rf list [failed|done|ready|on_deck]
-  workflow -h <workflow dir> -s1 [FAILED|READY|DONE|ON_DECK] |sort
+rf list [ready|on_deck|running|failed|done]
+  workflow -h <workflow dir> -s1 [READY|ON_DECK|RUNNING|FAILED|DONE] |sort
 
 ---------------------------------------------------
 
