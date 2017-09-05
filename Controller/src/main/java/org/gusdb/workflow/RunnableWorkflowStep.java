@@ -1,21 +1,20 @@
 package org.gusdb.workflow;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Formatter;
+import java.util.List;
 
 public class RunnableWorkflowStep extends WorkflowStep {
 
     boolean isInvoked;
     int invokedButNotRunningCount;
 
-    int handleChangesSinceLastSnapshot(Workflow<RunnableWorkflowStep> workflow)
+    int handleChangesSinceLastSnapshot()
             throws SQLException, IOException, InterruptedException {
         if (workflow_step_id == null)
             Utilities.error("Step " + getFullName()
@@ -31,7 +30,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
         } else { // this step has been changed by wrapper or pilot UI. log
                  // change.
             if (!getOperativeState().equals(prevState)) {
-		String skippedMsg = getSkipped()? "-skipped-" : "";
+              String skippedMsg = getSkipped()? "-skipped-" : "";
                 steplog(getOperativeState(), skippedMsg);
                 isInvoked = false;
             }
@@ -44,8 +43,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
         return getOperativeState().equals(Workflow.RUNNING) ? 1 : 0;
     }
 
-    private void setHandledFlag() throws SQLException, FileNotFoundException,
-            IOException {
+    private void setHandledFlag() throws SQLException {
         // check that state is still as expected, to avoid theoretical race
         // condition
 
@@ -108,13 +106,13 @@ public class RunnableWorkflowStep extends WorkflowStep {
     // if this step is ready, and all parents are done, transition to ON_DECK
     void maybeGoToOnDeck() throws SQLException, IOException {
 
-	// (ignore off_line or stop_after if undoing)
+      // (ignore off_line or stop_after if undoing)
 
         if (!getOperativeState().equals(Workflow.READY) || (off_line && !getUndoing())) return;
 
         for (WorkflowStep parent : getParents()) {
             if (!parent.getOperativeState().equals(Workflow.DONE)
-		|| (parent.getStopAfter() && !getUndoing())) return;
+                || (parent.getStopAfter() && !getUndoing())) return;
         }
 
         steplog(Workflow.ON_DECK, "");
@@ -134,7 +132,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
 
     // if this step doesn't have an invoker (ie, it is a call to or return
     // from a subgraph), just go to done
-    void goToDone() throws SQLException, IOException {
+    void goToDone() throws SQLException {
         String workflowStepTable = workflowGraph.getWorkflow().getWorkflowStepTable();
         String set = getUndoing() ? " SET undo_state = '" + Workflow.DONE
                 + "', undo_state_handled = 1, state = '" + Workflow.READY
@@ -157,13 +155,13 @@ public class RunnableWorkflowStep extends WorkflowStep {
                 else steplog(Workflow.DONE, "");
                 goToDone();
             } else {
-	        String[] cmd = { "idle", "workflowRunStep", workflow.getHomeDir(),
-				 workflow.getId().toString(), getFullName(),
-				 "" + getId(), invokerClassName,
-				 getStepDir() + "/step.err", testOnly ? "test" : "run",
-				 getUndoing() ? "1" : "0",
-				 getSkipIfFileName()
-		};
+                String[] cmd = { "idle", "workflowRunStep", workflow.getHomeDir(),
+                    workflow.getId().toString(), getFullName(),
+                    "" + getId(), invokerClassName,
+                    getStepDir() + "/step.err", testOnly ? "test" : "run",
+                        getUndoing() ? "1" : "0",
+                            getSkipIfFileName()
+                };
                 List<String> cmd2 = new ArrayList<String>();
                 Collections.addAll(cmd2, cmd);
                 for (String name : paramValues.keySet()) {

@@ -1,8 +1,8 @@
 package org.gusdb.workflow;
 
+import static org.gusdb.fgputil.FormatUtil.NL;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,9 +18,9 @@ import java.util.Set;
 
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
-import org.gusdb.workflow.xml.WorkflowXmlContainer;
 import org.gusdb.workflow.xml.ParamDeclaration;
 import org.gusdb.workflow.xml.WorkflowClassFactory;
+import org.gusdb.workflow.xml.WorkflowXmlContainer;
 import org.xml.sax.SAXException;
 
 /*
@@ -49,48 +49,46 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
 
     public static final Character FLAG_DIVIDER = ':';
 
-    private List<ParamDeclaration> paramDeclarations = new ArrayList<ParamDeclaration>();
-    private Map<String, String> constants = new LinkedHashMap<String, String>();
-    private Map<String, String> globalConstants;
-    private Map<String, String> tmpGlobalConstants = new LinkedHashMap<String, String>();
-    private Map<String, T> globalStepsByName;
-    private Workflow<T> workflow;
-    private String xmlFileName;
-    private boolean isGlobal = false;
+    private List<ParamDeclaration> _paramDeclarations = new ArrayList<ParamDeclaration>();
+    private Map<String, String> _constants = new LinkedHashMap<String, String>();
+    private Map<String, String> _globalConstants;
+    private Map<String, String> _tmpGlobalConstants = new LinkedHashMap<String, String>();
+    private Map<String, T> _globalStepsByName;
+    private Workflow<T> _workflow;
+    private String _xmlFileName;
+    private boolean _isGlobal = false;
 
-    private List<T> subgraphCallerSteps = new ArrayList<T>();
-    private List<T> rootSteps = new ArrayList<T>();
+    private List<T> _subgraphCallerSteps = new ArrayList<T>();
+    private List<T> _rootSteps = new ArrayList<T>();
 
     // following state must be updated after expansion
-    private Map<String, T> stepsByName = new LinkedHashMap<String, T>();
-    private List<T> leafSteps = new ArrayList<T>();
-    private List<T> sortedSteps;
-
-    final static String nl = System.getProperty("line.separator");
+    private Map<String, T> _stepsByName = new LinkedHashMap<String, T>();
+    private List<T> _leafSteps = new ArrayList<T>();
+    private List<T> _sortedSteps;
 
     public WorkflowGraph() {}
     
     @Override
     public void addConstant(NamedValue constant) {
-        constants.put(constant.getName(), constant.getValue());
+        _constants.put(constant.getName(), constant.getValue());
     }
 
     @Override
     public void addGlobalConstant(NamedValue constant) {
-        tmpGlobalConstants.put(constant.getName(), constant.getValue());
+        _tmpGlobalConstants.put(constant.getName(), constant.getValue());
     }
 
     @Override
     public void addParamDeclaration(ParamDeclaration paramDecl) {
-        paramDeclarations.add(paramDecl);
+        _paramDeclarations.add(paramDecl);
     }
 
     public boolean getIsGlobal() {
-        return isGlobal;
+        return _isGlobal;
     }
 
     public void setIsGlobal(boolean isGlobal) {
-        this.isGlobal = isGlobal;
+        this._isGlobal = isGlobal;
     }
 
     // called in the order found in the XML file. stepsByName retains
@@ -99,15 +97,15 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     public void addStep(T step) throws IOException {
         step.setWorkflowGraph(this);
         String stepName = step.getBaseName();
-        if (stepsByName.containsKey(stepName))
-            Utilities.error("In graph " + xmlFileName
+        if (_stepsByName.containsKey(stepName))
+            Utilities.error("In graph " + _xmlFileName
                     + ", non-unique step name: '" + stepName + "'");
 
-        stepsByName.put(stepName, step);
+        _stepsByName.put(stepName, step);
     }
 
     void setWorkflow(Workflow<T> workflow) {
-        this.workflow = workflow;
+        this._workflow = workflow;
     }
 
     // a step that is a call to a globalSubgraph
@@ -118,62 +116,62 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     }
 
     Workflow<T> getWorkflow() {
-        return workflow;
+        return _workflow;
     }
 
     @Override
     public void setXmlFileName(String xmlFileName) {
-        this.xmlFileName = xmlFileName;
+        this._xmlFileName = xmlFileName;
     }
 
     public String getXmlFileName() {
-        return xmlFileName;
+        return _xmlFileName;
     }
 
     public void setGlobalConstants(Map<String, String> globalConstants) {
-        this.globalConstants = globalConstants;
+        this._globalConstants = globalConstants;
     }
 
     public void setGlobalSteps(Map<String, T> globalSteps) {
-        this.globalStepsByName = globalSteps;
+        this._globalStepsByName = globalSteps;
     }
 
     public List<T> getRootSteps() {
-        return rootSteps;
+        return _rootSteps;
     }
 
     // recurse through steps starting at roots.
     @SuppressWarnings("unchecked")
     public List<T> getSortedSteps() {
-        if (sortedSteps == null) {
+        if (_sortedSteps == null) {
             int depthFirstOrder = 0;
-            sortedSteps = new ArrayList<T>();
+            _sortedSteps = new ArrayList<T>();
             Set<T> poppedSteps = new HashSet<T>(); // steps whose kids are done
                                                    // processing
-            for (T rootStep : rootSteps) {
-                rootStep.addToList((List<WorkflowStep>) sortedSteps,
+            for (T rootStep : _rootSteps) {
+                rootStep.addToList((List<WorkflowStep>) _sortedSteps,
                         (Set<WorkflowStep>) poppedSteps);
                 poppedSteps.add(rootStep);
             }
             // second pass to give everybody their order number;
-            for (T step : sortedSteps)
+            for (T step : _sortedSteps)
                 step.setDepthFirstOrder(depthFirstOrder++);
         }
-        return sortedSteps;
+        return _sortedSteps;
     }
 
     Map<String, T> getStepsByName() {
-        return stepsByName;
+        return _stepsByName;
     }
 
     Collection<T> getSteps() {
-        return stepsByName.values();
+        return _stepsByName.values();
     }
 
     String getStepsAsString() {
         StringBuffer buf = new StringBuffer();
         for (T step : getSortedSteps()) {
-            buf.append(step.getFullName() + nl);
+            buf.append(step.getFullName() + NL);
         }
         return buf.toString();
     }
@@ -184,13 +182,13 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         // digester loads global constants into a tmp structure. we validate
         // as a post-process because validation must happen after other
         // properties are set, which digester does later
-        if (isGlobal) globalConstants.putAll(tmpGlobalConstants);
-        else if (tmpGlobalConstants.size() != 0)
+        if (_isGlobal) _globalConstants.putAll(_tmpGlobalConstants);
+        else if (_tmpGlobalConstants.size() != 0)
             Utilities.error("In graph "
-                    + xmlFileName
+                    + _xmlFileName
                     + " a <globalConstant> is declared, but this graph is not global");
 
-        if (isGlobal) globalStepsByName.putAll(stepsByName);
+        if (_isGlobal) _globalStepsByName.putAll(_stepsByName);
 
         // getSteps retains the order in the XML file, so global subgraph
         // will come first, if there is one. this ensures that it is first
@@ -199,13 +197,13 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         for (T step : getSteps()) {
 
             // make the parent/child links from the remembered dependencies
-            makeParentChildLinks(step.getDependsNames(), stepsByName, step,
+            makeParentChildLinks(step.getDependsNames(), _stepsByName, step,
                     false, stepNamesSoFar);
             stepNamesSoFar.add(step.getBaseName());
 
             // remember steps that call a subgraph
             if (step.getSubgraphXmlFileName() != null)
-                subgraphCallerSteps.add(step);
+                _subgraphCallerSteps.add(step);
 
             // validate loadType
             step.checkLoadTypes();
@@ -221,13 +219,13 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
             String dName = dependName.getName();
             T parent = steps.get(dName);
             if (parent == null) {
-                Utilities.error("In file " + xmlFileName + ", step '"
+                Utilities.error("In file " + _xmlFileName + ", step '"
                         + step.getBaseName() + "' depends on " + globalStr
                         + "step '" + dName + "' which is not found");
             }
 
             if (!global && !stepNamesSoFar.contains(dName)) {
-                Utilities.error("In file " + xmlFileName + ", step '"
+                Utilities.error("In file " + _xmlFileName + ", step '"
                         + step.getBaseName() + "' depends on " + globalStr
                         + "step '" + dName
                         + "' which is not above it in the XML file");
@@ -307,13 +305,13 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
 
         // make another pass through all steps, by rebuilding the sorted
         // steps list, to check for cycles in graph from the new dependencies
-        sortedSteps = null;
+        _sortedSteps = null;
         getSortedSteps();
     }
 
     // delete steps with includeIf = false
     void deleteExcludedSteps() throws java.io.IOException, Exception {
-        Map<String, T> stepsTmp = new HashMap<String, T>(stepsByName);
+        Map<String, T> stepsTmp = new HashMap<String, T>(_stepsByName);
         for (T step : stepsTmp.values()) {
             if (step.getExcludeFromGraph()) {
                 for (WorkflowStep parent : step.getParents()) {
@@ -328,21 +326,21 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
                         child.addParent(parent);
                     }
                 }
-                stepsByName.remove(step.getBaseName());
-                subgraphCallerSteps.remove(step);
-                rootSteps.remove(step);
-                leafSteps.remove(step);
+                _stepsByName.remove(step.getBaseName());
+                _subgraphCallerSteps.remove(step);
+                _rootSteps.remove(step);
+                _leafSteps.remove(step);
             }
         }
         // rediscover root steps: if we deleted one, then its kids become root
         for (T step : getSteps()) {
-            if (step.getParents().size() == 0 && !rootSteps.contains(step)) {
-                rootSteps.add(step);
-                sortedSteps = null; // force re-creation of this list
+            if (step.getParents().size() == 0 && !_rootSteps.contains(step)) {
+                _rootSteps.add(step);
+                _sortedSteps = null; // force re-creation of this list
             }
-            if (step.getChildren().size() == 0 && !leafSteps.contains(step)) {
-                leafSteps.add(step);
-                sortedSteps = null; // force re-creation of this list
+            if (step.getChildren().size() == 0 && !_leafSteps.contains(step)) {
+                _leafSteps.add(step);
+                _sortedSteps = null; // force re-creation of this list
             }
         }
     }
@@ -360,30 +358,30 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     // and its src.
     @SuppressWarnings("unchecked")
     void insertSubgraphReturnChildren() {
-        Map<String, T> currentStepsByName = new HashMap<String, T>(stepsByName);
+        Map<String, T> currentStepsByName = new HashMap<String, T>(_stepsByName);
         for (T step : currentStepsByName.values()) {
             T returnStep = step;
             if (step.getIsSubgraphCall()) {
                 returnStep = (T) step.insertSubgraphReturnChild();
-                stepsByName.put(returnStep.getBaseName(), returnStep);
+                _stepsByName.put(returnStep.getBaseName(), returnStep);
             }
         }
 
     }
 
     void setRootsAndLeafs() {
-        rootSteps = new ArrayList<T>();
-        leafSteps = new ArrayList<T>();
+        _rootSteps = new ArrayList<T>();
+        _leafSteps = new ArrayList<T>();
         for (T step : getSteps()) {
-            if (step.getParents().size() == 0) rootSteps.add(step);
-            if (step.getChildren().size() == 0) leafSteps.add(step);
+            if (step.getParents().size() == 0) _rootSteps.add(step);
+            if (step.getChildren().size() == 0) _leafSteps.add(step);
         }
-        sortedSteps = null;
+        _sortedSteps = null;
     }
 
     @Override
     public String toString() {
-        return "Constants" + nl + constants.toString() + nl + nl + "Steps" + nl
+        return "Constants" + NL + _constants.toString() + NL + NL + "Steps" + NL
                 + getSortedSteps().toString();
     }
 
@@ -395,7 +393,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         // confirm that caller has values for each of this graph's declared
         // parameters. gather all such errors into fileErrorsMap for reporting
         // in total later
-        for (ParamDeclaration decl : paramDeclarations) {
+        for (ParamDeclaration decl : _paramDeclarations) {
 	  if (!paramValues.containsKey(decl.getName()) && decl.getDefault() != null) 
 	      paramValues.put(decl.getName(), decl.getDefault());
             if (!paramValues.containsKey(decl.getName())) {
@@ -411,10 +409,10 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         }
 
         // substitute param values into constants
-        substituteIntoConstants(paramValues, constants, false, false);
+        substituteIntoConstants(paramValues, _constants, false, false);
 
         // substitute param values and globalConstants into globalConstants
-        if (isGlobal) {
+        if (_isGlobal) {
             substituteIntoConstants(paramValues, globalConstants, false, false);
 
             substituteIntoConstants(new HashMap<String, String>(),
@@ -422,17 +420,17 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         }
 
         // substitute globalConstants into constants
-        substituteIntoConstants(globalConstants, constants, false, false);
+        substituteIntoConstants(globalConstants, _constants, false, false);
 
         // substitute constants into constants
-        substituteIntoConstants(new HashMap<String, String>(), constants, true,
+        substituteIntoConstants(new HashMap<String, String>(), _constants, true,
                 true);
 
         // substitute them all into step param values, xmlFileName,
         // includeIf and excludeIf
         for (T step : getSteps()) {
             step.substituteValues(globalConstants, false);
-            step.substituteValues(constants, false);
+            step.substituteValues(_constants, false);
             step.substituteValues(paramValues, true);
         }
     }
@@ -451,8 +449,8 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         for (String constantName : to.keySet()) {
             String constantValue = to.get(constantName);
             String newConstantValue =
-		Utilities.substituteVariablesIntoString(constantValue, from,
-							xmlFileName, check, "constant", constantName);
+                Utilities.substituteVariablesIntoString(constantValue, from,
+                    _xmlFileName, check, "constant", constantName);
             to.put(constantName, newConstantValue);
             if (updateFrom) from.put(constantName, newConstantValue);
         }
@@ -462,25 +460,24 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     // Invert
     // //////////////////////////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
-    void convertToUndo() throws FileNotFoundException, SQLException,
-            IOException {
+    void convertToUndo() throws SQLException {
 
         // find all descendants of the undo root
-        WorkflowStep undoRootStep = stepsByName.get(workflow.getUndoStepName());
+        WorkflowStep undoRootStep = _stepsByName.get(_workflow.getUndoStepName());
 	if (undoRootStep == null) Utilities.error("Trying to undo an unrecognized step: " + undoRootStep);
         Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
         undoDescendants.add(undoRootStep);
 
         // reset stepsByName to hold only descendants of undo root that are DONE
-        stepsByName = new HashMap<String, T>();
+        _stepsByName = new HashMap<String, T>();
         for (WorkflowStep step : undoDescendants) {
             if (step.getState().equals(Workflow.DONE))
-                stepsByName.put(step.getFullName(), (T) step);
+                _stepsByName.put(step.getFullName(), (T) step);
         }
 
         // invert each step (in trimmed graph)
         for (T step : getSteps())
-            step.invert(stepsByName.keySet());
+            step.invert(_stepsByName.keySet());
 
         // remove undoRootStep's children (it is the new leaf)
         undoRootStep.removeAllChildren();
@@ -490,8 +487,8 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
 
         // make sure all undoable steps in db have state set
         PreparedStatement undoStepPstmt = WorkflowStep.getPreparedUndoUpdateStmt(
-                workflow.getDbConnection(), workflow.getId(),
-                workflow.getWorkflowStepTable());
+                _workflow.getDbConnection(), _workflow.getId(),
+                _workflow.getWorkflowStepTable());
         try {
             for (WorkflowStep step : getSteps()) {
                 undoStepPstmt.setString(1, step.getFullName());
@@ -523,8 +520,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         - different in memory and db
     */
     String inDbExactly(boolean stepTableEmpty) throws SQLException,
-            FileNotFoundException, NoSuchAlgorithmException, IOException,
-            Exception {
+            FileNotFoundException, IOException {
 
         if (stepTableEmpty) return "Step table empty";
 
@@ -533,7 +529,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
                 + " from "
                 + workflowStepTable
                 + " where workflow_id = "
-                + workflow.getId() + " order by depth_first_order";
+                + _workflow.getId() + " order by depth_first_order";
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -542,10 +538,10 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         StringBuffer diffs = new StringBuffer();
         StringBuffer errors = new StringBuffer();
 
-        List<String> notInDb = new ArrayList<String>(stepsByName.keySet());
+        List<String> notInDb = new ArrayList<String>(_stepsByName.keySet());
 
         try {
-            stmt = workflow.getDbConnection().createStatement();
+            stmt = _workflow.getDbConnection().createStatement();
 	    paramValuesStmt =
 		WorkflowStep.getPreparedParamValStmt(getWorkflow().getDbConnection(),
 						     getWorkflow().getWorkflowStepParamValTable());
@@ -560,7 +556,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
                 String dbState = rs.getString(5);
                 Integer dbId = rs.getInt(6);
 
-                T step = stepsByName.get(dbName);
+                T step = _stepsByName.get(dbName);
 
                 if (step == null) {
                     String diff = "Step '"
@@ -569,25 +565,25 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
                     diffs.append(diff);
                     if (!(dbState.equals(Workflow.READY) || dbState.equals(Workflow.ON_DECK))) {
                         errors.append(diff + " while in the state '" + dbState
-                                + '"' + nl + nl);
+                                + '"' + NL + NL);
                     }
                 } else {
                     notInDb.remove(dbName);
 
                     // update diffs and errors depending on mismatch found, if any
                     checkStepMismatch(step, dbId, dbName, dbParamsDigest, dbDependsString, dbClassName,
-				      dbState, diffs, errors, paramValuesStmt);
+                        dbState, diffs, errors, paramValuesStmt);
                 }
             }
 
             if (notInDb.size() != 0) {
                 diffs.append("The following steps are in the XML graph, but not yet in the WorkflowStep table");
                 for (String t : notInDb)
-                    diffs.append("   " + t + nl);
+                    diffs.append("   " + t + NL);
             }
 
             if (errors.length() != 0) {
-                workflow.log(errors.toString());
+                _workflow.log(errors.toString());
                 Utilities.error("The XML graph has changed illegally.  See controller.log for details");
             }
             return diffs.toString();
@@ -602,77 +598,75 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     // allow ready steps to add new
     void checkStepMismatch(T step, Integer dbId, String dbName, String dbParamsDigest,
             String dbDependsString, String dbClassName, String dbState,
-			   StringBuffer diffs, StringBuffer errors, PreparedStatement paramValuesStmt)
-	throws NoSuchAlgorithmException, SQLException, Exception {
+            StringBuffer diffs, StringBuffer errors, PreparedStatement paramValuesStmt)
+                throws SQLException {
 
         boolean stepClassMatch = (dbClassName == null && step.getStepClassName() == null)
                 || ((dbClassName != null && step.getStepClassName() != null)
-		    && step.getStepClassName().equals(dbClassName));
+                    && step.getStepClassName().equals(dbClassName));
 
-	boolean runningOrFailed = dbState.equals(Workflow.RUNNING) || dbState.equals(Workflow.FAILED);
-	boolean done = dbState.equals(Workflow.DONE);
-
+        boolean runningOrFailed = dbState.equals(Workflow.RUNNING) || dbState.equals(Workflow.FAILED);
+        boolean done = dbState.equals(Workflow.DONE);
 
         // don't require that the param digest of a subgraph call agrees.
         // this way steps can be grafted into a graph, and new params can
         // be passed to them. as long as existing steps have matching
         // param digests, all is ok
         boolean mismatch =
-	    (!step.getIsSubgraphCall() && !dbParamsDigest.equals(step.getParamsDigest()))
-	    || !stepClassMatch
-	    || !step.getDependsString().equals(dbDependsString)
-	    || !step.getFullName().equals(dbName);
-	     
-	if (!mismatch) return;
+            (!step.getIsSubgraphCall() && !dbParamsDigest.equals(step.getParamsDigest()))
+            || !stepClassMatch
+            || !step.getDependsString().equals(dbDependsString)
+            || !step.getFullName().equals(dbName);
 
-	String s = "Step '" + dbName + "' has changed in XML file " + step.getSourceXmlFileName();
-	StringBuffer diff = new StringBuffer();
+        if (!mismatch) return;
 
-	boolean illegalChange = false;
-	    	
-	if (!dbName.equals(step.getFullName())) {
-	    diff.append("  old name:            " + dbName + nl);
-	    diff.append("  new name:            " + step.getFullName() + nl);
-	    illegalChange |= (runningOrFailed || done);
-	}
+        String s = "Step '" + dbName + "' has changed in XML file " + step.getSourceXmlFileName();
+        StringBuffer diff = new StringBuffer();
 
-	if (!stepClassMatch) {
-	    diff.append("  old class name:      " + dbClassName + nl);
-	    diff.append("  new class name:      " + step.getStepClassName() + nl);
-	    illegalChange |= (runningOrFailed || done);
-	}
+        boolean illegalChange = false;
 
-	if (!dbDependsString.equals(step.getDependsString())) {
-	    diff.append("  old depends string:  " + dbDependsString + nl);
-	    diff.append("  new depends string:  " + step.getDependsString() + nl);
-	    illegalChange |= (runningOrFailed || done);
-	}
+        if (!dbName.equals(step.getFullName())) {
+          diff.append("  old name:            " + dbName + NL);
+          diff.append("  new name:            " + step.getFullName() + NL);
+          illegalChange |= (runningOrFailed || done);
+        }
 
-	if (!dbParamsDigest.equals(step.getParamsDigest())) {
-	    diff.append("  old params digest:   " + dbParamsDigest + nl);
-	    diff.append("  new params digest:   " + step.getParamsDigest() + nl);
-	    Map<String,String> dbParamValuesDiff = new LinkedHashMap<String, String>();
-	    Map<String,String> newParamValuesDiff = new LinkedHashMap<String, String>();
-	    illegalChange |= step.checkChangedParams(paramValuesStmt, dbId, dbParamsDigest, dbState, dbParamValuesDiff, newParamValuesDiff);
-	    diff.append("  unmatched old params:" + nl);
-	    for (String paramName : dbParamValuesDiff.keySet()) {
-		diff.append("    " + paramName + ": " + dbParamValuesDiff.get(paramName) + nl);
-	    }
-	    diff.append("unmatched new params:" + nl);
-	    for (String paramName : newParamValuesDiff.keySet()) {
-		diff.append("  " + paramName + ": " + newParamValuesDiff.get(paramName) + nl);
-	    }
-	}
+        if (!stepClassMatch) {
+          diff.append("  old class name:      " + dbClassName + NL);
+          diff.append("  new class name:      " + step.getStepClassName() + NL);
+          illegalChange |= (runningOrFailed || done);
+        }
 
-	diffs.append(s + diff);
+        if (!dbDependsString.equals(step.getDependsString())) {
+          diff.append("  old depends string:  " + dbDependsString + NL);
+          diff.append("  new depends string:  " + step.getDependsString() + NL);
+          illegalChange |= (runningOrFailed || done);
+        }
 
-	if (illegalChange)
-	    errors.append(s + " while in the state '" + dbState + "'" + nl + diff + nl + nl);
+        if (!dbParamsDigest.equals(step.getParamsDigest())) {
+          diff.append("  old params digest:   " + dbParamsDigest + NL);
+          diff.append("  new params digest:   " + step.getParamsDigest() + NL);
+          Map<String,String> dbParamValuesDiff = new LinkedHashMap<String, String>();
+          Map<String,String> newParamValuesDiff = new LinkedHashMap<String, String>();
+          illegalChange |= step.checkChangedParams(paramValuesStmt, dbId, dbParamsDigest, dbState, dbParamValuesDiff, newParamValuesDiff);
+          diff.append("  unmatched old params:" + NL);
+          for (String paramName : dbParamValuesDiff.keySet()) {
+            diff.append("    " + paramName + ": " + dbParamValuesDiff.get(paramName) + NL);
+          }
+          diff.append("unmatched new params:" + NL);
+          for (String paramName : newParamValuesDiff.keySet()) {
+            diff.append("  " + paramName + ": " + newParamValuesDiff.get(paramName) + NL);
+          }
+        }
+
+        diffs.append(s + diff);
+
+        if (illegalChange)
+          errors.append(s + " while in the state '" + dbState + "'" + NL + diff + NL + NL);
     }
 
     // remove from the db all READY or ON_DECK steps
-    void removeReadyStepsFromDb() throws SQLException, FileNotFoundException,
-            IOException {
+    void removeReadyStepsFromDb() throws SQLException {
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
         String workflowStepParamValTable = getWorkflow().getWorkflowStepParamValTable();
@@ -684,19 +678,19 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
                 + workflowStepTrackingTable
                 + " t"
                 + " where s.workflow_id = "
-                + workflow.getId()
+                + _workflow.getId()
                 + " and s.workflow_step_id = t.workflow_step_id and s.state = 'READY'";
 
         Set<String> stepNamesInDb = getStepNamesInDb(sql);
         if (stepNamesInDb.size() != 0) {
-            String msg = nl
+            String msg = NL
                     + "Error. The following steps are READY but have rows in "
-                    + workflowStepTrackingTable + ":" + nl;
+                    + workflowStepTrackingTable + ":" + NL;
             for (String s : stepNamesInDb)
-                msg += ("  " + s + nl);
-            msg += nl
+                msg += ("  " + s + NL);
+            msg += NL
                     + "These steps ran, failed and were set to ready without being cleaned up in the database.  Refer to each step's step.err file for instructions on how to clean it up in the database. When they are all clean, try running again."
-                    + nl;
+                    + NL;
 
             Utilities.error(msg);
         }
@@ -704,35 +698,33 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         sql = "delete from " + workflowStepParamValTable
 	    + " where workflow_step_id in (select workflow_step_id from "
 	    + workflowStepTable + " where workflow_id = "
-                + workflow.getId()
+                + _workflow.getId()
                 + " and (state = 'READY' or state = 'ON_DECK'))";
-        workflow.executeSqlUpdate(sql);
+        _workflow.executeSqlUpdate(sql);
 
         sql = "delete from " + workflowStepTable + " where workflow_id = "
-                + workflow.getId()
+                + _workflow.getId()
                 + " and (state = 'READY' or state = 'ON_DECK')";
-        workflow.executeSqlUpdate(sql);
+        _workflow.executeSqlUpdate(sql);
     }
 
-    Set<String> getStepNamesInDb() throws SQLException, FileNotFoundException,
-            IOException {
+    Set<String> getStepNamesInDb() throws SQLException {
 
         String workflowStepTable = getWorkflow().getWorkflowStepTable();
 
         String sql = "select name" + " from " + workflowStepTable
-                + " where workflow_id = " + workflow.getId()
+                + " where workflow_id = " + _workflow.getId()
                 + " order by depth_first_order";
         return getStepNamesInDb(sql);
     }
 
-    Set<String> getStepNamesInDb(String sql) throws SQLException,
-            FileNotFoundException, IOException {
+    Set<String> getStepNamesInDb(String sql) throws SQLException {
         Set<String> stepsInDb = new HashSet<String>();
 
         Statement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = workflow.getDbConnection().createStatement();
+            stmt = _workflow.getDbConnection().createStatement();
             rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 String dbName = rs.getString(1);
@@ -759,7 +751,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         // (if there is a global subgraph caller, it will be first in the list.
         // this way we can gather global constants before any other graph is
         // processed)
-        for (T subgraphCallerStep : subgraphCallerSteps) {
+        for (T subgraphCallerStep : _subgraphCallerSteps) {
 
             if (subgraphCallerStep.getExcludeFromGraph()) continue;
 
@@ -774,7 +766,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
             // if is a global graph, check that it is a child of the root graph
             if (subgraphCallerStep.getIsGlobal() && !path.equals("")) {
                 Utilities.error("Graph "
-                        + xmlFileName
+                        + _xmlFileName
                         + " is not the root graph, but contains a <globalSubgraph> step '"
                         + subgraphCallerStep.getBaseName()
                         + "'.  They are only allowed in the root graph.");
@@ -783,9 +775,9 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
             String newPath = path + subgraphCallerStep.getBaseName() + ".";
 
             WorkflowGraph<T> subgraph = WorkflowGraphUtil.createExpandedGraph(
-                    classFactory, workflow, paramErrorsMap,
+                    classFactory, _workflow, paramErrorsMap,
                     globalSteps, globalConstants, subgraphXmlFileName,
-                    xmlFileName, subgraphCallerStep.getSkipIfFileName(),
+                    _xmlFileName, subgraphCallerStep.getSkipIfFileName(),
                     subgraphCallerStep.getIsGlobal(), newPath,
                     subgraphCallerStep.getBaseName(),
                     subgraphCallerStep.getParamValues(), macroValuesMap,
@@ -796,13 +788,11 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
             // before processing dependsGlobal in that graph. This is needed
             // because it is not until we expand the global graph that the steps
             // within it are instantiated. the steps in non-root graphs would be
-            // ok, but there are steps in root graph that have globalDepends,
-            // and
-            // they can't make the association before the global graph is
-            // expanded
+            // ok, but there are steps in root graph that have globalDepends, and
+            // they can't make the association before the global graph is expanded
             for (T step : getSteps())
                 makeParentChildLinks(step.getDependsGlobalNames(),
-                        globalStepsByName, step, true, null);
+                        _globalStepsByName, step, true, null);
 
             // inject it into the caller graph
             WorkflowStep subgraphReturnStep = subgraphCallerStep.getChildren().get(
@@ -814,7 +804,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
 
             // add its steps to stepsByName
             for (T subgraphStep : subgraph.getSteps()) {
-                stepsByName.put(subgraphStep.getFullName(), subgraphStep);
+                _stepsByName.put(subgraphStep.getFullName(), subgraphStep);
             }
         }
     }
@@ -869,7 +859,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     // attach the roots of this graph to a step in a parent graph that is
     // calling it
     void attachToCallingStep(WorkflowStep callingStep) {
-        for (T rootStep : rootSteps) {
+        for (T rootStep : _rootSteps) {
             callingStep.addChild(rootStep);
             rootStep.addParent(callingStep);
         }
@@ -878,7 +868,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
     // attach the leafs of this graph to a step in a parent graph that is
     // the return from this graph
     void attachToReturnStep(WorkflowStep childStep) {
-        for (T leafStep : leafSteps) {
+        for (T leafStep : _leafSteps) {
             childStep.addParent(leafStep);
             leafStep.addChild(childStep);
         }

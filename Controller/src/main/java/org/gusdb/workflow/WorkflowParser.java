@@ -1,8 +1,11 @@
 package org.gusdb.workflow;
 
+import java.sql.Connection;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.workflow.Workflow.WorkflowGraphClassFactory;
 
 public class WorkflowParser {
@@ -19,14 +22,16 @@ public class WorkflowParser {
         String homeDirName = cmdLine.getOptionValue("h");
 
         // create a parser, and parse the model file
-        Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
-        WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
-            new WorkflowGraphClassFactory(), workflow);
-        workflow.setWorkflowGraph(rootGraph);
+        try (DatabaseInstance db = Workflow.getDb();
+             Connection conn = db.getDataSource().getConnection()) {
+          Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+          WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
+              new WorkflowGraphClassFactory(), workflow);
+          workflow.setWorkflowGraph(rootGraph);
 
-        // print out the model content
-        System.out.println(rootGraph.toString());
-        System.exit(0);
+          // print out the model content
+          System.out.println(rootGraph.toString());
+        }
     }
 
     private static Options declareOptions() {

@@ -1,8 +1,11 @@
 package org.gusdb.workflow;
 
+import java.sql.Connection;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
+import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.workflow.RunnableWorkflow.RunnableWorkflowGraphClassFactory;
 
 public class IllegalGraphReport {
@@ -30,17 +33,20 @@ public class IllegalGraphReport {
     String homeDirName = cmdLine.getOptionValue("h");
 
     System.err.println("Initializing...");
-    RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
-    WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
-        new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
-    runnableWorkflow.setWorkflowGraph(rootGraph);
+    try (DatabaseInstance db = Workflow.getDb();
+         Connection conn = db.getDataSource().getConnection()) {
+      RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn);
+      WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
+          new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
+      runnableWorkflow.setWorkflowGraph(rootGraph);
 
-    if (!runnableWorkflow.workflowTableInitialized()) {
-      System.out.println("Workflow not in database yet.  Are you sure you are running the right report?");
-    }
-    else {
-      rootGraph.inDbExactly(false);
-      System.out.println("The graph has no illegal changes.  Woohoo.");
+      if (!runnableWorkflow.workflowTableInitialized()) {
+        System.out.println("Workflow not in database yet.  Are you sure you are running the right report?");
+      }
+      else {
+        rootGraph.inDbExactly(false);
+        System.out.println("The graph has no illegal changes.  Woohoo.");
+      }
     }
   }
 }

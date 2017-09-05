@@ -1,5 +1,6 @@
 package org.gusdb.workflow;
 
+import static org.gusdb.fgputil.FormatUtil.NL;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -63,14 +64,13 @@ public class Workflow<T extends WorkflowStep> {
     public static final String DONE = "DONE";
     public static final String RUNNING = "RUNNING";
     public static final String ALL = "ALL";
-    final static String nl = System.getProperty("line.separator");
-    
+
     public static final String LOAD_THROTTLE_FILE = "loadThrottle.prop";
     public static final String FAIL_THROTTLE_FILE = "failThrottle.prop";
 
     // configuration
-    private Connection dbConnection;
-    private String homeDir;
+    private final String homeDir;
+    private final Connection connection;
     private Properties workflowProps; // from workflow config file
     protected Properties loadThrottleConfig = new Properties();
     protected Properties failThrottleConfig = new Properties();
@@ -105,8 +105,9 @@ public class Workflow<T extends WorkflowStep> {
     // list of processes to clean
     private List<Process> bgdProcesses = new ArrayList<Process>();
 
-    public Workflow(String homeDir) throws FileNotFoundException, IOException {
+    public Workflow(String homeDir, Connection connection) throws FileNotFoundException, IOException {
         this.homeDir = homeDir.replaceAll("/$", "");
+        this.connection = connection;
         name = getWorkflowConfig("name");
         version = getWorkflowConfig("version");
         workflowTable = getWorkflowConfig("workflowTable");
@@ -180,18 +181,17 @@ public class Workflow<T extends WorkflowStep> {
     // Read from DB
     // /////////////////////////////////////////////////////////////////////////
 
-    Integer getId() throws SQLException, FileNotFoundException, IOException {
+    Integer getId() throws SQLException {
         getDbState();
         return workflow_id;
     }
 
-    protected void getDbSnapshot() throws SQLException, IOException {
+    protected void getDbSnapshot() throws SQLException {
         getDbState();
         getStepsDbState();
     }
 
-    protected void getDbState() throws SQLException, FileNotFoundException,
-            IOException {
+    protected void getDbState() throws SQLException {
         if (workflow_id == null) {
             String sql = "select workflow_id, state, undo_step_id, process_id, host_machine, test_mode"
                     + " from "
@@ -204,7 +204,7 @@ public class Workflow<T extends WorkflowStep> {
             Statement stmt = null;
             ResultSet rs = null;
             try {
-                stmt = getDbConnection().createStatement();
+                stmt = connection.createStatement();
                 rs = stmt.executeQuery(sql);
                 if (!rs.next())
                     error("workflow '" + name + "' version '" + version
@@ -224,8 +224,7 @@ public class Workflow<T extends WorkflowStep> {
     }
 
     // read all WorkflowStep rows into memory (and remember the prev snapshot)
-    protected void getStepsDbState() throws SQLException,
-            FileNotFoundException, IOException {
+    protected void getStepsDbState() throws SQLException {
         String sql = WorkflowStep.getBulkSnapshotSql(workflow_id,
                 workflowStepTable);
 
@@ -237,7 +236,7 @@ public class Workflow<T extends WorkflowStep> {
         resetStepCounts();  // used for throttling
         
         try {
-            stmt = getDbConnection().createStatement();
+            stmt = connection.createStatement();
             rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 String stepName = rs.getString("NAME");
@@ -311,7 +310,7 @@ public class Workflow<T extends WorkflowStep> {
         Statement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = getDbConnection().createStatement();
+            stmt = connection.createStatement();
             rs = stmt.executeQuery(sql);
             if (rs.next()) return true;
         }
@@ -329,30 +328,29 @@ public class Workflow<T extends WorkflowStep> {
     /**
      * RunnableWorkflow overrides this to log to a real log
      * 
-	 * @throws IOException if error occurs while logging
-	 */
+     * @throws IOException if error occurs while logging
+     */
     void log(String msg) throws IOException {
         System.err.println(msg);
     }
 
-    Connection getDbConnection() throws SQLException, FileNotFoundException,
-            IOException {
-        if (dbConnection == null) {
-            String dsn = Utilities.getGusConfig("jdbcDsn");
-            String login = Utilities.getGusConfig("databaseLogin");
-            log("Connecting to " + dsn + " (" + login + ")");
-            DatabaseInstance db = new DatabaseInstance(
-                SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
-                    Utilities.getGusConfig("databasePassword")));
-            dbConnection = db.getDataSource().getConnection();
-            log("Connected");
-        }
-        return dbConnection;
+    static DatabaseInstance getDb() throws IOException {
+      String dsn = Utilities.getGusConfig("jdbcDsn");
+      String login = Utilities.getGusConfig("databaseLogin");
+      System.err.println("Connecting to " + dsn + " (" + login + ")");
+      DatabaseInstance db = new DatabaseInstance(
+          SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
+              Utilities.getGusConfig("databasePassword")));
+      System.err.println("Connected");
+      return db;
     }
 
-    void executeSqlUpdate(String sql) throws SQLException,
-            FileNotFoundException, IOException {
-        Statement stmt = getDbConnection().createStatement();
+    Connection getDbConnection() {
+      return connection;
+    }
+
+    void executeSqlUpdate(String sql) throws SQLException {
+        Statement stmt = connection.createStatement();
         try {
             stmt.executeUpdate(sql);
         }
@@ -374,6 +372,10 @@ public class Workflow<T extends WorkflowStep> {
                     + " not found in workflow properties file: "
                     + configFileName);
         return value;
+    }
+
+    public String getWorkflowXmlFileName() throws IOException {
+        return getWorkflowConfig("workflowXmlFile");
     }
 
   Integer getLoadThrottleConfig(String key) throws FileNotFoundException, IOException {
@@ -404,14 +406,6 @@ public class Workflow<T extends WorkflowStep> {
         Utilities.error(msg);
     }
 
-    public String getWorkflowXmlFileName() throws FileNotFoundException,
-            IOException {
-        Properties workflowProps = new Properties();
-        workflowProps.load(new FileInputStream(getHomeDir()
-                + "/config/workflow.prop"));
-        return workflowProps.getProperty("workflowXmlFile");
-    }
-
     void addBgdProcess(Process p) {
         bgdProcesses.add(p);
     }
@@ -438,16 +432,16 @@ public class Workflow<T extends WorkflowStep> {
     // ////////////////////////////////////////////////////////////////
 
     // very light reporting of state of workflow (no steps)
-    void quickReportWorkflow() throws SQLException, FileNotFoundException,
-            IOException {
-        getDbState();
+    void quickReportWorkflow() throws SQLException {
 
-        System.out.println("Workflow '" + name + " " + version + "'" + nl
-                + "workflow_id:           " + workflow_id + nl
-                + "state:                 " + state + nl
-                + "undo_step:             " + undoStepName + nl
-                + "process_id:            " + process_id + nl
-                + "host_machine:          " + host_machine + nl);
+      getDbState();
+
+        System.out.println("Workflow '" + name + " " + version + "'" + NL
+                + "workflow_id:           " + workflow_id + NL
+                + "state:                 " + state + NL
+                + "undo_step:             " + undoStepName + NL
+                + "process_id:            " + process_id + NL
+                + "host_machine:          " + host_machine + NL);
     }
 
     // light reporting of state of workflow with steps
@@ -473,7 +467,7 @@ public class Workflow<T extends WorkflowStep> {
         ResultSet rs = null;
         Formatter formatter = null;
         try {
-            stmt = getDbConnection().createStatement();
+            stmt = connection.createStatement();
             rs = stmt.executeQuery(sql);
             StringBuilder sb = new StringBuilder();
             formatter = new Formatter(sb);
@@ -632,10 +626,13 @@ public class Workflow<T extends WorkflowStep> {
         if (cmdLine.hasOption("db")) 
             Utilities.setDatabase(cmdLine.getOptionValue("db"));
 
+        try (DatabaseInstance db = getDb();
+             Connection conn = db.getDataSource().getConnection()) {
+
         // runnable workflow, either test or run mode
         if (cmdLine.hasOption("r") || cmdLine.hasOption("t") || (cmdLine.hasOption("u") && cmdLine.hasOption("c"))) {
             System.err.println("Initializing...");
-            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName);
+            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn);
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                 new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
@@ -655,21 +652,21 @@ public class Workflow<T extends WorkflowStep> {
         // quick workflow report
         else if (cmdLine.hasOption("q")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
+                    homeDirName, conn);
             workflow.quickReportWorkflow();
         }
 
         // change machine
         else if (cmdLine.hasOption("m")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
+                    homeDirName, conn);
             workflow.resetMachine();
         }
 
         // quick step report (three column output)
         else if (cmdLine.hasOption("s")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
+                    homeDirName, conn);
             String[] desiredStates = getDesiredStates(cmdLine, "s");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, false);
@@ -678,7 +675,7 @@ public class Workflow<T extends WorkflowStep> {
         // quick step report (one column output)
         else if (cmdLine.hasOption("s1")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
+                    homeDirName, conn);
             String[] desiredStates = getDesiredStates(cmdLine, "s1");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, true);
@@ -686,7 +683,7 @@ public class Workflow<T extends WorkflowStep> {
 
         // compile check or detailed step report
         else if (cmdLine.hasOption("c") || cmdLine.hasOption("d")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
             WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                     new WorkflowGraphClassFactory(), workflow);
             workflow.setWorkflowGraph(rootGraph);
@@ -698,14 +695,16 @@ public class Workflow<T extends WorkflowStep> {
         }
 
         else if (cmdLine.hasOption("reset")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
             workflow.reset();
         }
 
         else {
             oops = true;
         }
+
+        }
+
         if (oops) {
             CliUtil.usage(cmdlineSyntax, cmdDescrip, getUsageNotes(), options);
             System.exit(1);
@@ -732,93 +731,93 @@ public class Workflow<T extends WorkflowStep> {
     private static String getUsageNotes() {
         return
 
-        nl
+        NL
                 + "Home dir must contain the following:"
-                + nl
+                + NL
                 + "   config/"
-                + nl
+                + NL
                 + "     initOfflineSteps   (steps to take offline at startup)"
-                + nl
+                + NL
                 + "     loadThrottle.prop   (configure load throttling)"
-                + nl
+                + NL
                 + "     failThrottle.prop   (configure fail throttling)"
-                + nl
+                + NL
                 + "     rootParams.prop    (root parameter values)"
-                + nl
+                + NL
                 + "     stepsShared.prop   (steps shared config)"
-                + nl
+                + NL
                 + "     steps.prop         (steps config)"
-                + nl
+                + NL
                 + "     workflow.prop      (meta config)"
-                + nl
-                + nl
-                + nl
+                + NL
+                + NL
+                + NL
                 + "Allowed states:  READY, ON_DECK, RUNNING, DONE, FAILED, ALL"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "Examples:"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  run a workflow:"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -r"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  test a workflow:"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -t"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  report steps that would be undone for a given step:"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -c -u step_name"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  undo a step:"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -r -u step_name"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  undo a step in a test workflow:"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -t -u step_name"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  check the graph for compile errors"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -c"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  quick report of workflow state (no steps)"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -q"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  print steps report (three column output)."
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -s FAILED ON_DECK"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  print steps report (one column output)."
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -s1 FAILED ON_DECK"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  print detailed steps report."
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -d"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  limit steps report to steps in particular states"
-                + nl
+                + NL
                 + "    % workflow -h workflow_dir -d FAILED RUNNING"
-                + nl
-                + nl
+                + NL
+                + NL
                 + "  print steps report, using the optional offline flag to only include steps"
-                + nl
+                + NL
                 + "  that have the flag in the indicated state.  [not implemented yet]"
-                + nl + "    % workflow -h workflow_dir -d0 ON_DECK" + nl
-                + "    % workflow -h workflow_dir -d1 READY ON_DECK" + nl;
+                + NL + "    % workflow -h workflow_dir -d0 ON_DECK" + NL
+                + "    % workflow -h workflow_dir -d1 READY ON_DECK" + NL;
     }
 
     private static Options declareOptions() {

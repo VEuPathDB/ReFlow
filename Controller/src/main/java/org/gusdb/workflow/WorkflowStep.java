@@ -1,5 +1,6 @@
 package org.gusdb.workflow;
 
+import static org.gusdb.fgputil.FormatUtil.NL;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,7 +58,6 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     public static final Character PATH_DIVIDER = '.';
 
     // static
-    private static final String nl = System.getProperty("line.separator");
     static final String totalLoadType = "total";
     private static final JavaScript javaScriptInterpreter = new JavaScript();
 
@@ -151,12 +151,12 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         this.failTypes.addAll(Arrays.asList(tmp));
     }
 
-    public void addLoadTypes(String[] loadTypes) { 
-      addLoadOrFailTypes(loadTypes, this.loadTypes);
+    public void addLoadTypes(String[] newLoadTypes) { 
+      addLoadOrFailTypes(newLoadTypes, this.loadTypes);
     }
     
-    public void addFailTypes(String[] failTypes) { 
-      addLoadOrFailTypes(failTypes, this.failTypes);
+    public void addFailTypes(String[] newFailTypes) { 
+      addLoadOrFailTypes(newFailTypes, this.failTypes);
     }
     
     private void addLoadOrFailTypes(String[] loadOrFailTypesSource, Set<String> loadOrFailTypesTarget) {
@@ -617,7 +617,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // write this step to the db, if not already there.
     // called during workflow initialization
     void initializeStepTable(Set<String> stepNamesInDb,
-        PreparedStatement insertStepTableStmt, PreparedStatement updateStepTableStmt, PreparedStatement insertStepTableParamValStmt)
+        PreparedStatement insertStepTableStmt, PreparedStatement updateStepTableStmt)
             throws SQLException {
         if (stepNamesInDb.contains(getFullName())) {
             updateStepTableStmt.setString(1, getDependsString());
@@ -674,11 +674,11 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // newParamValuesDiff: params that in memory but are absent or different in memory
     // return true if the changes are illegal
     boolean checkChangedParams(PreparedStatement paramValuesStatement,
-			       Integer dbId,
-			       String dbParamsDigest,
-			       String dbState,
-			       Map<String, String> dbParamValuesDiff,
-			       Map<String, String> newParamValuesDiff) throws SQLException, Exception {
+        Integer dbId,
+        String dbParamsDigest,
+        String dbState,
+        Map<String, String> dbParamValuesDiff,
+        Map<String, String> newParamValuesDiff) throws SQLException {
 
 	if (dbParamsDigest.equals(getParamsDigest())) return false;
 
@@ -829,7 +829,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 	    try {
 		javaScriptInterpreter.evaluateBooleanExpression(newIf);
 	    } catch (ScriptException e) {
-		error(nl + type + " is not a valid boolean expression " + nl + e);
+		error(NL + type + " is not a valid boolean expression " + NL + e);
 	    }
 	}
 	return newIf;
@@ -880,24 +880,23 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
 
-    protected void executeSqlUpdate(String sql) throws SQLException,
-            FileNotFoundException, IOException {
+    protected void executeSqlUpdate(String sql) throws SQLException {
         workflowGraph.getWorkflow().executeSqlUpdate(sql);
     }
 
     @Override
     public String toString() {
 
-        String s = nl + "name:       " + getFullName() + nl + "id:         "
-                + workflow_step_id + nl + "stepClass:  " + invokerClassName
-                + nl + "sourceXml:  " + workflowGraph.getXmlFileName() + nl
-                + "subgraphXml " + subgraphXmlFileName + nl + "state:      "
-                + state + nl + "undo_state: " + undo_state + nl
-                + "off_line:   " + off_line + nl + "stop_after: " + stop_after
-                + nl + "handled:    " + state_handled + nl + "process_id: "
-                + process_id + nl + "start_time: " + start_time + nl
-                + "end_time:   " + end_time + nl + "depth:      "
-                + depthFirstOrder + nl + "depends on: ";
+        String s = NL + "name:       " + getFullName() + NL + "id:         "
+                + workflow_step_id + NL + "stepClass:  " + invokerClassName
+                + NL + "sourceXml:  " + workflowGraph.getXmlFileName() + NL
+                + "subgraphXml " + subgraphXmlFileName + NL + "state:      "
+                + state + NL + "undo_state: " + undo_state + NL
+                + "off_line:   " + off_line + NL + "stop_after: " + stop_after
+                + NL + "handled:    " + state_handled + NL + "process_id: "
+                + process_id + NL + "start_time: " + start_time + NL
+                + "end_time:   " + end_time + NL + "depth:      "
+                + depthFirstOrder + NL + "depends on: ";
 
         String delim = "";
         StringBuffer buf = new StringBuffer(s);
@@ -905,8 +904,8 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
             buf.append(delim + parent.getFullName());
             delim = ", ";
         }
-        buf.append(nl + "params: " + paramValues);
-        buf.append(nl + nl);
+        buf.append(NL + "params: " + paramValues);
+        buf.append(NL + NL);
         return buf.toString();
     }
 
@@ -915,6 +914,10 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
         return baseName.compareTo(s.getBaseName());
     }
 
+    /**
+     * Sets the group name (if relevant to this implementation)
+     * @param groupName
+     */
     public void setGroupName(Name groupName) {
         // value is not needed in this implementation;
         // added for interface compliance only

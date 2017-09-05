@@ -1,12 +1,13 @@
 package org.gusdb.workflow;
 
+import static org.gusdb.fgputil.FormatUtil.NL;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,7 +30,6 @@ import org.gusdb.workflow.xml.WorkflowClassFactory;
  - generate step documentation
  - whole system documentation
  - get manual confirm on -reset
-
 
  Workflow object that runs in two contexts:
  - step reporter
@@ -71,9 +71,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
   }
 
-    public RunnableWorkflow(String homeDir) throws FileNotFoundException,
-            IOException {
-        super(homeDir);
+    public RunnableWorkflow(String homeDir, Connection conn) throws FileNotFoundException, IOException {
+        super(homeDir, conn);
         initHomeDir(); // initialize workflow home directory, if needed
     }
 
@@ -82,7 +81,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         makeBackups(); // backup config/ and gus_home/lib/xml/workflow
 
-        initDb(true, testOnly); // write workflow to db, if not already there
+        initDb(testOnly); // write workflow to db, if not already there
 
         getDbSnapshot(); // read state of Workflow and WorkflowSteps
 
@@ -118,22 +117,18 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             error("Failed making backups: " + "workflowMakeBackups -h "
                     + getHomeDir());
         process.destroy();
-	log("Making backup");
-
+        log("Making backup");
     }
 
     // write the workflow and steps to the db
-    protected void initDb(boolean updateXmlFileDigest, boolean testmode)
-            throws SQLException, IOException, Exception,
-            NoSuchAlgorithmException {
+    protected void initDb(boolean testmode)
+            throws SQLException, IOException {
 
-        boolean stepTableEmpty = initWorkflowTable(updateXmlFileDigest,
-                testmode);
+        boolean stepTableEmpty = initWorkflowTable(testmode);
         initWorkflowStepTable(stepTableEmpty);
     }
 
-    private boolean initWorkflowTable(boolean updateXmlFileDigest,
-            boolean testmode) throws SQLException, IOException {
+    private boolean initWorkflowTable(boolean testmode) throws SQLException, IOException {
 
         boolean uninitialized = !workflowTableInitialized();
         if (uninitialized) {
@@ -146,9 +141,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                     + "' in database");
 
             if (!checkNewWorkflowHomeDir()) {
-                error(nl
+                error(NL
                         + "Error: The data/ and steps/ directories are not empty, but your workflow does not exist in the database.  This suggests you have mistakenly changed databases.  Check your gus.config file."
-                        + nl);
+                        + NL);
             }
 
             String sql = getNewWorkflowIdSql();
@@ -183,8 +178,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         return "select " + workflowTable + "_sq.nextval from dual";
     }
 
-    private void setInitializingStepTableFlag(boolean initializing)
-            throws FileNotFoundException, SQLException, IOException {
+    private void setInitializingStepTableFlag(boolean initializing) throws SQLException {
         int i = initializing ? 1 : 0;
         String sql = "UPDATE " + workflowTable
                 + " SET initializing_step_table = " + i
@@ -193,8 +187,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
 
     private void initWorkflowStepTable(boolean stepTableEmpty)
-            throws SQLException, IOException, Exception,
-            NoSuchAlgorithmException {
+            throws SQLException, IOException {
 
         setInitializingStepTableFlag(true);
 
@@ -211,11 +204,11 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             } else {
                 if (checkForRunningOrFailedSteps())
                     error("Workflow graph in XML has changed while there are steps in state RUNNING or FAILED."
-                            + nl
+                            + NL
                             + "Please use workflowstep -l to find these states."
-                            + nl
+                            + NL
                             + "Please wait until all RUNNING states are complete."
-                            + nl
+                            + NL
                             + "For FAILED states, correct their problems and use workflowstep to set them to 'ready'.");
 
                 log("Workflow graph in XML has changed.  Updating DB with new graph.");
@@ -236,7 +229,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             try {
                 for (WorkflowStep step : workflowGraph.getSortedSteps()) {
                     step.initializeStepTable(stepNamesInDb, insertStepPstmt,
-					     updateStepPstmt, insertStepParamValPstmt);
+                        updateStepPstmt);
                 }
             }
             finally {
@@ -286,20 +279,20 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 	    boolean foundRunningOrFailed = false;
             for (WorkflowStep step : undoDescendants) {
                 if (step.getState() != null && step.getState().equals(RUNNING)) {
-		    runningStr += "  " + step.getFullName() + nl;
+		    runningStr += "  " + step.getFullName() + NL;
 		    foundRunningOrFailed = true;
 		}
                 if (step.getState() != null && step.getState().equals(FAILED)) {
-		    failedStr += "  " + step.getFullName() + nl;
+		    failedStr += "  " + step.getFullName() + NL;
 		    foundRunningOrFailed = true;
 		}
 	    }
 	    if (foundRunningOrFailed)
-		error("You can't start an undo while steps in the undo graph are RUNNING or FAILED.  You must wait for RUNNING steps to finish or kill them.  You must clean up FAILED steps and set them to ready" + nl + nl
+		error("You can't start an undo while steps in the undo graph are RUNNING or FAILED.  You must wait for RUNNING steps to finish or kill them.  You must clean up FAILED steps and set them to ready" + NL + NL
 		      + "The following steps are RUNNING:"
-		      + nl + runningStr + nl +nl
+		      + NL + runningStr + NL +NL
 		      + "The following steps are FAILED:"
-		      + nl + failedStr);
+		      + NL + failedStr);
 
             // find the step based on its name, and set undo_step_id
             for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
@@ -315,8 +308,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                 error("Step name '" + undoStepName + "' is not found");
 
             // set undo_step_id in workflow table
-            String sql = "UPDATE " + workflowTable + nl
-                    + "SET undo_step_id = '" + undo_step_id + "'" + nl
+            String sql = "UPDATE " + workflowTable + NL
+                    + "SET undo_step_id = '" + undo_step_id + "'" + NL
                     + "WHERE workflow_id = " + workflow_id;
             executeSqlUpdate(sql);
         }
@@ -348,7 +341,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         boolean notDone = false;
         for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
-            step.handleChangesSinceLastSnapshot(this);
+            step.handleChangesSinceLastSnapshot();
             notDone |= !step.getOperativeState().equals(DONE);
         }
         if (!notDone) setDoneState(testOnly);
@@ -366,9 +359,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     for (RunnableWorkflowStep step : workflowGraph.getSortedSteps()) {
 
       boolean okToRun = okToRun(step, step.getLoadTypes(), runningLoadTypeCounts, runningStepClassCounts,
-          loadThrottleConfig, LOAD_THROTTLE_FILE, maxRunningPerStepClass, testOnly) &&
+          loadThrottleConfig, LOAD_THROTTLE_FILE, maxRunningPerStepClass) &&
           okToRun(step, step.getFailTypes(), failedFailTypeCounts, failedStepClassCounts, failThrottleConfig,
-              FAIL_THROTTLE_FILE, maxFailedPerStepClass, testOnly);
+              FAIL_THROTTLE_FILE, maxFailedPerStepClass);
 
       if (okToRun) {
         int slotsUsed = step.runOnDeckStep(this, testOnly); // 0 or 1
@@ -379,7 +372,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
   private boolean okToRun(RunnableWorkflowStep step, String[] types,
       Map<String, Integer> typeCounts, Map<String, Integer> stepClassCounts, Properties config,
-      String configFile, int maxStepClassCount, boolean testOnly) throws FileNotFoundException, IOException, SQLException {
+      String configFile, int maxStepClassCount) throws FileNotFoundException, IOException {
     
     // not ok to run if we've used up the total allowed
     boolean okToRun = typeCounts.get(WorkflowStep.totalLoadType) == null || typeCounts.get(WorkflowStep.totalLoadType) < getThrottleConfig(WorkflowStep.totalLoadType, config, configFile);
@@ -411,15 +404,15 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
     private void readOfflineFile() throws IOException,
             java.lang.InterruptedException {
-        readStepStateFile("initOfflineSteps", "offline");
+        readStepStateFile("initOfflineSteps");
     }
 
     private void readStopAfterFile() throws IOException,
             java.lang.InterruptedException {
-        readStepStateFile("initStopAfterSteps", "stopafter");
+        readStepStateFile("initStopAfterSteps");
     }
 
-    private void readStepStateFile(String file, String state)
+    private void readStepStateFile(String file)
             throws IOException, java.lang.InterruptedException {
         String filename = getHomeDir() + "/config/" + file;
         File f = new File(filename);
@@ -443,28 +436,28 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         String hostname = java.net.InetAddress.getLocalHost().getHostName();
 
         if (host_machine != null && !host_machine.equals(hostname)) {
-            error(nl
+            error(NL
                     + "Error: You are running on "
                     + hostname
                     + " but the workflow was last run on "
                     + host_machine
                     + "."
-                    + nl
-                    + nl
+                    + NL
+                    + NL
                     + "Please go to "
                     + host_machine
                     + " and run the ps -u command to confirm that no workflow process are running there.  It is CRITICAL that there be none."
-                    + nl
-                    + nl
+                    + NL
+                    + NL
                     + "If the controller is running on "
                     + host_machine
                     + ", you must kill it to run here.  If workflowRunStep processes are running, then you must either wait until they complete or kill them."
-                    + nl
-                    + nl
+                    + NL
+                    + NL
                     + "If there are NO PROCESSES RUNNING on "
                     + host_machine
                     + " then it is safe to run here.  Use the workflow -m option to let the controller know you are changing machines."
-                    + nl);
+                    + NL);
         }
 
         if (state != null && process_id != null && state.equals(RUNNING)) {
@@ -485,9 +478,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         log(msg);
         System.err.println(msg);
 
-        String sql = "UPDATE " + workflowTable + nl + "SET state = '" + RUNNING
+        String sql = "UPDATE " + workflowTable + NL + "SET state = '" + RUNNING
                 + "', process_id = " + processId + ", host_machine = '"
-                + hostname + "'" + nl + "WHERE workflow_id = " + workflow_id;
+                + hostname + "'" + NL + "WHERE workflow_id = " + workflow_id;
         executeSqlUpdate(sql);
     }
 
@@ -548,8 +541,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         }
     }
 
-    private boolean checkForRunningOrFailedSteps() throws SQLException,
-            IOException {
+    private boolean checkForRunningOrFailedSteps() throws SQLException {
         Statement stmt = null;
         ResultSet rs = null;
         String sql = "select count(*) from " + workflowStepTable
@@ -583,7 +575,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         StringBuffer buf = sdf.format(new java.util.Date(), new StringBuffer(),
                 new FieldPosition(0));
 
-        writer.println(buf + "  " + msg + nl);
+        writer.println(buf + "  " + msg + NL);
         writer.close();
     }
 }
