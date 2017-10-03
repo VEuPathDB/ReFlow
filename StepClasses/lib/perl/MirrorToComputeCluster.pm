@@ -22,7 +22,17 @@ sub run {
   my ($fileOrDir, $relativePath) = fileparse($fileOrDirToMirror);
 
   if($undo){
-      $self->runCmdOnCluster(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
+      #$self->runCmdOnCluster(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
+
+      # Change #1
+      # 'rm -fr' fails silently if that directory does not exist (at least on Sapelo)
+      # workflow is unable to detect the failure. A workaround is to run a test comand ahead,
+      # such as 'ls' which should fail if there is no such directory
+      # Change #2
+      # workflow directory is not accessible from login node on UGA Sapelo
+      # therefore use runCmdOnClusterTransferServer instead of runCmdOnCluster
+      $self->runCmdOnClusterTransferServer(0, "ls $clusterWorkflowDataDir/$fileOrDirToMirror");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
   }else{
 
       $self->copyToCluster("$workflowDataDir/$relativePath",
