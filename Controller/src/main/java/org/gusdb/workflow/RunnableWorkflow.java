@@ -85,9 +85,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         getDbSnapshot(); // read state of Workflow and WorkflowSteps
 
-        readOfflineFile(); // read start-up offline requests
+        initOfflineSteps(); // read start-up offline requests
 
-        readStopAfterFile(); // read start-up offline requests
+        initStopAfterSteps(); // read start-up offline requests
 
         setRunningState(testOnly); // set db state. fail if already running
 
@@ -402,24 +402,24 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     return okToRun;
   }
 
-    private void readOfflineFile() throws IOException,
+    private void initOfflineSteps() throws IOException,
             java.lang.InterruptedException {
-        readStepStateFile("initOfflineSteps");
+        applyStepStateFile("initOfflineSteps", "offline");
     }
 
-    private void readStopAfterFile() throws IOException,
+    private void initStopAfterSteps() throws IOException,
             java.lang.InterruptedException {
-        readStepStateFile("initStopAfterSteps");
+        applyStepStateFile("initStopAfterSteps", "stopafter");
     }
 
-    private void readStepStateFile(String file)
+    private void applyStepStateFile(String file, String desiredState)
             throws IOException, java.lang.InterruptedException {
         String filename = getHomeDir() + "/config/" + file;
         File f = new File(filename);
         if (!f.exists())
             error("Required config file " + filename + " does not exist");
         String[] cmd = { "workflowstep", "-h", getHomeDir(), "-f", filename,
-                state };
+                desiredState };
         Process process = Runtime.getRuntime().exec(cmd);
         process.waitFor();
         process.destroy();
