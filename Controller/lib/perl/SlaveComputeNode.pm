@@ -32,9 +32,9 @@ sub copyFrom {
 
   my $masterWorkflowDataDir = $self->{mgr}->getSharedConfig('masterWorkflowDataDir');
 
-  my ($clusterDataDir, $dataPath) = split(/\/data\//, $fromDir);  # split out cluster data dir so we can replace it
+  my ($slaveDataDir, $dataPath) = split(/\/data\//, $toDir);  # split out data dir so we can replace it
 
-  $self->{mgr}->error("SlaveComputeNode can't parse '$fromDir' into a clusterDataDir and a data path") unless ($clusterDataDir && $dataPath);
+  $self->{mgr}->error("SlaveComputeNode can't parse '$toDir' into a DataDir and a data path") unless ($slaveDataDir && $dataPath);
 
   my $masterFromDir = "$masterWorkflowDataDir/data/$dataPath";
 
