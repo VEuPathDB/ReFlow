@@ -38,7 +38,9 @@ sub copyFrom {
 
   my $masterFromDir = "$masterWorkflowDataDir/data/$dataPath";
 
-  $self->{mgr}->runCmd("cp $masterFromDir/$fromFile $toDir");
+  # i want everything from the master directory
+  print STDERR "RUNNING Command:  cp -r $masterFromDir $toDir\n";
+  $self->{mgr}->runCmd("cp -r $masterFromDir $toDir");
 }
 
 sub runCmdOnCluster {
