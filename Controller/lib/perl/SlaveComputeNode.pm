@@ -30,17 +30,15 @@ sub copyTo {
 sub copyFrom {
   my ($self, $fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag) = @_;
 
-  my $masterWorkflowDataDir = $self->{mgr}->getSharedConfig('masterWorkflowDataDir');
+  my $masterWorkflowDataDir = $self->{mgr}->getSharedConfigRelaxed('masterWorkflowDataDir');
 
   my ($clusterDataDir, $dataPath) = split(/\/data\//, $fromDir);  # split out data dir so we can replace it
 
   $self->{mgr}->error("SlaveComputeNode can't parse '$fromDir' into a DataDir and a data path") unless ($clusterDataDir && $dataPath);
 
-  my $masterFromDir = "$masterWorkflowDataDir/data/$dataPath";
+  my $masterFromDir = "$masterWorkflowDataDir/$dataPath/$fromFile/";
 
-  # i want everything from the master directory
-  print STDERR "RUNNING Command:  cp -r $masterFromDir $toDir\n";
-  $self->{mgr}->runCmd("cp -r $masterFromDir $toDir");
+  $self->{mgr}->runCmd(0, "cp -r $masterFromDir $toDir");
 }
 
 sub runCmdOnCluster {
