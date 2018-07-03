@@ -96,8 +96,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         // start polling
         while (true) {
             getDbSnapshot();
-            if (handleStepChanges(testOnly)) break; // return true if all steps
-                                                    // done
+            if (handleStepChanges(testOnly)) break; // returns true if all steps done
             findOndeckSteps();
             fillOpenSlots(testOnly);
 	    System.gc();
@@ -272,11 +271,18 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             handleStepChanges(testOnly);
 	    WorkflowStep undoRootStep = workflowGraph.getStepsByName().get(undoStepName);
 	    if (undoRootStep == null) error("The step name you are trying to undo does not exist.  Check its spelling: '" + undoStepName + "'");
-	    Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
+
+	    log("Finding descendants of " + undoStepName);
+	    Set<WorkflowStep> undoDescendants = new HashSet<WorkflowStep>();
 	    undoDescendants.add(undoRootStep);
+	    undoRootStep.getDescendants(undoDescendants);
+
 	    String runningStr = "";
 	    String failedStr = "";
 	    boolean foundRunningOrFailed = false;
+
+	    log("Confirming that no descendants are running or failed");
+
             for (WorkflowStep step : undoDescendants) {
                 if (step.getState() != null && step.getState().equals(RUNNING)) {
 		    runningStr += "  " + step.getFullName() + NL;

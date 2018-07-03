@@ -465,8 +465,10 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         // find all descendants of the undo root
         WorkflowStep undoRootStep = _stepsByName.get(_workflow.getUndoStepName());
 	if (undoRootStep == null) Utilities.error("Trying to undo an unrecognized step: " + undoRootStep);
-        Set<WorkflowStep> undoDescendants = undoRootStep.getDescendants();
+        Set<WorkflowStep> undoDescendants = new HashSet<WorkflowStep>();
         undoDescendants.add(undoRootStep);
+        undoRootStep.getDescendants(undoDescendants);
+
 
         // reset stepsByName to hold only descendants of undo root that are DONE
         _stepsByName = new HashMap<String, T>();

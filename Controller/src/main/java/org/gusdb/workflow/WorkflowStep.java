@@ -12,7 +12,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -391,12 +390,13 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     }
 
     // all kids, recursively
-    Set<WorkflowStep> getDescendants() {
-        Set<WorkflowStep> descendants = new HashSet<WorkflowStep>(children);
+    void getDescendants(Set<WorkflowStep> accumulator) {
         for (WorkflowStep kid : children) {
-            descendants.addAll(kid.getDescendants());
+            if (!accumulator.contains(kid)) {
+              accumulator.add(kid);
+              kid.getDescendants(accumulator);
+            }
         }
-        return descendants;
     }
 
     public Map<String, String> getParamValues() {
