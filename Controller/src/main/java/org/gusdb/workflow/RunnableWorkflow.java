@@ -127,10 +127,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             error(NL + "Error: Worklfow instance is LOCKED by another Process" + NL);
         }
 
-
-        System.out.println("testing");
-        System.exit(1);
-
         boolean stepTableEmpty = initWorkflowTable(testmode);
         initWorkflowStepTable(stepTableEmpty);
     }
