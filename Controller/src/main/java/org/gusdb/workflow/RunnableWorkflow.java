@@ -123,6 +123,14 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     protected void initDb(boolean testmode)
             throws SQLException, IOException {
 
+        if (checkForLockedWorkflows()) {
+            error(NL + "Error: Worklfow instance is LOCKED by another Process" + NL);
+        }
+
+
+        System.out.println("testing");
+        System.exit(1);
+
         boolean stepTableEmpty = initWorkflowTable(testmode);
         initWorkflowStepTable(stepTableEmpty);
     }
@@ -566,6 +574,30 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             if (stmt != null) stmt.close();
         }
     }
+
+
+
+    private boolean checkForLockedWorkflows() throws SQLException {
+        Statement stmt = null;
+        ResultSet rs = null;
+        String sql = "select count(*) from " + workflowStepTable
+                + " WHERE state = 'LOCKED'";
+
+        try {
+            stmt = getDbConnection().createStatement();
+            rs = stmt.executeQuery(sql);
+            rs.next();
+            Integer count = rs.getInt(1);
+            return count != 0;
+        }
+        finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+        }
+    }
+
+
+
 
     private boolean checkNewWorkflowHomeDir() {
         File stepDir = new File(getHomeDir() + "/steps");
