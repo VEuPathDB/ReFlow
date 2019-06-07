@@ -399,7 +399,7 @@ public class Workflow<T extends WorkflowStep> {
     String value = config.getProperty(key);
     if (value == null)
       return null;
-    return new Integer(config.getProperty(key));
+    return Integer.valueOf(config.getProperty(key));
   }
 
     void error(String msg) {
