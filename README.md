@@ -1,4 +1,4 @@
-Reflow: a reversible workflow
+Reflow: a reversible workflow    <img alt="ReFlow logo" src="Controller/doc/ReFlowLogo.PNG" width=50/> 
 =============================
 
 ReFlow is a reversible workflow system for building and maintaining large functional genomics databases.
