@@ -410,6 +410,13 @@ sub copyFromCluster {
 ########## Distrib Job subroutines.  Should be factored to a pluggable
 ########## class (to enable alternatives like Map/Reduce on the cloud)
 
+#generalized version getDistribJobLogsDir
+sub getClusterJobLogsDir {
+    my ($self) = @_;
+    my $home = $self->getComputeClusterHomeDir();
+    return "$home/taskLogs";
+}
+
 sub getDistribJobLogsDir {
     my ($self) = @_;
     my $home = $self->getComputeClusterHomeDir();
@@ -470,6 +477,64 @@ sub getNodeClass {
   return $self->{nodeClass};
 }
 
+sub runAndMonitorSnakemake {
+    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $workingDir, $numJobs, $time, $queue, $maxMemoryGigs, $snakefile, $config) = @_;
+
+    if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
+      $self->log("Skipping runAndMonitorSnakemake -- slave workflows don't run snakemake");
+      return 1;
+    }
+
+    return 1 if ($test);
+
+    # if not already started, start it up
+    if (!$self->_readInfoFile($jobInfoFile, $user, $transferServer) || !$self->_clusterJobRunning($jobInfoFile, $user, $submitServer, $transferServer, $self->getNodeClass())) {
+
+	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
+	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
+
+        #TODO consider if this may break in the case where a user has different gus_home on elm vs cluster
+        my $gusHome = $ENV{'GUS_HOME'};
+        my $s = $snakefile ? "-s $gusHome/lib/snakemake/workflows/$snakefile" : "";
+        my $c = $config ? "--configfile $gusHome/lib/snakemake/config/$config" : "";
+  
+        my $snakemakeSubmitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, "", "", "", "$workingDir/submit_snakemake.log");
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, "", $time, $maxMemoryGigs);
+	my $snakemakeCmd = "$snakemakeSubmitCmd snakemake $s -j $numJobs --config \"logFile=$logFile\" --cluster \"$submitCmd\" $c";
+
+        #currently assumes snakemake in base conda env
+	my $cmd = "mkdir -p $workingDir; cd $workingDir; conda activate; $snakemakeCmd";
+
+	# do the submit on submit server, and capture its output
+        my $jobInfo = $self->_runSshCmdWithRetries(0, "/bin/bash -login -c \"$cmd\"", "", 1, 0, $user, $submitServer, "");
+
+	$self->error("Did not get jobInfo back from command:\n $cmd") unless $jobInfo;
+
+	# now write the output of submit into jobInfoFile on transfer server
+	my $writeCmd = "cat > $jobInfoFile";
+
+	open(F, "| ssh -2 $user\@$transferServer '/bin/bash -login -c \"$writeCmd\"'") || $self->error("Can't open file handle to write job info to transfer server");
+	print F $jobInfo;
+	close(F);
+
+	# read it back to confirm it got there safely
+	my $jobInfoRead = $self->_readInfoFile($jobInfoFile, $user, $transferServer);
+	chomp $jobInfoRead;
+	$self->error("Failed writing job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
+
+    }
+    $self->log("workflowRunSnakemake terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
+
+    while (1) {
+	sleep(10);
+	last if !$self->_clusterJobRunning($jobInfoFile, $user, $submitServer, $transferServer, $self->getNodeClass());
+    }
+
+    sleep(1); # wait for log file 
+
+    return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
+}
+
 sub runAndMonitorDistribJob {
     my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $propFile, $numNodes, $time, $queue, $ppn, $maxMemoryGigs) = @_;
 
@@ -524,6 +589,14 @@ sub runAndMonitorDistribJob {
     return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 }
 
+#generalized version of distribJobReadInfoFile
+sub _readInfoFile {
+  my ($mgr, $jobInfoFile, $user, $server) = @_;
+  my $cmd = "if [ -a $jobInfoFile ];then cat $jobInfoFile; fi";
+  my $jobSubmittedInfo = $mgr->_runSshCmdWithRetries(0, $cmd, undef, 0, 1, $user, $server, "");
+  return $jobSubmittedInfo;
+}
+
 sub _checkClusterTaskLogForDone {
   my ($self, $logFile, $user, $transferServer) = @_;
 
@@ -534,6 +607,32 @@ sub _checkClusterTaskLogForDone {
     $self->logErr("tail of cluster log file is: '$done'");
 
     return $done && $done =~ /Done/;
+}
+
+#generalized version of distribJobRunning
+sub _clusterJobRunning {
+    my ($self, $jobInfoFile, $user, $submitServer, $transferServer, $nodeClass) = @_;
+
+    my $jobSubmittedInfo = $self->_readInfoFile($jobInfoFile, $user, $transferServer);
+
+    $self->error("Job info file on cluster does not exist or is empty: $jobInfoFile") unless $jobSubmittedInfo;
+
+    my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
+    $self->error("Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'") unless $jobId;
+
+
+    my $checkStatusCmd = $nodeClass->getCheckStatusCmd($jobId);
+
+    my $jobStatusString = $self->_runSshCmdWithRetries(0, $checkStatusCmd, undef, 1, 1, $user, $submitServer, "2>&1");
+
+    if ($jobStatusString) {
+      my ($running, $msg) = $nodeClass->checkJobStatus($jobStatusString, $jobId);
+      $self->logErr($msg) unless $running;
+      return $running;
+    } else {
+      $self->logErr("Empty job status string returned from command '$checkStatusCmd'\n");
+      return 0;
+    }
 }
 
 sub _distribJobRunning {
