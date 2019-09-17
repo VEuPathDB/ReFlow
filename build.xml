@@ -5,35 +5,6 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <import file="${projectsDir}/FgpUtil/build.xml" />
-    
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ReFlow-ChildCheckout">
-    <available file="${projectsDir}/FgpUtil" type="dir" property="FgpUtil.present" />
-    <antcall target="FgpUtil-Checkout"/>
-  </target>
-  
-
-  <target name="FgpUtil-Checkout" unless="FgpUtil.present">
-    <ant target="defaultProjectCheckout" inheritAll="false">
-      <property name="svnurl" value="https://cbilsvn.pmacs.upenn.edu/svn/gus/FgpUtil"/>
-      <property name="project" value="FgpUtil"/>
-    </ant>
-  </target>
-
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- ooooooooooooooooooooooooooo    Update    ooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ReFlow-ChildUpdate">
-    <ant target="defaultProjectUpdate">
-      <property name="project" value="FgpUtil"/>
-    </ant>
-  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
@@ -47,32 +18,32 @@
                                             ReFlow/DatasetClass-Installation,
                                             ReFlow/DatasetLoader-Installation,
                                             ReFlow/StepClasses-Installation,
-                                            ReFlow/AuthoringGui-Installation" >
+                                            ReFlow/AuthoringGui-Installation">
 
     <ant target="defaultProjectInstall">
-      <property name="project" value="ReFlow"/>
+      <property name="project" value="ReFlow" />
     </ant>
 
-  </target>  
+  </target>
 
   <target name="ReFlow-MavenInstallation">
     <ant target="mavenBuildProject">
-      <property name="project" value="ReFlow"/>
+      <property name="project" value="ReFlow" />
     </ant>
-    <property name="alreadyBuilt" value="true"/>
+    <property name="alreadyBuilt" value="true" />
   </target>
-   
+
 
   <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
 
   <target name="ReFlow-Installation-postprocess">
-    <echo message="Postprocessing the ReFlow installation"/>
+    <echo message="Postprocessing the ReFlow installation" />
 
-    <replace dir="${targetDir}/bin" 
-             propertyFile="${targetDir}/config/replacements.prop" > 
+    <replace dir="${targetDir}/bin"
+             propertyFile="${targetDir}/config/replacements.prop">
       <include name="**/*" />
-      <replacefilter token="@perl@" property="perl"/>
-    </replace> 
+      <replacefilter token="@perl@" property="perl" />
+    </replace>
 
   </target>
 
@@ -81,50 +52,50 @@
 
   <target name="ReFlow/GraphParser-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="GraphParser"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="GraphParser" />
     </ant>
   </target>
 
   <target name="ReFlow/Controller-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="Controller"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="Controller" />
     </ant>
-  </target>  
+  </target>
 
   <target name="ReFlow/TestFlow-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="TestFlow"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="TestFlow" />
     </ant>
-  </target>  
+  </target>
 
   <target name="ReFlow/DatasetClass-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="DatasetClass"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="DatasetClass" />
     </ant>
-  </target>  
+  </target>
 
   <target name="ReFlow/DatasetLoader-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="DatasetLoader"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="DatasetLoader" />
     </ant>
   </target>
-  
+
   <target name="ReFlow/StepClasses-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="StepClasses"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="StepClasses" />
     </ant>
   </target>
-  
+
   <target name="ReFlow/AuthoringGui-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="ReFlow"/>
-      <property name="component" value="AuthoringGui"/>
+      <property name="project" value="ReFlow" />
+      <property name="component" value="AuthoringGui" />
     </ant>
   </target>
 
@@ -133,12 +104,12 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ReFlow-Release">
-    
+
     <ant target="defaultProjectRelease">
-      <property name="tag" value="v1-4-0"/>
-      <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
+      <property name="tag" value="v1-4-0" />
+      <property name="cvsroot" value="/files/cbil/cvs/cvsroot" />
     </ant>
-  </target>  
+  </target>
 
 
 </project>
