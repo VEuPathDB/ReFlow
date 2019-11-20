@@ -138,7 +138,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
             name = getWorkflowConfig("name");
             version = getWorkflowConfig("version");
-            test_mode = new Boolean(testmode);
+            test_mode = Boolean.valueOf(testmode);
 
             log("Initializing workflow " + "'" + name + " " + version
                     + "' in database");

@@ -356,7 +356,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
                                     */
                 }
             }
-            excludeFromGraph = new Boolean(efg);
+            excludeFromGraph = Boolean.valueOf(efg);
         }
         return excludeFromGraph;
     }
