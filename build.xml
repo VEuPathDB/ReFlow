@@ -1,4 +1,4 @@
-<project name="GGTools" default="Installation" basedir=".">
+<project name="ReFlow" default="Installation" basedir=".">
 
   <!-- ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
