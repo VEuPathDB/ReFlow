@@ -92,13 +92,13 @@ public class LoadTypeTest {
   @Test
   public void testInvalidLoadTypeWithoutPath() {
     Assertions.assertThrows(RuntimeException.class, () -> {
-        // create a calling step for the graph, and declare labels
-        var callingStep = new WorkflowStep();
-        callingStep.setName("calling-step");
-        callingStep.setXmlFile("");
-        callingStep.setStepLoadTypes("label-sub:Type");
+      // create a calling step for the graph, and declare labels
+      var callingStep = new WorkflowStep();
+      callingStep.setName("calling-step");
+      callingStep.setXmlFile("");
+      callingStep.setStepLoadTypes("label-sub:Type");
 
-        graph.setCallingStep(callingStep);
+      graph.setCallingStep(callingStep);
     });
   }
 }
