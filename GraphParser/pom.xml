@@ -15,15 +15,23 @@
   <dependencies>
     <dependency>
       <groupId>org.gusdb</groupId>
-      <artifactId>fgputil-util</artifactId>
+      <artifactId>fgputil-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-digester</groupId>
-      <artifactId>commons-digester</artifactId>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-xml</artifactId>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-digester3</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
     </dependency>
   </dependencies>
 

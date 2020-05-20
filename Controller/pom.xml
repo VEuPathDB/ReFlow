@@ -14,12 +14,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.gusdb.workflow</groupId>
-      <artifactId>reflow-graphparser</artifactId>
+      <groupId>org.gusdb</groupId>
+      <artifactId>fgputil-db</artifactId>
     </dependency>
     <dependency>
       <groupId>org.gusdb</groupId>
-      <artifactId>fgputil-util</artifactId>
+      <artifactId>fgputil-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gusdb.workflow</groupId>
+      <artifactId>reflow-graphparser</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
