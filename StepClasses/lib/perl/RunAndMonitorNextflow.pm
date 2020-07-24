@@ -34,16 +34,18 @@ sub run {
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
   my $logFile = "$clusterWorkingDir/.nextflow.log";
   my $traceFile = "$clusterWorkingDir/trace.txt";
+  my $nextflowStdoutFile = "$clusterWorkingDir/nextflow.txt";
 
 
   if($undo){
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterResultsDir/*");
-      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/trace.txt");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $traceFile");
       $self->runCmdOnClusterTransferServer(0, "rm -fr $logFile");
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $nextflowStdoutFile");
       $self->log("Removing log file at: $logFile");
   }else{
-      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile);
+      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile);
 
       if (!$success){
 	  $self->error (
@@ -71,7 +73,7 @@ sub getConfigDeclaration {
 }
 
 sub runAndMonitor {
-    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile) = @_;
+    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile) = @_;
 
     if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
       $self->log("Skipping runAndMonitorNextflow -- slave workflows don't run nextflow");
@@ -86,7 +88,7 @@ sub runAndMonitor {
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
-	my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume";
+	my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
 
         my $fullCommand = $isGit ? "nextflow pull $nextflowWorkflow; $nextflowCmd" : $nextflowCmd;
 
