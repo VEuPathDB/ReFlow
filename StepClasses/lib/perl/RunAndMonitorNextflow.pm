@@ -130,13 +130,13 @@ sub runAndMonitor {
 sub _checkClusterTaskLogForDone {
   my ($self, $logFile, $user, $transferServer) = @_;
 
-    my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -1 $logFile; fi\"";
+    my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -5 $logFile; fi\"";
 
     my $done = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 0, $user, $transferServer, "");
 
     $self->logErr("tail of cluster log file is: '$done'");
 
-    return $done && $done =~ /Execution complete -- Goodbye/;
+    return $done && $done =~ /failedCount=0;/ && $done =~ /Execution complete -- Goodbye/;
 }
 
 
