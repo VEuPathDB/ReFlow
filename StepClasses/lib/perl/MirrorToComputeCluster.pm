@@ -17,8 +17,10 @@ sub run {
 
   # $relativePath is a path relative to the workflow data dir on the local
   # server and also on the cluster.
-  # it must exist in its entirety.  $fileOrDir is the basename of the
-  # file to copy to that pre-existing path.
+  # Must exist locally.
+  # Will be created on the cluster if not present.
+  #
+  # $fileOrDir is the basename of the file to copy to that pre-existing path.
   my ($fileOrDir, $relativePath) = fileparse($fileOrDirToMirror);
 
   if($undo){
@@ -33,8 +35,10 @@ sub run {
       # therefore use runCmdOnClusterTransferServer instead of runCmdOnCluster
       $self->runCmdOnClusterTransferServer(0, "ls $clusterWorkflowDataDir/$fileOrDirToMirror");
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
+      $self->runCmdOnClusterTransferServer(0, "cd $clusterWorkflowDataDir && rmdir -p --ignore-fail-on-non-empty $relativePath");
   }else{
 
+      $self->runCmdOnClusterTransferServer(0, "cd $clusterWorkflowDataDir && mkdir -p $relativePath");
       $self->copyToCluster("$workflowDataDir/$relativePath",
 			   $fileOrDir,
 			   "$clusterWorkflowDataDir/$relativePath");
