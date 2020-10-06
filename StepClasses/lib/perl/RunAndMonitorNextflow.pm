@@ -3,6 +3,7 @@ package ReFlow::StepClasses::RunAndMonitorNextflow;
 @ISA = (ReFlow::Controller::WorkflowStepHandle);
 
 use strict;
+use warnings;
 use ReFlow::Controller::WorkflowStepHandle;
 use File::Basename;
 
@@ -89,15 +90,22 @@ sub runAndMonitor {
 	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
 	my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
+        if($isGit){
+          $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
+        }
 
-        my $fullCommand = $isGit ? "nextflow pull $nextflowWorkflow; $nextflowCmd" : $nextflowCmd;
+        # prepend slash to ;, >, and & so that the command is submitted whole
+        $nextflowCmd =~ s{([;>&])}{\\$1}g;
 
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $fullCommand);
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd);
 
+
+        # wrap in a login shell to allow nextflow to be user installed
 	my $cmd = "cd $workingDir; $submitCmd ";
+        $cmd = "/bin/bash -login -c \"$cmd\"";
 
 	# do the submit on submit server, and capture its output
-        my $jobInfo = $self->_runSshCmdWithRetries(0, "/bin/bash -login -c \"$cmd\"", "", 1, 0, $user, $submitServer, "");
+        my $jobInfo = $self->_runSshCmdWithRetries(0, $cmd, "", 1, 0, $user, $submitServer, "");
 
 	$self->error("Did not get jobInfo back from command:\n $cmd") unless $jobInfo;
 
@@ -132,11 +140,28 @@ sub _checkClusterTaskLogForDone {
 
     my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -5 $logFile; fi\"";
 
-    my $done = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 0, $user, $transferServer, "");
+    my $tail = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 0, $user, $transferServer, "");
+    
+    $self->logErr("tail of cluster log file is: '$tail'");
+    return tailLooksOk($tail);
+}
 
-    $self->logErr("tail of cluster log file is: '$done'");
+sub tailLooksOk {
+    my ($tail) = @_;
+    # Does it look like the workflow has finished?
+    return unless $tail;
+    return unless $tail =~/Execution complete -- Goodbye/;
 
-    return $done && $done =~ /failedCount=0;/ && $done =~ /Execution complete -- Goodbye/;
+    # Does it look like nothing failed?
+    my ($failedCount) = $tail =~ /failedCount=(\d+);/; 
+    return unless defined $failedCount;
+    return 1 if $failedCount == 0;
+
+    # Sometimes failures happen on the way. That's ok.
+    # We might still be done, as long as we kept trying
+    my ($retriesCount) = $tail =~ /retriesCount=(\d+);/;
+    return unless defined $retriesCount;
+    return $failedCount == $retriesCount;
 }
 
 
