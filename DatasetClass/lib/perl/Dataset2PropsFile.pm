@@ -55,7 +55,8 @@ sub dataset2PropsFile {
   my $classNamesUsed = $datasets->getClassNamesUsed();
 
   # validate all dataset properties against classes
-  $datasets->validateAgainstClasses();
+  # TODO: This is a temporary solution because of differences in ebi classes and master
+  #$datasets->validateAgainstClasses();
 
   my $datasetsFullName = $datasets->getFullName();
   my $datasetPropertiesFileName = "$ENV{GUS_HOME}/lib/prop/datasetProperties/${datasetsFullName}.prop";
