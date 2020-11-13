@@ -89,22 +89,15 @@ sub runAndMonitor {
 	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
 	my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
-        if($isGit){
-          $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
-        }
 
-        # prepend slash to ;, >, and & so that the command is submitted whole
-        $nextflowCmd =~ s{([;>&])}{\\$1}g;
+        my $fullCommand = $isGit ? "nextflow pull $nextflowWorkflow; $nextflowCmd" : $nextflowCmd;
 
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd);
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $fullCommand);
 
-
-        # wrap in a login shell to allow nextflow to be user installed
 	my $cmd = "cd $workingDir; $submitCmd ";
-        $cmd = "/bin/bash -login -c \"$cmd\"";
 
 	# do the submit on submit server, and capture its output
-        my $jobInfo = $self->_runSshCmdWithRetries(0, $cmd, "", 1, 0, $user, $submitServer, "");
+        my $jobInfo = $self->_runSshCmdWithRetries(0, "/bin/bash -login -c \"$cmd\"", "", 1, 0, $user, $submitServer, "");
 
 	$self->error("Did not get jobInfo back from command:\n $cmd") unless $jobInfo;
 
