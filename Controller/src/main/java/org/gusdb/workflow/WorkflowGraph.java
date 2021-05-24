@@ -593,7 +593,7 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
         finally {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
-            if (paramValuesStmt != null) stmt.close();
+            if (paramValuesStmt != null) paramValuesStmt.close();
         }
     }
 
