@@ -526,7 +526,7 @@ sub runAndMonitorSnakemake {
     $self->log("workflowRunSnakemake terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
 
     while (1) {
-	sleep(10);
+	sleep(180);
 	last if !$self->_clusterJobRunning($jobInfoFile, $user, $submitServer, $transferServer, $self->getNodeClass());
     }
 
