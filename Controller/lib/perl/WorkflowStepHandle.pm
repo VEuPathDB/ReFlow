@@ -580,7 +580,7 @@ sub runAndMonitorDistribJob {
     $self->log("workflowRunDistribJob terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
 
     while (1) {
-	sleep(10);
+	sleep(180);
 	last if !$self->_distribJobRunning($jobInfoFile,$user, $submitServer, $transferServer, $self->getNodeClass());
     }
 
