@@ -1,40 +1,23 @@
-<project name="ReFlow" default="Installation" basedir=".">
-
-  <!-- ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <import file="${projectsDir}/FgpUtil/build.xml" />
+<project name="ReFlow" default="ReFlow-Installation" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="ReFlow-Installation" depends="FgpUtil-Installation,
-                                            ReFlow-MavenInstallation,
-                                            ReFlow/GraphParser-Installation,
-                                            ReFlow/Controller-Installation,
-                                            ReFlow/TestFlow-Installation,
-                                            ReFlow/DatasetClass-Installation,
-                                            ReFlow/DatasetLoader-Installation,
-                                            ReFlow/StepClasses-Installation,
-                                            ReFlow/AuthoringGui-Installation">
-
+  <target name="ReFlow-Installation" depends="ReFlow/GraphParser-Installation,
+                                              ReFlow/Controller-Installation,
+                                              ReFlow/TestFlow-Installation,
+                                              ReFlow/DatasetClass-Installation,
+                                              ReFlow/DatasetLoader-Installation,
+                                              ReFlow/StepClasses-Installation,
+                                              ReFlow/AuthoringGui-Installation">
     <ant target="defaultProjectInstall">
       <property name="project" value="ReFlow" />
     </ant>
-
-  </target>
-
-  <target name="ReFlow-MavenInstallation">
-    <ant target="mavenBuildProject">
-      <property name="project" value="ReFlow" />
-    </ant>
-    <property name="alreadyBuilt" value="true" />
   </target>
 
 
-  <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
+	<!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
 
   <target name="ReFlow-Installation-postprocess">
     <echo message="Postprocessing the ReFlow installation" />
@@ -99,19 +82,4 @@
     </ant>
   </target>
 
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ReFlow-Release">
-
-    <ant target="defaultProjectRelease">
-      <property name="tag" value="v1-4-0" />
-      <property name="cvsroot" value="/files/cbil/cvs/cvsroot" />
-    </ant>
-  </target>
-
-
 </project>
-
-
