@@ -27,7 +27,6 @@
     <groupId>org.gusdb</groupId>
     <artifactId>gus-project-pom</artifactId>
     <version>1.0.0</version>
-    <relativePath>../install/pom.xml</relativePath>
   </parent>
 
 </project>
