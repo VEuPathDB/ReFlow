@@ -1,4 +1,4 @@
-<project name="ReFlow" default="ReFlow-Installation" basedir=".">
+<project name="ReFlow" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
@@ -15,21 +15,6 @@
       <property name="project" value="ReFlow" />
     </ant>
   </target>
-
-
-	<!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
-
-  <target name="ReFlow-Installation-postprocess">
-    <echo message="Postprocessing the ReFlow installation" />
-
-    <replace dir="${targetDir}/bin"
-             propertyFile="${targetDir}/config/replacements.prop">
-      <include name="**/*" />
-      <replacefilter token="@perl@" property="perl" />
-    </replace>
-
-  </target>
-
 
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
