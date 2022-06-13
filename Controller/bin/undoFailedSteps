@@ -1,0 +1,93 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use lib "$ENV{GUS_HOME}/lib/perl";
+use GUS::Supported::GusConfig;
+use GUS::ObjRelP::DbiDatabase;
+use Data::Dumper;
+
+# my $gusconfig = GUS::Supported::GusConfig->new();
+# 
+# my $db = GUS::ObjRelP::DbiDatabase->new($dsn,
+#                                         $gusconfig->getDatabaseLogin(),
+#                                         $gusconfig->getDatabasePassword(),
+#                                         0,0,1,
+#                                         $gusconfig->getCoreSchemaName());
+# 
+# my $dbh = $db->getQueryHandle(0);
+# $dbh->do("alter session set nls_date_format = 'yyyy-mm-dd hh24:mi:ss'");
+
+# find failed steps
+
+
+use ReFlow::Controller::WorkflowHandle;
+
+my $workflow = ReFlow::Controller::WorkflowHandle->new($ENV{WORKFLOW_DIR});
+
+my @steps;
+foreach my $row (@{ $workflow->getStepNamesWithSql(
+  "SELECT NAME,STATE,UNDO_STATE FROM APIDB.WORKFLOWSTEP WHERE STATE='FAILED'") } ){
+   push(@steps, $row->[0]);
+}
+
+
+my %undos;
+my $sql = "SELECT a4.EXECUTABLE, w2.ALGORITHM_INVOCATION_ID 
+  FROM apidb.WORKFLOWSTEP w
+  LEFT JOIN apidb.WORKFLOWSTEPALGINVOCATION w2 ON w.WORKFLOW_STEP_ID = w2.WORKFLOW_STEP_ID
+  LEFT JOIN core.ALGORITHMINVOCATION a ON w2.ALGORITHM_INVOCATION_ID = a.ALGORITHM_INVOCATION_ID
+  LEFT JOIN core.ALGORITHMIMPLEMENTATION a4 ON a.ALGORITHM_IMPLEMENTATION_ID = a4.ALGORITHM_IMPLEMENTATION_ID
+  WHERE w.name = '%s'
+  AND a4.EXECUTABLE IS NOT NULL
+  AND w2.ALGORITHM_INVOCATION_ID IS NOT NULL";
+
+foreach my $stepName ( @steps ){
+  my($executable, $invocationId) = $workflow->_runSqlQuery_single_array(sprintf($sql,$stepName));
+  #print Dumper( $executable, $invocationId);
+  # Could there be more than one invocationId? Yes. In which case you have to run this script again.
+  next unless($executable && $invocationId);
+  $undos{$stepName}->{$executable} = $invocationId;
+}
+
+unless(@steps){
+  print "No failed steps found\n"; exit;
+}
+
+while ( my ($stepName, $hash ) = each %undos ) {
+	my $ans = ask("Undo step $stepName ", ['y', 'n']);
+  unless($ans){ print "\n"; exit; }
+  next unless($ans eq 'y');
+  while( my ($executable, $invocationId) = each %$hash ){
+    my $cmd = sprintf("ga GUS::Community::Plugin::Undo --plugin %s --workflowContext --commit --algInvocationId %d", $executable, $invocationId);
+    $ans = ask("Run command:\n$cmd\nContinue ",  ['y', 'n']);
+    unless($ans){ print "\n"; exit; }
+    next unless($ans eq 'y');
+    system($cmd);
+    print "\n-----------------\n";
+  }
+}
+
+sub ask {
+  my ($msg,$opts,$default) = @_;
+  my $options = "";
+  if(ref($opts) eq 'ARRAY') { $options = sprintf("(%s)", join(" ", @$opts))}
+  printf STDERR ("%s %s ? %s", $msg, $options, $default ? "default: $default " : "");
+	while(my $r = <STDIN>){
+		chomp $r;
+    unless($r){ print "\nExiting\n"; exit }
+    if( $r eq "" && $default){
+      print "NULL INPUT\n"; exit;
+      return $default
+    }
+    if( my ($response) =  grep { /^$r$/ } @$opts ) {
+      return $response;
+    }
+		else {
+			print "$r is not a valid option\n";
+      printf STDERR ("%s (%s) ? %s", $msg, $options, $default ? "default: $default " : "");
+		}
+	}
+}
+
+1;
