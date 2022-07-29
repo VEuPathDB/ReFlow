@@ -18,6 +18,9 @@ sub run {
 
   my $nextflowConfigFile = $self->getParamValue("nextflowConfigFile");
   my $nextflowWorkflow = $self->getParamValue("nextflowWorkflow");
+
+  $nextflowWorkflow = "https://github.com/".$nextflowWorkflow;
+
   my $isGitRepo = $self->getBooleanParamValue("isGitRepo");
 
   # get global properties
