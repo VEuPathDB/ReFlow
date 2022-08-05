@@ -18,6 +18,9 @@ sub run {
 
   my $nextflowConfigFile = $self->getParamValue("nextflowConfigFile");
   my $nextflowWorkflow = $self->getParamValue("nextflowWorkflow");
+
+  $nextflowWorkflow = "https://github.com/".$nextflowWorkflow;
+
   my $isGitRepo = $self->getBooleanParamValue("isGitRepo");
 
   # get global properties
@@ -89,7 +92,9 @@ sub runAndMonitor {
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
-	my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
+	#my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
+    #use "-C" instead of "-c" to avoid taking from anything besides the specified config
+my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -resume >$nextflowStdoutFile 2>&1";    
         if($isGit){
           $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
         }
