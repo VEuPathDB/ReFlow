@@ -26,8 +26,7 @@ print STDERR "running wrapper command: $0 " . join(" ", @ARGV) . "\n\n";
 
 my $workflow = ReFlow::Controller::WorkflowHandle->new($homeDir);
 # construct step subclass
-my $workflowStep =  $workflow->getRunnableStep($stepClassName, $stepName, $stepId);
-$workflowStep->setParamValues(\@paramStrings);
+my $workflowStep =  $workflow->getRunnableStep($stepClassName, $stepName, $stepId, \@paramStrings);
 my $status = $workflowStep->runInWrapper($mode, $undo, $stepClassName, $forceUndoFileName);
 
 exit($status);

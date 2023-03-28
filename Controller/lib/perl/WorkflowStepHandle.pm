@@ -20,7 +20,7 @@ use File::Basename;
 ##########################################################################
 
 sub new {
-  my ($class, $stepName, $stepId, $workflowHandle) = @_;
+  my ($class, $stepName, $stepId, $workflowHandle, $paramStrings) = @_;
 
   my $self = {
       workflow => $workflowHandle,   # if null, better caller better call setWorkflow()
@@ -29,6 +29,8 @@ sub new {
   };
 
   bless($self,$class);
+
+  $self->setParamValues($paramStrings);
 
   return $self;
 }

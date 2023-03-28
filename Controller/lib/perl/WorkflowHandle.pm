@@ -68,10 +68,21 @@ sub new {
 
 # construct step subclass that has a run() method (ie, a step class)
 sub getRunnableStep {
-  my ($self, $stepClassName, $stepName, $stepId) = @_;
-  my $stepClass =  eval "{require $stepClassName; $stepClassName->new('$stepName', '$stepId')}";
+  my ($self, $stepClassName, $stepName, $stepId, $paramStrings) = @_;
+
+  eval "require $stepClassName";
   $self->error($@) if $@;
-  $stepClass->setWorkflow($self);
+
+  my $stepClass = eval {
+    $stepClassName->new($stepName, $stepId, $self, $paramStrings);
+  };
+  $self->error($@) if $@;
+
+
+#  my $stepClass =  eval "{require $stepClassName; $stepClassName->new('$stepName', '$stepId')}";
+#  $self->error($@) if $@;
+#  $stepClass->setWorkflow($self);
+
   return $stepClass;
 }
 
