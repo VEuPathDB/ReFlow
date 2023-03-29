@@ -7,10 +7,11 @@ unless($workflowDir) {
   die "rf requires ENVIRONMENT Variable WORKFLOW_DIR";
 }
 
-my @actions = ("list", "run", "undo", "reset", "set");
+my @actions = ("list", "run", "undo", "reset", "set", "log", "log-f", "summary");
 my @listable = ("failed", "done", "ready", "on_deck", "running");
 my @modes = ("real", "test");
 my @states = ("ready", "kill", "offline", "online", "stopafter", "resume");
+my @loggable = ("err", "tailerr", "step", "tailstep", "controller", "pilot");
 
 my $action = $ARGV[0];
 unless($action) {
@@ -63,6 +64,48 @@ elsif($action eq "set") {
   $cmd = $cmd . " -u" if($ARGV[3] eq 'undo');
 
 }
+
+elsif($action eq "log" || $action eq 'log-f') {
+  my $toLog = $ARGV[1];
+  &checkValue(\@loggable, $toLog);
+
+  my $file = "step.err";
+  if($toLog =~ /step/) {
+    $file = "step.log";
+  }
+
+  my $stepName = $ARGV[2];
+  my $requireStep = 1;
+
+  if($toLog eq 'controller' || $toLog eq 'pilot') {
+    $requireStep = 0;
+  }
+
+  if($requireStep && !$stepName) {
+    &usage();
+    die "<step pattern> is required but missing";
+  }
+
+    if($action eq 'log') {
+    $cmd = "less +G";
+  }
+  else {
+    $cmd = "tail -f";
+  }
+
+
+  if($toLog eq 'controller' || $toLog eq 'pilot') {
+    $cmd = "$cmd $workflowDir/logs/${toLog}.log";
+  }
+  else {
+    $cmd = "$cmd $workflowDir/steps/$stepName/$file";
+  }
+}
+elsif($action eq "summary") {
+  $cmd = "workflow -h $workflowDir -q && workflow -h $workflowDir -s 'ON_DECK,READY,FAILED'";
+}
+
+
 else {
   die "Whoops... You specified an incorrect command line action: $action";
 }
@@ -97,8 +140,22 @@ rf reset test
 rf set [ready|kill|offline|online|stopafter|resume] <stepname_pattern> [undo]
   workflowstep -h workflow_dir -p stepname_pattern [ready|kill|offline|online|stopafter|resume] [-u]
 
+  NOTE: this is handy to chain together with list command like:
+  rf list failed 2>/dev/null |while read STEP; do echo rf set ready $STEP; done
+
 ---------------------------------------------------
 
+rf log|log-f [err|step|controller|pilot] [<stepname_pattern>]
+  log-f will follow the file (tail -f)
+  examples:
+  rf log controller
+  rf log-f controller
+  rf log err global.taxonomy.runPlugin
+  rf log-f step global.taxonomy.runPlugin
+---------------------------------------------------
+
+rf summary
+  workflowstep -h workflow_dir -q && workflowstep -h workflow_dir -s READY,FAILED,ON_DECK
 ";
 
 }
