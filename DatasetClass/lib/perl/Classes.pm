@@ -3,7 +3,6 @@ package ReFlow::DatasetClass::Classes;
 use strict;
 
 use XML::Simple;
-use JSON;
 use Data::Dumper;
 use ReFlow::DatasetLoader::DatasetLoaders;
 
@@ -97,7 +96,7 @@ sub getDatasetLoaderText {
 
 
 sub getDatasetPropertiesText {
-    my ($self, $dataset, $datasetClassCategories, $moreProps) = @_;
+    my ($self, $dataset, $datasetClassCategories) = @_;
     my $class = $self->getClass($dataset->{class});
 
     my $className = $dataset->{class};
@@ -127,11 +126,6 @@ sub getDatasetPropertiesText {
     foreach my $propKey (keys(%{$dataset->{prop}})) {
       my $propValue = $dataset->{prop}->{$propKey}->{content};
       push(@props, "$propKey=$propValue") unless($propKey eq 'projectName' && !$propValue);
-    }
-
-    if(defined($moreProps->{$name})){
-      my $json = to_json($moreProps->{$name});
-      push(@props, "studyCharacteristics=$json");
     }
     return join("\n", @props);
 }
