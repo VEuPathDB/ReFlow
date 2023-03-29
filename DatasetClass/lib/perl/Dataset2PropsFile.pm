@@ -3,6 +3,7 @@ package ReFlow::DatasetClass::Dataset2PropsFile;
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
 use XML::Twig;
+use YAML qw/LoadFile/;
 use File::Basename;
 use ReFlow::DatasetClass::Datasets;
 use ReFlow::DatasetClass::Classes;
@@ -54,6 +55,20 @@ sub dataset2PropsFile {
   my $datasets = ReFlow::DatasetClass::Datasets->new($datasetFile, $classes);
   my $classNamesUsed = $datasets->getClassNamesUsed();
 
+  # load additional dataset properties from yaml
+  my $moreProps = {};
+  my $studyCharacteristicsFilename = sprintf("%s.yaml", join("/", $ENV{GUS_HOME}, "lib/yaml", basename($datasetFile, '.xml')));
+  if(-e $studyCharacteristicsFilename){
+    $moreProps = LoadFile($studyCharacteristicsFilename);
+    while(my ($ds,$p) = each %$moreProps){
+      while(my ($k,$v) = each %$p){
+        unless(ref($v) eq 'ARRAY'){
+          $moreProps->{$ds}->{$k} = [ $v ];
+        }
+      }
+    }
+  }
+
   # validate all dataset properties against classes
   # TODO: This is a temporary solution because of differences in ebi classes and master
   #$datasets->validateAgainstClasses();
@@ -62,7 +77,8 @@ sub dataset2PropsFile {
   my $datasetPropertiesFileName = "$ENV{GUS_HOME}/lib/prop/datasetProperties/${datasetsFullName}.prop";
 
   if (-e $datasetPropertiesFileName) {
-    if (-M $datasetPropertiesFileName < -M $datasetFile) {
+    if ((-M $datasetPropertiesFileName < -M $datasetFile) && 
+      (-M $datasetPropertiesFileName < -M $studyCharacteristicsFilename)) {
       print STDERR "File $datasetPropertiesFileName is up to date.\n";
       return;
     } else {
@@ -75,7 +91,7 @@ sub dataset2PropsFile {
   open(F, ">$datasetPropertiesFileName.tmp") || die "Can't open file file '$datasetPropertiesFileName.tmp' for writing\n";
 
   foreach my $dataset (@{$datasets->getDatasets()}) {
-    my $datasetPropertiesText = $classes->getDatasetPropertiesText($dataset, $datasetClassCategories);
+    my $datasetPropertiesText = $classes->getDatasetPropertiesText($dataset, $datasetClassCategories, $moreProps);
     print F "$datasetPropertiesText\n\n";
   }
   close(F);
