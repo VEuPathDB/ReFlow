@@ -102,7 +102,7 @@ elsif($action eq "log" || $action eq 'log-f') {
   }
 }
 elsif($action eq "summary") {
-  $cmd = "workflow -h $workflowDir -q && workflow -h $workflowDir -s 'ON_DECK,READY,FAILED'";
+  $cmd = "workflow -h $workflowDir -q && workflow -h $workflowDir -s 'ON_DECK,READY,FAILED,RUNNING'";
 }
 
 
@@ -141,7 +141,7 @@ rf set [ready|kill|offline|online|stopafter|resume] <stepname_pattern> [undo]
   workflowstep -h workflow_dir -p stepname_pattern [ready|kill|offline|online|stopafter|resume] [-u]
 
   NOTE: this is handy to chain together with list command like:
-  rf list failed 2>/dev/null |while read STEP; do echo rf set ready $STEP; done
+  rf list failed 2>/dev/null |while read STEP; do echo rf set ready \$STEP; done
 
 ---------------------------------------------------
 
