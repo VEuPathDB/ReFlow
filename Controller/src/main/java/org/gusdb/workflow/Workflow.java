@@ -115,7 +115,7 @@ public class Workflow<T extends WorkflowStep> {
         workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
         workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
         maxRunningPerStepClass = Integer.parseInt(getWorkflowConfig("maxRunningPerStepClass")); 
-        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass")); 
+        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass"));
     }
 
     // ///////////////////////////////////////////////////////////////////////
@@ -337,11 +337,20 @@ public class Workflow<T extends WorkflowStep> {
     static DatabaseInstance getDb() throws IOException {
       String dsn = Utilities.getGusConfig("jdbcDsn");
       String login = Utilities.getGusConfig("databaseLogin");
+
+      SupportedPlatform platform;
+      if (Utilities.getGusConfig("dbVendor").equals("Postgres")){
+          platform = SupportedPlatform.POSTGRESQL;
+      } else {
+        platform = SupportedPlatform.ORACLE;
+      }
+
       System.err.println("Connecting to " + dsn + " (" + login + ")");
       DatabaseInstance db = new DatabaseInstance(
-          SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
+          SimpleDbConfig.create(platform, dsn, login,
               Utilities.getGusConfig("databasePassword")));
       System.err.println("Connected");
+
       return db;
     }
 
@@ -549,25 +558,25 @@ public class Workflow<T extends WorkflowStep> {
     void reset() throws SQLException, FileNotFoundException, IOException {
         getDbState();
 
-	if (!test_mode)
-	  error("Cannot reset a workflow unless it was run in test mode (-t)");
+        if (!test_mode)
+            error("Cannot reset a workflow unless it was run in test mode (-t)");
 
         for (String dirName : homeDirSubDirs) {
             File dir = new File(getHomeDir() + "/" + dirName);
-	    if (dir.exists()) {
-	      IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
-	      System.out.println("rm -rf " + dir);
-	    }
+            if (dir.exists()) {
+                IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
+                System.out.println("rm -rf " + dir);
+            }
         }
 
         String sql = "update " + workflowTable
-	    + " set undo_step_id = null where workflow_id = " + workflow_id;
+                + " set undo_step_id = null where workflow_id = " + workflow_id;
         executeSqlUpdate(sql);
 
         sql = "delete from " + workflowStepParamValTable
-	    + " where workflow_step_id in (select workflow_step_id from "
-	    + workflowStepTable + " where workflow_id = " + workflow_id
-	    + ")";
+                + " where workflow_step_id in (select workflow_step_id from "
+                + workflowStepTable + " where workflow_id = " + workflow_id
+                + ")";
         executeSqlUpdate(sql);
         System.out.println(sql);
 
