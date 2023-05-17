@@ -24,7 +24,7 @@ public class WorkflowParser {
         // create a parser, and parse the model file
         try (DatabaseInstance db = Workflow.getDb();
              Connection conn = db.getDataSource().getConnection()) {
-          Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+          Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn, db.getPlatform());
           WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
               new WorkflowGraphClassFactory(), workflow);
           workflow.setWorkflowGraph(rootGraph);

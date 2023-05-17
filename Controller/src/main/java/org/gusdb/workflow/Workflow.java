@@ -25,6 +25,7 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
@@ -71,6 +72,7 @@ public class Workflow<T extends WorkflowStep> {
     // configuration
     private final String homeDir;
     private final Connection connection;
+    private final DBPlatform platform;
     private Properties workflowProps; // from workflow config file
     protected Properties loadThrottleConfig = new Properties();
     protected Properties failThrottleConfig = new Properties();
@@ -105,9 +107,10 @@ public class Workflow<T extends WorkflowStep> {
     // list of processes to clean
     private List<Process> bgdProcesses = new ArrayList<Process>();
 
-    public Workflow(String homeDir, Connection connection) throws FileNotFoundException, IOException {
+    public Workflow(String homeDir, Connection connection, DBPlatform platform) throws FileNotFoundException, IOException {
         this.homeDir = homeDir.replaceAll("/$", "");
         this.connection = connection;
+        this.platform = platform;
         name = getWorkflowConfig("name");
         version = getWorkflowConfig("version");
         workflowTable = getWorkflowConfig("workflowTable");
@@ -339,7 +342,7 @@ public class Workflow<T extends WorkflowStep> {
       String login = Utilities.getGusConfig("databaseLogin");
 
       SupportedPlatform platform;
-      if (Utilities.getGusConfig("dbVendor").equals("Postgres")){
+      if (Utilities.getGusConfig("dbVendor").trim().equals("Postgres")){
           platform = SupportedPlatform.POSTGRESQL;
       } else {
         platform = SupportedPlatform.ORACLE;
@@ -356,6 +359,10 @@ public class Workflow<T extends WorkflowStep> {
 
     Connection getDbConnection() {
       return connection;
+    }
+
+    DBPlatform getDbPlatform() {
+        return platform;
     }
 
     void executeSqlUpdate(String sql) throws SQLException {
@@ -463,10 +470,12 @@ public class Workflow<T extends WorkflowStep> {
         for (String ds : desiredStates)
             buf.append("'" + ds + "',");
 
+        DBPlatform platform = getDb().getPlatform();
+
         String state_str = undo_step_id == null ? "state" : "undo_state";
         String sql = "select name, workflow_step_id," + state_str
                 + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
-                + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
+                + "  ELSE ("+ platform.getNvlFunctionName()+"(end_time," + platform.getSysdateIdentifier()+") - start_time) * 24 "
                 + "  END AS hours " + " from " + workflowStepTable
                 + " where workflow_id = '" + workflow_id + "'" + " and "
                 + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
@@ -641,7 +650,7 @@ public class Workflow<T extends WorkflowStep> {
         // runnable workflow, either test or run mode
         if (cmdLine.hasOption("r") || cmdLine.hasOption("t") || (cmdLine.hasOption("u") && cmdLine.hasOption("c"))) {
             System.err.println("Initializing...");
-            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn);
+            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn, db.getPlatform());
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                 new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
@@ -661,21 +670,21 @@ public class Workflow<T extends WorkflowStep> {
         // quick workflow report
         else if (cmdLine.hasOption("q")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             workflow.quickReportWorkflow();
         }
 
         // change machine
         else if (cmdLine.hasOption("m")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             workflow.resetMachine();
         }
 
         // quick step report (three column output)
         else if (cmdLine.hasOption("s")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             String[] desiredStates = getDesiredStates(cmdLine, "s");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, false);
@@ -684,7 +693,7 @@ public class Workflow<T extends WorkflowStep> {
         // quick step report (one column output)
         else if (cmdLine.hasOption("s1")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             String[] desiredStates = getDesiredStates(cmdLine, "s1");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, true);
@@ -692,7 +701,7 @@ public class Workflow<T extends WorkflowStep> {
 
         // compile check or detailed step report
         else if (cmdLine.hasOption("c") || cmdLine.hasOption("d")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn, db.getPlatform());
             WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                     new WorkflowGraphClassFactory(), workflow);
             workflow.setWorkflowGraph(rootGraph);
@@ -704,7 +713,7 @@ public class Workflow<T extends WorkflowStep> {
         }
 
         else if (cmdLine.hasOption("reset")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn, db.getPlatform());
             workflow.reset();
         }
 

@@ -35,7 +35,7 @@ public class IllegalGraphReport {
     System.err.println("Initializing...");
     try (DatabaseInstance db = Workflow.getDb();
          Connection conn = db.getDataSource().getConnection()) {
-      RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn);
+      RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn, db.getPlatform());
       WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
           new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
       runnableWorkflow.setWorkflowGraph(rootGraph);
