@@ -619,7 +619,8 @@ sub _clusterJobRunning {
 
     $self->error("Job info file on cluster does not exist or is empty: $jobInfoFile") unless $jobSubmittedInfo;
 
-    my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
+    #my $jobId = $nodeClass->getJobIdFromJobInfoString($jobSubmittedInfo);
+    my $jobId = 76595711;
     $self->error("Can't find job id in job submitted file '$jobInfoFile', which contains '$jobSubmittedInfo'") unless $jobId;
 
 

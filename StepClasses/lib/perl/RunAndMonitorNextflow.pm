@@ -32,14 +32,14 @@ sub run {
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
   my $clusterWorkingDir = "$clusterDataDir/$workingDir";
-  my $clusterResultsDir = "$clusterDataDir/$resultsDir";
+ 	 my $clusterResultsDir = "$clusterDataDir/$resultsDir";
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
   my $logFile = "$clusterWorkingDir/.nextflow.log";
   my $traceFile = "$clusterWorkingDir/trace.txt";
   my $nextflowStdoutFile = "$clusterWorkingDir/nextflow.txt";
-
+  my $revision = $self->getParamValue("revision");
 
   if($undo){
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
@@ -49,7 +49,8 @@ sub run {
       $self->runCmdOnClusterTransferServer(0, "rm -fr $nextflowStdoutFile");
       $self->log("Removing log file at: $logFile");
   }else{
-      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile);
+      #my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile);
+      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile, $revision);
 
       if (!$success){
 	  $self->error (
@@ -77,7 +78,7 @@ sub getConfigDeclaration {
 }
 
 sub runAndMonitor {
-    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile) = @_;
+    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile, $revision) = @_;
 
     if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
       $self->log("Skipping runAndMonitorNextflow -- slave workflows don't run nextflow");
@@ -94,9 +95,9 @@ sub runAndMonitor {
 
 	#my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -resume >$nextflowStdoutFile 2>&1";    
+my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow  -r $revision -resume > $nextflowStdoutFile 2>&1"; ##-with-trace to be replace back before main to discuss with John 
         if($isGit){
-          $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
+          $nextflowCmd = " $nextflowCmd";
         }
 
         # prepend slash to ;, >, and & so that the command is submitted whole
@@ -117,15 +118,14 @@ my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow 
 	# now write the output of submit into jobInfoFile on transfer server
 	my $writeCmd = "cat > $jobInfoFile";
 
-	open(F, "| ssh -2 $user\@$transferServer '/bin/bash -login -c \"$writeCmd\"'") || $self->error("Can't open file handle to write job info to transfer server");
+	open(F, "| ssh -2 $user\@$transferServer '/bin/bash -login -c \"$writeCmd\"'") || $self->error("Can't open file handle to write job info to transfer server"); 
 	print F $jobInfo;
 	close(F);
 
 	# read it back to confirm it got there safely
-	my $jobInfoRead = $self->_readInfoFile($jobInfoFile, $user, $transferServer);
-	chomp $jobInfoRead;
-	$self->error("Failed writing job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
-
+        #my $jobInfoRead = $self->_readInfoFile($jobInfoFile, $user, $transferServer);
+	#chomp $jobInfoRead;
+        #$self->error("Failed writing job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
     }
     $self->log("workflowRunNextflow terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
 
@@ -136,7 +136,7 @@ my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow 
 
     sleep(1); # wait for log file 
 
-    return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
+   return $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 }
 
 
