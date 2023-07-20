@@ -177,7 +177,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
 
     private String getNewWorkflowIdSql() {
-        return "SELECT " + getDbPlatform().getNextIdSqlExpression(null,workflowTable)
+        return "SELECT " + getDbPlatform().getNextValExpression(null,workflowTable, "_sq")
                 + " " + getDbPlatform().getDummyTable();
     }
 

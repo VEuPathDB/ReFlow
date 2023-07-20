@@ -54,7 +54,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
 
         if (!getUndoing()) {
             sql = "UPDATE " + workflowStepTable
-                    + " SET state_handled = 1, last_handled_time = SYSDATE"
+                    + " SET state_handled = 1, last_handled_time = " + workflowGraph.getWorkflow().getDbPlatform().getSysdateIdentifier()
                     + " WHERE workflow_step_id = " + workflow_step_id
                     + " AND state = '" + state + "'" + " AND off_line = "
                     + offlineInt + " AND stop_after = " + stopafterInt;
@@ -62,7 +62,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
         } else {
             sql = "UPDATE "
                     + workflowStepTable
-                    + " SET undo_state_handled = 1, undo_last_handled_time = SYSDATE"
+                    + " SET undo_state_handled = 1, undo_last_handled_time = " + workflowGraph.getWorkflow().getDbPlatform().getSysdateIdentifier()
                     + " WHERE workflow_step_id = " + workflow_step_id;
             undo_state_handled = true; // till next snapshot
         }
