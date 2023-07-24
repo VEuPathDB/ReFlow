@@ -9,6 +9,7 @@ use ReFlow::Controller::SlaveComputeNode;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
+use GUS::Supported::GusConfig;
 
 
 #
@@ -71,6 +72,64 @@ sub getWorkflowHomeDir {
     my ($self) = @_;
     return $self->{workflow}->getWorkflowHomeDir();
 
+}
+
+sub getGusConfigFile {
+  my ($self) = @_;
+  my $gusConfigFile = $self->{paramValues}->{"gusConfigFile"};
+  if (defined $gusConfigFile) {
+    if (-e $gusConfigFile){
+      return $gusConfigFile;
+    } else {
+      return $self->getWorkflowDataDir() . "/" . $gusConfigFile;
+    }
+  } else {
+    return "$ENV{GUS_HOME}/config/gus.config";
+  }
+}
+
+sub getGusConfig{
+  my ($self) = @_;
+
+  if (!$self->{gusConfig}) {
+    $self->{gusConfig} = GUS::Supported::GusConfig->new($self->getGusConfigFile());
+  }
+  return $self->{gusConfig};
+}
+
+sub getGusInstanceName {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusConfig()->getDbiDsn();
+  my @dd = split(/:/,$dbiDsn);
+  return pop(@dd);
+}
+
+sub getGusDbiDsn {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDbiDsn();
+}
+
+sub getGusDatabaseLogin {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDatabaseLogin();
+}
+
+sub getGusDatabasePassword {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDatabasePassword();
+}
+
+sub getDbh {
+  my ($self) = @_;
+
+  if (!$self->{dbh}) {
+    $self->{dbh} = DBI->connect(
+      $self->getGusDbiDsn()
+      , $self->getGusDatabaseLogin()
+      , $self->getGusDatabasePassword()
+    ) or $self->error(DBI::errstr);
+  }
+  return $self->{dbh};
 }
 
 sub getConfig {
@@ -157,7 +216,6 @@ sub getName {
   return $self->{name};
 }
 
-
 sub testInputFile {
   my ($self, $paramName, $fileName, $directory) = @_;
 
@@ -208,12 +266,17 @@ sub runSqlFetchOneRow {
 
     my $className = ref($self);
     if ($test != 1 && $test != 0) {
-	$self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
+	    $self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
     }
     my @output = ("just", "testing");
     my $testmode = $test? " (in test mode, so only pretending) " : "";
     $self->log("Running SQL$testmode:  $sql\n\n");
-    @output = $self->{workflow}->_runSqlQuery_single_array($sql) unless $test;
+
+    unless ($test){
+      my $stmt = $self->getDbh()->prepare($sql);
+      $stmt->execute() or $self->error(DBI::errstr);
+      @output = $stmt->fetchrow_array();
+    }
     return @output;
 }
 
@@ -295,7 +358,6 @@ sub logErr {
   close(F);
 }
 
-# 
 sub getComputeClusterHomeDir {
     my ($self) = @_;
 
@@ -325,7 +387,6 @@ sub getClusterWorkflowDataDir {
     my $home = $self->getComputeClusterHomeDir();
     return "$home/data";
 }
-
 
 sub getClusterServer {
   my ($self) = @_;
@@ -407,7 +468,6 @@ sub copyFromCluster {
 
     $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
-
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
 ########## class (to enable alternatives like Map/Reduce on the cloud)
