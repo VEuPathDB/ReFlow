@@ -852,7 +852,7 @@ SET
   ${undoStr}state = '$state',
   process_id = NULL,
   skipped = $skipped,
-  end_time = SYSDATE, $undoStr2
+  end_time = LOCALTIMESTAMP, $undoStr2
   ${undoStr}state_handled = 0
 WHERE workflow_step_id = $self->{id}
 AND ${undoStr}state in ($allowedCurrentStates)
@@ -876,7 +876,7 @@ SET
   process_id = $process_id,
   skipped = 0,
   host_machine = '$hostname',
-  start_time = SYSDATE,
+  start_time = LOCALTIMESTAMP,
   end_time = NULL
 WHERE workflow_step_id = $self->{id}
 ";
