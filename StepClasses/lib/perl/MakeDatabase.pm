@@ -13,13 +13,16 @@ sub run {
 
   # get parameters
   my $dbName = $self->getParamValue('dbName');
+  my $roleSql = "SET ROLE gus_w";
 
   if($undo){
     my $sql = "DROP DATABASE \"$dbName\"";
+    $self->{workflow}->_runSql($roleSql);
     $self->{workflow}->_runSql($sql);
   }else{
     my $sql = "CREATE DATABASE \"$dbName\" WITH TEMPLATE template_gus_apidb";
     $self->log("creating database with script $sql");
+    $self->{workflow}->_runSql($roleSql);
     $self->{workflow}->_runSql($sql);
   }
 }
