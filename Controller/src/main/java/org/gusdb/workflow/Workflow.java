@@ -26,6 +26,7 @@ import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
 import org.gusdb.fgputil.db.platform.DBPlatform;
+import org.gusdb.fgputil.db.platform.PostgreSQL;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
@@ -470,16 +471,29 @@ public class Workflow<T extends WorkflowStep> {
         for (String ds : desiredStates)
             buf.append("'" + ds + "',");
 
-        DBPlatform platform = getDb().getPlatform();
 
+        String sql;
         String state_str = undo_step_id == null ? "state" : "undo_state";
-        String sql = "select name, workflow_step_id," + state_str
-                + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
-                + "  ELSE ("+ platform.getNvlFunctionName()+"(end_time," + platform.getSysdateIdentifier()+") - start_time) * 24 "
-                + "  END AS hours " + " from " + workflowStepTable
-                + " where workflow_id = '" + workflow_id + "'" + " and "
-                + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
-                + " order by end_time ASC, start_time ASC";
+
+        if (getDbPlatform().getClass().equals(PostgreSQL.class)){
+            sql = "SELECT name, workflow_step_id," + state_str
+                    + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
+                    + "  ELSE EXTRACT(EPOCH FROM (COALESCE(end_time, LOCALTIMESTAMP) - start_time))/3600 "
+                    + "  END AS hours " + " FROM " + workflowStepTable
+                    + " WHERE workflow_id = '" + workflow_id + "'" + " AND "
+                    + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
+                    + " ORDER BY end_time ASC, start_time ASC"
+            ;
+        } else {
+            sql = "SELECT name, workflow_step_id," + state_str
+                    + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
+                    + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
+                    + "  END AS hours " + " from " + workflowStepTable
+                    + " WHERE workflow_id = '" + workflow_id + "'" + " AND "
+                    + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
+                    + " ORDER BY end_time ASC, start_time ASC"
+            ;
+        }
 
         Statement stmt = null;
         ResultSet rs = null;
