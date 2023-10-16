@@ -94,7 +94,7 @@ sub runAndMonitor {
 
 	#my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -resume >$nextflowStdoutFile 2>&1";    
+my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume >$nextflowStdoutFile 2>&1";   
         if($isGit){
           $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
         }
