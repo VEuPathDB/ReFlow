@@ -18,7 +18,7 @@ sub run {
 
   if($undo){
     if (-e $gusConfigTarget){
-      $self->runCmd(0, "rm $$gusConfigTarget");
+      $self->runCmd(0, "rm $gusConfigTarget");
     }
   } else{
     my $dbh = $self->getDbh();
