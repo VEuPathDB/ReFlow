@@ -99,9 +99,23 @@ sub getGusConfig{
 
 sub getGusInstanceName {
   my ($self) = @_;
-  my $dbiDsn = $self->getGusConfig()->getDbiDsn();
+  my $dbiDsn = $self->getGusDbiDsn();
   my @dd = split(/:/,$dbiDsn);
   return pop(@dd);
+}
+
+sub getGusDatabaseHostname {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusDbiDsn();
+  $dbiDsn =~ /(:|;)host=((\w|\.)+);?/ ;
+  return $2;
+}
+
+sub getGusDatabaseName {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusDbiDsn();
+  $dbiDsn =~ /(:|;)dbname=((\w|\.)+);?/ ;
+  return $2;
 }
 
 sub getGusDbiDsn {
