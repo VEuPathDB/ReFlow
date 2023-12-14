@@ -104,7 +104,6 @@ my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow 
 
 	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd);
 
-
         # wrap in a login shell to allow nextflow to be user installed
 	my $cmd = "cd $workingDir; $submitCmd ";
         $cmd = "/bin/bash -login -c \"$cmd\"";
@@ -159,8 +158,12 @@ sub tailLooksOk {
 
     # Does it look like nothing failed?
     my ($failedCount) = $tail =~ /failedCount=(\d+);/; 
+    my ($abortedCount) = $tail =~ /abortedCount=(\d+);/; 
+    my ($runningCount) = $tail =~ /runningCount=(\d+);/; 
     return unless defined $failedCount;
-    return 1 if $failedCount == 0;
+    return unless defined $abortedCount;
+    return unless defined $runningCount;
+    return 1 if ($failedCount == 0 && $abortedCount == 0 && $runningCount == 0);
 
     # Sometimes failures happen on the way. That's ok.
     # We might still be done, as long as we kept trying
