@@ -168,10 +168,12 @@ sub tailLooksOk {
     my ($failedCount) = $tail =~ /failedCount=(\d+);/; 
     my ($abortedCount) = $tail =~ /abortedCount=(\d+);/; 
     my ($runningCount) = $tail =~ /runningCount=(\d+);/; 
+    my ($pendingCount) = $tail =~ /pendingCount=(\d+);/; 
     return unless defined $failedCount;
     return unless defined $abortedCount;
     return unless defined $runningCount;
-    return 1 if ($failedCount == 0 && $abortedCount == 0 && $runningCount == 0);
+    return unless defined $pendingCount;
+    return 1 if ($failedCount == 0 && $abortedCount == 0 && $runningCount == 0 && $pendingCount);
 
     # Sometimes failures happen on the way. That's ok.
     # We might still be done, as long as we kept trying
