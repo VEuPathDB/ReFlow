@@ -12,9 +12,10 @@ sub run {
 
   # get parameters
   my $dbName = $self->getParamValue('dbName');
+  my $dataDir = $self->getParamValue('dataDir');
 
   my $gusConfigSource = $self->getGusConfigFile();
-  my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dbName/$dbName" . "_gus.config";
+  my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dataDir/$dbName" . "_gus.config";
 
   if($undo){
     if (-e $gusConfigTarget){
