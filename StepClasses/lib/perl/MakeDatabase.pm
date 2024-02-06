@@ -22,11 +22,11 @@ sub run {
     $self->{workflow}->_runSql($roleSql);
     $self->{workflow}->_runSql($sql);
   }else{
+      my $sql = "CREATE DATABASE \"$dbName\" WITH TEMPLATE template_gus_apidb";
     if($test) {
       $self->log("will create database with script $sql");
     }
     else {
-      my $sql = "CREATE DATABASE \"$dbName\" WITH TEMPLATE template_gus_apidb";
       $self->log("creating database with script $sql");
       $self->{workflow}->_runSql($roleSql);
       $self->{workflow}->_runSql($sql);
