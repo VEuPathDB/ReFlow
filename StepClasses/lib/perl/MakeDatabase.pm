@@ -13,8 +13,12 @@ use ReFlow::Controller::WorkflowStepHandle;
 sub run {
   my ($self, $test, $undo) = @_;
 
-  # get parameters
-  my $dbName = $self->getParamValue('dbName');
+  # Prefix db name with project name and version
+  my $dbName = $self->getWorkflowConfig('name') . "_" . $self->getWorkflowConfig('version');
+  # it's OK to have no dbName. We'll create a database as projectName_version in that case
+  # which is useful for global dbs etc.s
+  $dbName .= "_" . $self->getParamValue('dbName') if $dbName;
+
   my $roleSql = "SET ROLE gus_w";
 
   if($undo){
