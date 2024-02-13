@@ -20,7 +20,7 @@ sub run {
   my $gusConfigFilename = $self->getParamValue('gusConfigFilename');
 
   my $gusConfigSource = $self->getGusConfigFile();
-  my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dataDir/$gusConfigFilename" . "_gus.config";
+  my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dataDir/$gusConfigFilename";
 
   if($undo){
     if (-e $gusConfigTarget){
