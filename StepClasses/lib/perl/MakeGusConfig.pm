@@ -17,7 +17,7 @@ sub run {
   $dbName .= "_" . $self->getParamValue('dbName') if $dbName;
 
   my $dataDir = $self->getParamValue('dataDir');
-  my $gusConfigFilename = $self->getParamValue('gusConfigFile');
+  my $gusConfigFilename = $self->getParamValue('gusConfigFilename');
 
   my $gusConfigSource = $self->getGusConfigFile();
   my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dataDir/$gusConfigFilename" . "_gus.config";
