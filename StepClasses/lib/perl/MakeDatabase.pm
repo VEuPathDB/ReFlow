@@ -17,7 +17,7 @@ sub run {
   my $dbName = $self->getWorkflowConfig('name') . "_" . $self->getWorkflowConfig('version');
   # it's OK to have no dbName. We'll create a database as projectName_version in that case
   # which is useful for global dbs etc.s
-  $dbName .= "_" . $self->getParamValue('dbName') if $dbName;
+  $dbName .= "_" . $self->getParamValue('dbName') if $self->getParamValue('dbName');
 
   my $roleSql = "SET ROLE gus_w";
 
