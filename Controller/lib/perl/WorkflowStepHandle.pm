@@ -268,6 +268,7 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
+    $globalProperties->addProperty("workflowRootDataDir", $workflowDataDir);
     $self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
