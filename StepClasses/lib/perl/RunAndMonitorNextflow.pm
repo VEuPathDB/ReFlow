@@ -156,8 +156,6 @@ sub tailLooksOk {
     return unless $tail;
     return unless $tail =~/Execution complete -- Goodbye/;
 
-failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0;
-
     # Does it look like nothing failed?
     my ($failedCount) = $tail =~ /failedCount=(\d+)/;
     my ($abortedCount) = $tail =~ /abortedCount=(\d+)/;
