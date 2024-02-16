@@ -94,15 +94,15 @@ sub runAndMonitor {
 
 	#my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume >$nextflowStdoutFile 2>&1";   
+my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume ";
         if($isGit){
-          $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
+          $nextflowCmd = "$nextflowCmd";
         }
 
         # prepend slash to ;, >, and & so that the command is submitted whole
-        $nextflowCmd =~ s{([;>&])}{\\$1}g;
+        #$nextflowCmd =~ s{([;>&])}{\\$1}g;
 
-	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd);
+	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
 
         # wrap in a login shell to allow nextflow to be user installed
 	my $cmd = "cd $workingDir; $submitCmd ";
@@ -165,7 +165,7 @@ sub tailLooksOk {
     return unless defined $abortedCount;
     return unless defined $runningCount;
     return unless defined $pendingCount;
-    return 1 if ($failedCount == 0 && $abortedCount == 0 && $runningCount == 0 && $pendingCount == 0);
+    return 1 if ($failedCount eq 0 && $abortedCount eq 0 && $runningCount eq 0 && $pendingCount eq 0);
 
     # Sometimes failures happen on the way. That's ok.
     # We might still be done, as long as we kept trying
