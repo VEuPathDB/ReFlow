@@ -156,16 +156,19 @@ sub tailLooksOk {
     return unless $tail;
     return unless $tail =~/Execution complete -- Goodbye/;
 
+failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0;
+
     # Does it look like nothing failed?
-    my ($failedCount) = $tail =~ /failedCount=(\d+);/; 
-    my ($abortedCount) = $tail =~ /abortedCount=(\d+);/; 
-    my ($runningCount) = $tail =~ /runningCount=(\d+);/; 
-    my ($pendingCount) = $tail =~ /pendingCount=(\d+);/; 
-    return unless defined $failedCount;
-    return unless defined $abortedCount;
-    return unless defined $runningCount;
-    return unless defined $pendingCount;
-    return 1 if ($failedCount eq 0 && $abortedCount eq 0 && $runningCount eq 0 && $pendingCount eq 0);
+    my ($failedCount) = $tail =~ /failedCount=(\d+)/;
+    my ($abortedCount) = $tail =~ /abortedCount=(\d+)/;
+    my ($runningCount) = $tail =~ /runningCount=(\d+)/;
+    my ($pendingCount) = $tail =~ /pendingCount=(\d+)/;
+
+    # Faile unless one of these is defined
+    return unless(defined $failedCount || defined $abortedCount || defined $runningCount || defined $pendingCount);
+
+    # return success if these are all zero;  using stringwise comparison for undef case as that would match with == 0
+    return 1 if ($failedCount eq "0" && $abortedCount eq "0" && $runningCount eq "0" && $pendingCount eq "0");
 
     # Sometimes failures happen on the way. That's ok.
     # We might still be done, as long as we kept trying
