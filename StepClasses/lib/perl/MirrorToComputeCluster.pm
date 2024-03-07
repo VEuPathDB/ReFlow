@@ -31,7 +31,10 @@ sub run {
       # Change #2
       # workflow directory is not accessible from login node on UGA Sapelo
       # therefore use runCmdOnClusterTransferServer instead of runCmdOnCluster
-      $self->runCmdOnClusterTransferServer(0, "ls $clusterWorkflowDataDir/$fileOrDirToMirror");
+      #It seems unnecessary to check fileOrDirToMirror when deleting them. 
+      #In most cases, these files or directories have already been deleted from the cluster to save cluster storage. 
+      #Therefore comment out this line
+      #$self->runCmdOnClusterTransferServer(0, "ls $clusterWorkflowDataDir/$fileOrDirToMirror");
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
   }else{
 
