@@ -29,7 +29,7 @@ sub run {
     }
   } else{
     if ($test){
-      $self->log("will create gus config at $gusConfigTarget");
+      $self->runCmd(0, "echo test > $gusConfigTarget ");
     } else{
       my $dbh = $self->getDbh();
 
