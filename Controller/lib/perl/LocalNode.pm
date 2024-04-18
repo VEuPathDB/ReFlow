@@ -10,11 +10,11 @@ our @ISA = qw(ReFlow::Controller::ClusterNode);
 
 # static method
 sub getQueueSubmitCommand {
-  my ($class, $queue, $cmdToSubmit) = @_;
-  return "$cmdToSubmit";
+  my ($class, $queue, $cmdToSubmit, $maxRunTime, $maxMemoryGigs, $outFile) = @_;
+
+  return "localsub.bash -o $outFile -c \\\"$cmdToSubmit\\\"";
 }
 
-# TODO:  check where jobinfo string comes from
 sub getJobIdFromJobInfoString {
   my ($class, $jobInfoString) = @_;
 
@@ -29,7 +29,7 @@ sub getJobIdFromJobInfoString {
 sub getCheckStatusCmd {
   my ($class, $jobId) = @_;
 
-  return "$jobId";
+  return `if ps -p $jobId >/dev/null; then  echo $jobId ; fi`;
 }
 
 # static method to provide command to run kill jobs

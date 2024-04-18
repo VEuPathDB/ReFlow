@@ -86,6 +86,7 @@ sub runAndMonitor {
 
   return 1 if ($test);
 
+
   # if not already started, start it up
   if (!$self->_readInfoFile($jobInfoFile, $user, $transferServer) || !$self->_clusterJobRunning($jobInfoFile, $user, $submitServer, $transferServer, $self->getNodeClass())) {
 
@@ -117,7 +118,7 @@ sub runAndMonitor {
     # read it back to confirm it got there safely
     my $jobInfoRead = $self->_readInfoFile($jobInfoFile, $user, $transferServer);
     chomp $jobInfoRead;
-    $self->error("Failed writing job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
+    $self->error("Failed writing nextflow job info to jobinfo file on cluster.  (Reading it back didn't duplicate what we tried to write)") unless $jobInfo eq $jobInfoRead;
 
   }
   $self->log("workflowRunNextflow terminated, or we lost the ssh connection.   That's ok.  We'll commmence probing to see if it is alive.");
