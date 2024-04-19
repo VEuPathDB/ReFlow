@@ -8,7 +8,8 @@ use constant DEBUG => 0;
 our @ISA = qw(ReFlow::Controller::ClusterNode);
 
 
-# static method
+# will write processid in a file that mimics bsub
+# Job <12345>
 sub getQueueSubmitCommand {
   my ($class, $queue, $cmdToSubmit, $maxRunTime, $maxMemoryGigs, $outFile) = @_;
 
@@ -29,7 +30,9 @@ sub getJobIdFromJobInfoString {
 sub getCheckStatusCmd {
   my ($class, $jobId) = @_;
 
-  return `if ps -p $jobId >/dev/null; then  echo $jobId ; fi`;
+  return "ps -p $jobId";
+
+  #return `if ps -p $jobId >/dev/null; then  echo $jobId ; fi`;
 }
 
 # static method to provide command to run kill jobs
@@ -45,12 +48,11 @@ sub getKillJobCmd {
 sub checkJobStatus {
   my ($class, $statusFileString, $jobId) = @_;
 
-  return 1;
-  print STDERR "Status string '$statusFileString' does not contain expected job ID $jobId" unless  $statusFileString =~ /$jobId/;
+  if($statusFileString =~ /$jobId/) {
+    return 1;
+  }
 
-  my $flag = $statusFileString =~ /$jobId\s+\S+\s+(RUN|PEND|WAIT)/;
-  my $msg = $flag? "" : "Found non-running status for job '$jobId' in status string\n $statusFileString";
-  return ($flag, $msg);
+  return(undef, "No process found for job id $jobId");
 }
 
 
