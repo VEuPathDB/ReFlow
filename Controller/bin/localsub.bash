@@ -14,4 +14,4 @@ done
 
 bash -c "${CMD}" >$OUTPUTFILE & pid=$!
 
-echo Job <$pid>
+echo "Job <$pid>"
