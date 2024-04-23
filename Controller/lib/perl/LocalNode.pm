@@ -30,9 +30,8 @@ sub getJobIdFromJobInfoString {
 sub getCheckStatusCmd {
   my ($class, $jobId) = @_;
 
-  return "ps -p $jobId";
-
-  #return `if ps -p $jobId >/dev/null; then  echo $jobId ; fi`;
+  # echo here is to make sure this doesn't return error
+  return "ps -p $jobId || echo ProcessNotFound";
 }
 
 # static method to provide command to run kill jobs
