@@ -77,7 +77,23 @@ sub getConfigDeclaration {
 }
 
 sub runAndMonitor {
-    my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile) = @_;
+    my (
+      $self, 
+      $test, 
+      $user, 
+      $submitServer, 
+      $transferServer, 
+      $jobInfoFile, 
+      $logFile, 
+      $nextflowStdoutFile, 
+      $workingDir, 
+      $time, 
+      $queue, 
+      $nextflowWorkflow, 
+      $isGit, 
+      $clusterNextflowConfigFile
+      $isNfCoreWorkflow
+    ) = @_;
 
     if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
       $self->log("Skipping runAndMonitorNextflow -- slave workflows don't run nextflow");
@@ -92,15 +108,21 @@ sub runAndMonitor {
 	# first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
 	return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
-	#my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
+  my $nextflowCmd = "nextflow"
+  if ($isNfCoreWorkflow) {
+    # here we want to inherit config from nf-core, and cant guarantee the default branch is 'main'
+    $nextflowCmd = "$nextflowCmd -c $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -resume >$nextflowStdoutFile 2>&1";
+  } else {
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume >$nextflowStdoutFile 2>&1";    
-        if($isGit){
-          $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
-        }
+    $nextflowCmd = "$nextflowCmd -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume >$nextflowStdoutFile 2>&1";
+  }  
+  
+  if($isGit || $isNfCoreWorkflow) {
+    $nextflowCmd = "nextflow pull $nextflowWorkflow; $nextflowCmd";
+  }
 
-        # prepend slash to ;, >, and & so that the command is submitted whole
-        $nextflowCmd =~ s{([;>&])}{\\$1}g;
+  # prepend slash to ;, >, and & so that the command is submitted whole
+  $nextflowCmd =~ s{([;>&])}{\\$1}g;
 
 	my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd);
 
