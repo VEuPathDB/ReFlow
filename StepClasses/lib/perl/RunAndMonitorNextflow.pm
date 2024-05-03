@@ -94,6 +94,7 @@ sub runAndMonitor {
       $clusterNextflowConfigFile,
       $clusterNextflowParamsFile,
       $isNfCoreWorkflow,
+      $pipelineVersion,
     ) = @_;
 
     if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
@@ -112,7 +113,7 @@ sub runAndMonitor {
   my $nextflowCmd = "nextflow"
   if ($isNfCoreWorkflow) {
     # here we want to inherit config from nf-core, and cant guarantee the default branch is 'main'
-    $nextflowCmd = "$nextflowCmd -c $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -params-file $clusterNextflowParamsFile -resume >$nextflowStdoutFile 2>&1";
+    $nextflowCmd = "$nextflowCmd -c $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r $pipelineVersion -params-file $clusterNextflowParamsFile -resume >$nextflowStdoutFile 2>&1";
   } else {
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
     $nextflowCmd = "$nextflowCmd -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume >$nextflowStdoutFile 2>&1";
