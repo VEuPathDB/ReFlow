@@ -19,6 +19,8 @@ sub run {
   my $nextflowConfigFile = $self->getParamValue("nextflowConfigFile");
   my $nextflowWorkflow = $self->getParamValue("nextflowWorkflow");
 
+
+  # TODO:  why do we have the boolean param for "isGitRepo?"
   $nextflowWorkflow = "https://github.com/".$nextflowWorkflow;
 
   my $isGitRepo = $self->getBooleanParamValue("isGitRepo");
@@ -93,9 +95,14 @@ sub runAndMonitor {
     # first see if by any chance we are already done (would happen if somehow the flow lost track of the job)
     return 1 if $self->_checkClusterTaskLogForDone($logFile, $user, $transferServer);
 
+    # default to main branch but take from step shared if defined
+    # the workflow branch is gotten via lowercase nextflow workflow param + ".branch"
+    my $nextflowWorkflowBranchKey = $self->getParamValue("nextflowWorkflow") . ".branch";
+    my $workflowBranch = $self->getSharedConfigRelaxed($nextflowWorkflowBranchKey) ? $self->getSharedConfigRelaxed($nextflowWorkflowBranchKey) : "main";
+
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-    my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r main -resume ";
+    my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r $workflowBranch -resume ";
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
 
