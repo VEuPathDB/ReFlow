@@ -17,7 +17,7 @@ sub run {
   $dbName .= "_" . $self->getParamValue('dbName') if $self->getParamValue('dbName');
 
 
-  my $dataDir = $self->getParamValue('dataDir');
+  my $dataDir = $self->getParamValue("dataDir") ? $self->getParamValue('dataDir') : ".";
   my $gusConfigFilename = $self->getParamValue('gusConfigFilename');
 
   my $gusConfigSource = $self->getGusConfigFile();

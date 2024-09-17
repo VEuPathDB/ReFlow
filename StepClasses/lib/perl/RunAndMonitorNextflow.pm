@@ -144,7 +144,7 @@ sub runAndMonitor {
 sub _checkClusterTaskLogForDone {
   my ($self, $logFile, $user, $transferServer) = @_;
 
-    my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -5 $logFile; fi\"";
+    my $cmd = "/bin/bash -login -c \"if [ -a $logFile ]; then tail -15 $logFile; fi\"";
 
     my $tail = $self->_runSshCmdWithRetries(0, $cmd, undef, 0, 0, $user, $transferServer, "");
     
