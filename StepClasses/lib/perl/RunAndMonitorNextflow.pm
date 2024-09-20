@@ -102,7 +102,7 @@ sub runAndMonitor {
 
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
-    my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -with-trace -r $workflowBranch -resume ";
+    my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
 
