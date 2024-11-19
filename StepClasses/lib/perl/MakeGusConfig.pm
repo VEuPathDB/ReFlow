@@ -20,6 +20,8 @@ sub run {
   my $dataDir = $self->getParamValue("dataDir") ? $self->getParamValue('dataDir') : ".";
   my $gusConfigFilename = $self->getParamValue('gusConfigFilename');
 
+  my $projectName = $self->getParamValue('projectName');
+
   my $gusConfigSource = $self->getGusConfigFile();
   my $gusConfigTarget = $self->getWorkflowDataDir() . "/$dataDir/$gusConfigFilename";
 
@@ -41,7 +43,7 @@ sub run {
       my $dbiDsn= "dbiDsn=dbi:Pg:dbname=$dbName;host=$dbh->{pg_host};port=$dbh->{pg_port}";
       my $jdbcDsn = "jdbcDsn=jdbc:postgresql:\\/\\/$dbh->{pg_host}:$dbh->{pg_port}\\/$dbName";
 
-      my $cmd = "sed -e 's/^dbiDsn.*/$dbiDsn/' -e 's/^jdbcDsn.*/$jdbcDsn/' $gusConfigSource > $gusConfigTarget";
+      my $cmd = "sed -e 's/^dbiDsn.*/$dbiDsn/' -e 's/^jdbcDsn.*/$jdbcDsn/' -e 's/^project=.*/project=${projectName}/' -e 's/^group=.*/group=${projectName}/' $gusConfigSource > $gusConfigTarget";
       $self->runCmd($test, $cmd);
     }
   }
