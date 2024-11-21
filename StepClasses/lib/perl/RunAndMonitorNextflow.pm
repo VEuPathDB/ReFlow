@@ -68,6 +68,10 @@ Otherwise, to diagnose the problem, look in the scheduler and nextflow step logs
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ");
       }
+      else {
+        # remove the work directory
+        $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
+      }
   }
 }
 
