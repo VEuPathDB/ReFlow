@@ -10,7 +10,7 @@ sub run {
   my ($self, $test, $undo) = @_;
 
   # get param values
-  my $fileOrDirToMirror = $self->getParamValue('fileOrDirToMirror');
+  my $fileOrDirToCopy = $self->getParamValue('fileOrDirToCopy');
   my $outputDir = $self->getParamValue('outputDir');
   my $outputFiles = $self->getParamValue('outputFiles');
   my $deleteAfterCopy = $self->getBooleanParamValue('deleteAfterCopy');
@@ -19,7 +19,7 @@ sub run {
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
 
-  my ($filename, $relativeDir) = fileparse($fileOrDirToMirror);
+  my ($filename, $relativeDir) = fileparse($fileOrDirToCopy);
 
   # compress the working dir rel path into a digest.  this is the tmp dir used on the cluster.
   $digest = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
@@ -28,7 +28,7 @@ sub run {
   my $endPath = substr($relativeDir, length($workngDirRelativePath) - length($relativeDir));
 
   if($undo){
-      $self->runCmd(0, "rm -fr $workflowDataDir/$fileOrDirToMirror");
+      $self->runCmd(0, "rm -fr $workflowDataDir/$fileOrDirToCopy");
   }else {
       if ($test) {
 	  $self->runCmd(0, "mkdir -p $workflowDataDir/$outputDir");
