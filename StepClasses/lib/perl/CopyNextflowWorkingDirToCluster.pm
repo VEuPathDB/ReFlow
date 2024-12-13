@@ -10,20 +10,18 @@ sub run {
   my ($self, $test, $undo) = @_;
 
   # get param values
-  my $sourcePath = $self->getParamValue('workingDirRelativePath');
+  my $fileOrDirToCopy = $self->getParamValue('fileOrDirToCopy');
+
+  # $relativePath is a path relative to the workflow data dir on the local server
+  # $fileOrDir is the basename of the file/dir to copy 
+  my ($fileOrDir, $relativePath) = fileparse($fileOrDirToCopy);
+
+  # we compress the path of the relative dir into a single unique string.
+  # We use that string to create a temp dir on the cluster that holds the copied goodies
+  $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($relativePath);
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
-
-  # we collapse the path of the workingDir on local server into digest of that
-  # path. We use the digest to create a temp dir on the cluster that holds the goodies
-  $targetPath = $self->uniqueNameForNextflowWorkingDirectory($sourcePath);
-
-  # $relativePath is a path relative to the workflow data dir on the local
-  # server and also on the cluster.
-  # it must exist in its entirety.  $fileOrDir is the basename of the
-  # file to copy to that pre-existing path.
-  my ($fileOrDir, $relativePath) = fileparse($fileOrDirToMirror);
 
   if ($undo) {
       #$self->runCmdOnCluster(0, "rm -fr $clusterWorkflowDataDir/$fileOrDirToMirror");
@@ -39,12 +37,13 @@ sub run {
       #In most cases, these files or directories have already been deleted from the cluster to save cluster storage. 
       #Therefore comment out this line
       #$self->runCmdOnClusterTransferServer(0, "ls $clusterWorkflowDataDir/$fileOrDirToMirror");
-      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$targetDir");
+
+      $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$compressedPath");
   } elsif (!$test) {
 
-      $self->copyToCluster("$workflowDataDir/$sourcePath",
+      $self->copyToCluster("$workflowDataDir/$relativePath",
 			   $fileOrDir,
-			   "$clusterWorkflowDataDir/$targetPath");
+			   "$clusterWorkflowDataDir/$compressedPath");
   }
 }
 
