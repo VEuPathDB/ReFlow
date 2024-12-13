@@ -16,9 +16,9 @@ sub run {
   # $fileOrDir is the basename of the file/dir to copy 
   my ($fileOrDir, $relativePath) = fileparse($fileOrDirToCopy);
 
-  # we compress the path of the relative dir into a single unique string.
+  # we compress the path of fileOrDir into a unique name.
   # We use that string to create a temp dir on the cluster that holds the copied goodies
-  $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($relativePath);
+  $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($fileOrDir);
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();

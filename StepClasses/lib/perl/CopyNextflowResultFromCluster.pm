@@ -14,7 +14,7 @@ sub run {
   my $outputDir = $self->getParamValue('outputDir');
   my $outputFiles = $self->getParamValue('outputFiles');
   my $deleteAfterCopy = $self->getBooleanParamValue('deleteAfterCopy');
-  my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath'); # the part of the path that has the dependent data (not analysis or results)
+  my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath'); # the path that contains the /analysis directory.
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
@@ -46,9 +46,11 @@ sub run {
 
 sub getParamDeclaration {
   return (
-	  'fileOrDirToMirror',
+	  'fileOrDirToCopy',
 	  'outputDir',
 	  'outputFile',
+	  'deleteAfterCopy',
+	  'workingDirRelativePath',
 	 );
 }
 
