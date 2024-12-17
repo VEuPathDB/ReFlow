@@ -488,7 +488,7 @@ sub uniqueNameForNextflowWorkingDirectory {
   my ($self, $relativeDataDirPath)  @_;
   my $workflowName = $self->getWorkflowName();
   my $workflowVersion = $self->getWorkflowVersion();
-  return md5_hex("$workflowName $workflowVersion$ $relativeDataDirPath")
+  return md5_hex("$workflowName $workflowVersion $relativeDataDirPath")
 }
 
 

@@ -18,7 +18,7 @@ sub run {
 
   # we compress the path of fileOrDir into a unique name.
   # We use that string to create a temp dir on the cluster that holds the copied goodies
-  $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($fileOrDir);
+  my $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($fileOrDir);
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();

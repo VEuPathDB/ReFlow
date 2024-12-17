@@ -1,4 +1,4 @@
-package ReFlow::StepClasses::CopyNextflowWorkingDirToCluster;
+package ReFlow::StepClasses::DeleteNextflowWorkingDirFromCluster;
 
 @ISA = (ReFlow::Controller::WorkflowStepHandle);
 
@@ -12,7 +12,7 @@ sub run {
   # get param values
   my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath'); 
 
-  $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
+  my $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
 
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
 

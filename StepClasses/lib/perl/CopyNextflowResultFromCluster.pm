@@ -1,4 +1,4 @@
-package ReFlow::StepClasses::MirrorFromComputeCluster;
+package ReFlow::StepClasses::CopyNextflowResultFromCluster;
 
 @ISA = (ReFlow::Controller::WorkflowStepHandle);
 
@@ -22,7 +22,7 @@ sub run {
   my ($filename, $relativeDir) = fileparse($fileOrDirToCopy);
 
   # compress the working dir rel path into a digest.  this is the tmp dir used on the cluster.
-  $digest = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
+  my $digest = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
 
   # find the part of $relative dir that comes after $workingDirRelativePath.  We need to add this part after the digest.
   my $endPath = substr($relativeDir, length($workngDirRelativePath) - length($relativeDir));
