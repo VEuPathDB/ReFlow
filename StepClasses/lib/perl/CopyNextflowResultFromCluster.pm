@@ -14,18 +14,19 @@ sub run {
   my $outputDir = $self->getParamValue('outputDir');
   my $outputFiles = $self->getParamValue('outputFiles');
   my $deleteAfterCopy = $self->getBooleanParamValue('deleteAfterCopy');
-  my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath'); # the path that contains the /analysis directory.
+  my $workingDirRelativePath = $self->getParamValue('workingDirRelativePath'); # the path that contains the /analysis directory.
 
   my $workflowDataDir = $self->getWorkflowDataDir();
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
 
   my ($filename, $relativeDir) = fileparse($fileOrDirToCopy);
+  my $stepName = fileparse($workingDirRelativePath);  # the leaf file name in the rel path is the name of the step, eg 'tmhmm'. we need to add it to the path.
 
   # compress the working dir rel path into a digest.  this is the tmp dir used on the cluster.
-  my $digest = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
+  my $digest = $self->uniqueNameForNextflowWorkingDirectory($workingDirRelativePath);
 
   # find the part of $relative dir that comes after $workingDirRelativePath.  We need to add this part after the digest.
-  my $endPath = substr($relativeDir, length($workngDirRelativePath) - length($relativeDir));
+  my $endPath = substr($relativeDir, length($workingDirRelativePath) - length($relativeDir));
 
   if($undo){
       $self->runCmd(0, "rm -fr $workflowDataDir/$fileOrDirToCopy");
@@ -39,7 +40,7 @@ sub run {
 		  }
 	  };
       }else{
-	  $self->copyFromCluster("$clusterWorkflowDataDir/$digest/$endPath", $filename, "$workflowDataDir/$relativeDir", $deleteAfterCopy);
+	  $self->copyFromCluster("$clusterWorkflowDataDir/$digest/$stepName/$endPath", $filename, "$workflowDataDir/$relativeDir", $deleteAfterCopy);
       }
   }
 }

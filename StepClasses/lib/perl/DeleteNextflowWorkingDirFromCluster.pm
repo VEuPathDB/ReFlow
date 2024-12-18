@@ -10,13 +10,13 @@ sub run {
   my ($self, $test, $undo) = @_;
 
   # get param values
-  my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath'); 
+  my $workngDirRelativePath = $self->getParamValue('workingDirRelativePath');
 
   my $compressedPath = $self->uniqueNameForNextflowWorkingDirectory($workngDirRelativePath);
 
   my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
 
-  $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$compressedPath") unless $test;
+  $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$compressedPath");
 
 }
 
