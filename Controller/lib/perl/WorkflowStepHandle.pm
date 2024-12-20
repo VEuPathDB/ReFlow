@@ -10,7 +10,7 @@ use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
 use GUS::Supported::GusConfig;
-
+use Digest::MD5 qw(md5_hex);
 
 #
 # Super class of workflow steps written in perl, and called by the wrapper
@@ -483,6 +483,16 @@ sub copyFromCluster {
 
     $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
+
+sub uniqueNameForNextflowWorkingDirectory {
+  my ($self, $relativeDataDirPath)  @_;
+  my $workflowName = $self->getWorkflowConfig('name');
+  my $workflowVersion = $self->getWorkflowConfig('version');
+  my $digest = md5_hex("$workflowName $workflowVersion $relativeDataDirPath");
+  $self->log("Digest for $relativeDataDirPath is $digest");
+  return $digest;
+}
+
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
 ########## class (to enable alternatives like Map/Reduce on the cloud)
