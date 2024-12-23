@@ -485,7 +485,7 @@ sub copyFromCluster {
 }
 
 sub uniqueNameForNextflowWorkingDirectory {
-  my ($self, $relativeDataDirPath)  @_;
+  my ($self, $relativeDataDirPath) = @_;
   my $workflowName = $self->getWorkflowConfig('name');
   my $workflowVersion = $self->getWorkflowConfig('version');
   my $digest = md5_hex("$workflowName $workflowVersion $relativeDataDirPath");
