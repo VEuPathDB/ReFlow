@@ -41,6 +41,8 @@ sub run {
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkflowDataDir/$compressedPath");
   } elsif (!$test) {
 
+      $self->runCmdOnClusterTransferServer(0, "mkdir $clusterWorkflowDataDir/$compressedPath");
+
       $self->copyToCluster("$workflowDataDir/$relativePath",
 			   $fileOrDir,
 			   "$clusterWorkflowDataDir/$compressedPath");
