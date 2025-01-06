@@ -13,6 +13,7 @@ sub run {
   my $clusterServer = $self->getSharedConfig('clusterServer');
   my $clusterTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 
+  my $workingDirRelativePath = $self->getParamValue("workingDirRelativePath");
   my $workingDir = $self->getParamValue("workingDir");
   my $resultsDir = $self->getParamValue("resultsDir");
 
@@ -33,8 +34,8 @@ sub run {
 
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
-  my $clusterWorkingDir = "$clusterDataDir/$workingDir";
-  my $clusterResultsDir = "$clusterDataDir/$resultsDir";
+  my $clusterWorkingDir = self->relativePathToNextflowClusterPath($workingDir, $workingDirRelativePath) ;
+  my $clusterResultsDir = self->relativePathToNextflowClusterPath($resultsDir, $workingDirRelativePath) ;
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
