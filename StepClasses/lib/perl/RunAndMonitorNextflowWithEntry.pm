@@ -34,8 +34,8 @@ sub run {
 
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
-  my $clusterWorkingDir = self->relativePathToNextflowClusterPath($workingDir, $workingDirRelativePath) ;
-  my $clusterResultsDir = self->relativePathToNextflowClusterPath($resultsDir, $workingDirRelativePath) ;
+  my $clusterWorkingDir = $self->relativePathToNextflowClusterPath($workingDir, $workingDirRelativePath) ;
+  my $clusterResultsDir = $self->relativePathToNextflowClusterPath($resultsDir, $workingDirRelativePath) ;
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
