@@ -34,15 +34,22 @@ sub run {
 
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
-  my $clusterWorkingDir = $self->relativePathToNextflowClusterPath($workingDir, $workingDirRelativePath) ;
-  my $clusterResultsDir = $self->relativePathToNextflowClusterPath($resultsDir, $workingDirRelativePath) ;
+  # replace the working dir path with a single unique string (a digest of it), which is how we copy data onto cluster
+  # we need also to add the leaf of that path onto the digest, because that is how it is done in copy to cluster
+  my $leafDir = fileparse($workingDirRelativePath);
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($workingDirRelativePath);
+  $workingDir =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+  $resultsDir =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+  $nextflowConfigFile =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+
+  my $clusterWorkingDir = "$clusterDataDir/$workingDir";
+  my $clusterResultsDir = "$clusterDataDir/$resultsDir";
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
   my $logFile = "$clusterWorkingDir/.nextflow.log";
   my $traceFile = "$clusterWorkingDir/trace.txt";
   my $nextflowStdoutFile = "$clusterWorkingDir/nextflow.txt";
-
 
   if($undo){
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");

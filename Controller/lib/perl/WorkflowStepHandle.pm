@@ -493,23 +493,20 @@ sub uniqueNameForNextflowWorkingDirectory {
   return $digest;
 }
 
-# produce a cluster path for nextflow that embeds the unique name for the step
-sub getClusterNextflowWorkingDir {
-  my ($self, $relativeDataDirPath) = @_;
-  my $clusterWorkflowDataDir = $self->getClusterWorkflowDataDir();
-  return $clusterWorkflowDataDir . "/" . $self->uniqueNameForNextflowWorkingDirectory($relativeDataDirPath);
-}
-
 # replace the relativeDataDirPath part of a cluster path with the unique name for that part of the path.
 # also, prepend the cluster data dir
 sub relativePathToNextflowClusterPath {
   my ($self, $relativeDataDirPath, $fileOrDirRelativePath) = @_;
-  my $clusterNextflowWorkingDir = $self->getClusterNextflowWorkingDir($relativeDataDirPath);
 
-  # remove the relativeDataDirPath "prefix" from the fileOrDirRelativePath
-  my $noPrefix = substr($fileOrDirRelativePath, length($relativeDataDirPath) - length($fileOrDirRelativePath));
+  return $self->getClusterWorkflowDataDir() . "/" . $self->substituteInCompressedClusterPath($relativeDataDirPath, $fileOrDirRelativePath);
+}
 
-  return $clusterNextflowWorkingDir . "/" . $noPrefix;
+sub substituteInCompressedClusterPath {
+  my ($self, $pathToSubstitute, $targetPath ) = @_;
+
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($pathToSubstitute);
+  $targetPath =~ s/$pathToSubstitute/$compressed/;
+  return $targetPath
 }
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
