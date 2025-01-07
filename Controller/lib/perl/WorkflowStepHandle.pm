@@ -506,7 +506,11 @@ sub substituteInCompressedClusterPath {
 
   my $compressed = $self->uniqueNameForNextflowWorkingDirectory($pathToSubstitute);
   $targetPath =~ s/$pathToSubstitute/$compressed/;
-  return $targetPath
+
+  $pathToSubstitue =~ s/\/$//;
+  my $basePath = basename $pathToSubstitute
+
+  return $targetPath . "/" . $basePath;
 }
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
