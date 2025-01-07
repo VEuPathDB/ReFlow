@@ -502,15 +502,16 @@ sub relativePathToNextflowClusterPath {
 }
 
 sub substituteInCompressedClusterPath {
-  my ($self, $pathToSubstitute, $targetPath ) = @_;
+  my ($self, $relativeDataDirPath, $targetPath ) = @_;
 
-  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($pathToSubstitute);
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($relativeDataDirPath);
+
+  $relativeDataDirPath =~ s/\/$//;
+  my $pathToSubstitute = dirname $relativeDataDirPath;
+
   $targetPath =~ s/$pathToSubstitute/$compressed/;
 
-  $pathToSubstitue =~ s/\/$//;
-  my $basePath = basename $pathToSubstitute
-
-  return $targetPath . "/" . $basePath;
+  return $targetPath;
 }
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
