@@ -105,7 +105,7 @@ sub runAndMonitor {
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
     my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
 
-    if ($entry ne "none") {
+    if ($entry) {
 	$nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -entry $entry -r $workflowBranch -resume";
     }
 
