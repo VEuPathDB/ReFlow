@@ -19,6 +19,7 @@ sub run {
   my $nextflowConfigFile = $self->getParamValue("nextflowConfigFile");
   my $nextflowWorkflow = $self->getParamValue("nextflowWorkflow");
 
+  my $entry = $self->getParamValue("entry");
 
   # TODO:  why do we have the boolean param for "isGitRepo?"
   $nextflowWorkflow = "https://github.com/".$nextflowWorkflow;
@@ -51,7 +52,7 @@ sub run {
       $self->runCmdOnClusterTransferServer(0, "rm -fr $nextflowStdoutFile");
       $self->log("Removing log file at: $logFile");
   }else{
-      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile);
+      my $success = $self->runAndMonitor($test, $userName, $clusterServer, $clusterTransferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $clusterWorkingDir, $maxTimeMins, $clusterQueue, $nextflowWorkflow, $isGitRepo, $clusterNextflowConfigFile,$entry);
 
       if (!$success){
 	  $self->error (
@@ -79,7 +80,7 @@ sub getConfigDeclaration {
 }
 
 sub runAndMonitor {
-  my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile) = @_;
+  my ($self, $test, $user, $submitServer, $transferServer, $jobInfoFile, $logFile, $nextflowStdoutFile, $workingDir, $time, $queue, $nextflowWorkflow, $isGit, $clusterNextflowConfigFile,$entry) = @_;
 
   if ($self->getSharedConfigRelaxed('masterWorkflowDataDir')) {
     $self->log("Skipping runAndMonitorNextflow -- slave workflows don't run nextflow");
@@ -103,6 +104,10 @@ sub runAndMonitor {
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
     my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
+
+    if ($entry ne "none") {
+	$nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -entry $entry -r $workflowBranch -resume";
+    }
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
 
