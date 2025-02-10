@@ -13,6 +13,7 @@ sub run {
   my $clusterServer = $self->getSharedConfig('clusterServer');
   my $clusterTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 
+  my $workingDirRelativePath = $self->getParamValue("workingDirRelativePath");
   my $workingDir = $self->getParamValue("workingDir");
   my $resultsDir = $self->getParamValue("resultsDir");
 
@@ -34,6 +35,14 @@ sub run {
 
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
+  # replace the working dir path with a single unique string (a digest of it), which is how we copy data onto cluster
+  # we need also to add the leaf of that path onto the digest, because that is how it is done in copy to cluster
+  my $leafDir = fileparse($workingDirRelativePath);
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($workingDirRelativePath);
+  $workingDir =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+  $resultsDir =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+  $nextflowConfigFile =~ s|$workingDirRelativePath|$compressed/$leafDir|;
+
   my $clusterWorkingDir = "$clusterDataDir/$workingDir";
   my $clusterResultsDir = "$clusterDataDir/$resultsDir";
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
@@ -42,7 +51,6 @@ sub run {
   my $logFile = "$clusterWorkingDir/.nextflow.log";
   my $traceFile = "$clusterWorkingDir/trace.txt";
   my $nextflowStdoutFile = "$clusterWorkingDir/nextflow.txt";
-
 
   if($undo){
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
@@ -68,6 +76,10 @@ Otherwise, to diagnose the problem, look in the scheduler and nextflow step logs
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ");
+      }
+      else {
+        # remove the work directory
+        $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
       }
   }
 }
@@ -103,6 +115,7 @@ sub runAndMonitor {
 
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
+
     my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
 
     if ($entry) {

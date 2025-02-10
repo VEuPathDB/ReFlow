@@ -25,7 +25,7 @@ sub run {
       }else{
       # should be empty - check it still exists
         if (-e "$workflowDataDir/$dataDir"){
-            $self->runCmd(0, "rmdir $workflowDataDir/$dataDir");
+            $self->runCmd(0, "rm -r $workflowDataDir/$dataDir");
         }
       }
 

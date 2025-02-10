@@ -10,7 +10,7 @@ use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
 use GUS::Supported::GusConfig;
-
+use Digest::MD5 qw(md5_hex);
 
 #
 # Super class of workflow steps written in perl, and called by the wrapper
@@ -482,6 +482,36 @@ sub copyFromCluster {
     my $gzipFlag = $gzipProp && $gzipProp eq 'true';
 
     $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
+}
+
+sub uniqueNameForNextflowWorkingDirectory {
+  my ($self, $relativeDataDirPath) = @_;
+  my $workflowName = $self->getWorkflowConfig('name');
+  my $workflowVersion = $self->getWorkflowConfig('version');
+  my $digest = md5_hex("$workflowName $workflowVersion $relativeDataDirPath");
+  $self->log("Digest for $relativeDataDirPath is $digest");
+  return $digest;
+}
+
+# replace the relativeDataDirPath part of a cluster path with the unique name for that part of the path.
+# also, prepend the cluster data dir
+sub relativePathToNextflowClusterPath {
+  my ($self, $relativeDataDirPath, $fileOrDirRelativePath) = @_;
+
+  return $self->getClusterWorkflowDataDir() . "/" . $self->substituteInCompressedClusterPath($relativeDataDirPath, $fileOrDirRelativePath);
+}
+
+sub substituteInCompressedClusterPath {
+  my ($self, $relativeDataDirPath, $targetPath ) = @_;
+
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($relativeDataDirPath);
+
+  $relativeDataDirPath =~ s/\/$//;
+  my $pathToSubstitute = dirname $relativeDataDirPath;
+
+  $targetPath =~ s/$pathToSubstitute/$compressed/;
+
+  return $targetPath;
 }
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
