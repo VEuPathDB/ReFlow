@@ -303,7 +303,7 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
     // called by xml parser
     public void setSkipIfFile(String skipIfFileName) {
 	if (this.skipIfFileName != null) {
-	    error("It has a forceDoneFileName attribute but is also getting that value from its calling graph.  Only one is allowed. ");
+	    error("It has a skipIfFile attribute but is also getting that value from its calling graph.  Only one is allowed. ");
 	}
 	this.skipIfFileName = skipIfFileName;
     }
