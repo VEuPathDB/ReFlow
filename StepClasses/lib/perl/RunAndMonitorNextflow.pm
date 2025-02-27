@@ -7,6 +7,11 @@ use warnings;
 use ReFlow::Controller::WorkflowStepHandle;
 use File::Basename;
 
+sub clusterJobInfoFileName { return "clusterJobInfo.txt"}
+sub logFileName { return "nextflow.log" }
+sub traceFileName { return "trace.txt" }
+sub nextflowStdoutFileName { return "nextflow.txt" }
+
 sub run {
   my ($self, $test, $undo) = @_;
 
@@ -46,10 +51,10 @@ sub run {
   my $clusterResultsDir = "$clusterDataDir/$resultsDir";
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
-  my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
-  my $logFile = "$clusterWorkingDir/.nextflow.log";
-  my $traceFile = "$clusterWorkingDir/trace.txt";
-  my $nextflowStdoutFile = "$clusterWorkingDir/nextflow.txt";
+  my $jobInfoFile = "$clusterWorkingDir/" . $self->clusterJobInfoFileName();
+  my $logFile = "$clusterWorkingDir/" . $self->logFileName();
+  my $traceFile = "$clusterWorkingDir/" . $self->traceFileName();
+  my $nextflowStdoutFile = "$clusterWorkingDir/" . $self->nextflowStdoutFileName();
 
   if($undo){
       $self->runCmdOnClusterTransferServer(0, "rm -fr $clusterWorkingDir/work");
@@ -115,7 +120,7 @@ sub runAndMonitor {
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
 
-    my $nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
+    my $nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
 
