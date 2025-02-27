@@ -396,8 +396,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
           continue;
 
         if (typeCounts.get(type) != null && getThrottleConfig(type, config, configFile) != null && typeCounts.get(type) >= getThrottleConfig(type, config, configFile)) {
-          okToRun = false;
-          break;
+            okToRun = false;
+            break;
         }
       }
     }
