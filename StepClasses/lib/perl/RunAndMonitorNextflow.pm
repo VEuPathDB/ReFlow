@@ -124,7 +124,7 @@ sub runAndMonitor {
     my $nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
 
     if ($entry) {
-	$nextflowCmd = "nextflow -C $clusterNextflowConfigFile run $nextflowWorkflow -entry $entry -r $workflowBranch -resume";
+	$nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflow -entry $entry -r $workflowBranch -resume";
     }
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
