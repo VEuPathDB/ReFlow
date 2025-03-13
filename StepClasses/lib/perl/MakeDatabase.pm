@@ -20,6 +20,7 @@ sub run {
   $dbName .= "_" . $self->getParamValue('dbName') if $self->getParamValue('dbName');
 
   my $roleSql = "SET ROLE gus_w";
+  my $currentDbSql = "SELECT current_database()";
 
   if($undo){
     my $sql = "DROP DATABASE \"$dbName\"";
@@ -31,6 +32,10 @@ sub run {
       $self->log("will create database with script $sql");
     }
     else {
+      my ($currentDbName) = $self->{workflow}->_runSqlQuery_single_array($currentDbSql);
+      if ($currentDbName eq $dbName){
+        $self->log("We are already connected to $dbName so we must be in a production environment. Skipping database creation");
+      }
       $self->log("creating database with script $sql");
       $self->{workflow}->_runSql($roleSql);
       $self->{workflow}->_runSql($sql);
