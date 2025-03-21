@@ -188,8 +188,12 @@ sub tailLooksOk {
     my ($pendingCount) = $tail =~ /pendingCount=(\d+)/;
     my ($submittedCount) = $tail =~ /submittedCount=(\d+)/;
 
+    my ($succeededCount) = $tail =~ /succeededCount=(\d+)/;
+
     # This just confirms we are at the end of the log file (ie. not still running)
     return unless(defined $failedCount || defined $abortedCount || defined $runningCount || defined $pendingCount || defined $submittedCount);
+
+    return unless($succeededCount);
 
     # return success if these are all zero;  using stringwise comparison for undef case as that would match with == 0
     return 1 if ($failedCount eq "0" && $abortedCount eq "0" && $runningCount eq "0" && $pendingCount eq "0" && $submittedCount eq "0");
