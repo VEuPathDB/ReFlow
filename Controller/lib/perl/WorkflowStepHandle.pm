@@ -9,7 +9,8 @@ use ReFlow::Controller::SlaveComputeNode;
 use Sys::Hostname;
 use ReFlow::Controller::WorkflowHandle qw($READY $ON_DECK $FAILED $DONE $RUNNING $START $END);
 use File::Basename;
-
+use GUS::Supported::GusConfig;
+use Digest::MD5 qw(md5_hex);
 
 #
 # Super class of workflow steps written in perl, and called by the wrapper
@@ -71,6 +72,78 @@ sub getWorkflowHomeDir {
     my ($self) = @_;
     return $self->{workflow}->getWorkflowHomeDir();
 
+}
+
+sub getGusConfigFile {
+  my ($self) = @_;
+  my $gusConfigFile = $self->{paramValues}->{"gusConfigFile"};
+  if (defined $gusConfigFile) {
+    if (-e $gusConfigFile){
+      return $gusConfigFile;
+    } else {
+      return $self->getWorkflowDataDir() . "/" . $gusConfigFile;
+    }
+  } else {
+    return "$ENV{GUS_HOME}/config/gus.config";
+  }
+}
+
+sub getGusConfig{
+  my ($self) = @_;
+
+  if (!$self->{gusConfig}) {
+    $self->{gusConfig} = GUS::Supported::GusConfig->new($self->getGusConfigFile());
+  }
+  return $self->{gusConfig};
+}
+
+sub getGusInstanceName {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusDbiDsn();
+  my @dd = split(/:/,$dbiDsn);
+  return pop(@dd);
+}
+
+sub getGusDatabaseHostname {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusDbiDsn();
+  $dbiDsn =~ /(:|;)host=((\w|\.)+);?/ ;
+  return $2;
+}
+
+sub getGusDatabaseName {
+  my ($self) = @_;
+  my $dbiDsn = $self->getGusDbiDsn();
+  $dbiDsn =~ /(:|;)dbname=((\w|\.)+);?/ ;
+  return $2;
+}
+
+sub getGusDbiDsn {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDbiDsn();
+}
+
+sub getGusDatabaseLogin {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDatabaseLogin();
+}
+
+sub getGusDatabasePassword {
+  my ($self) = @_;
+  return $self->getGusConfig()->getDatabasePassword();
+}
+
+sub getDbh {
+  my ($self) = @_;
+
+  if (!$self->{dbh}) {
+    $self->{dbh} = DBI->connect(
+      $self->getGusDbiDsn()
+      , $self->getGusDatabaseLogin()
+      , $self->getGusDatabasePassword()
+    ) or $self->error(DBI::errstr);
+  }
+  return $self->{dbh};
 }
 
 sub getConfig {
@@ -157,7 +230,6 @@ sub getName {
   return $self->{name};
 }
 
-
 sub testInputFile {
   my ($self, $paramName, $fileName, $directory) = @_;
 
@@ -196,6 +268,7 @@ sub getDatasetLoader {
 
     my $globalProperties = $self->getSharedConfigProperties();
     $globalProperties->addProperty("dataDir", $dataDir);
+    $globalProperties->addProperty("workflowRootDataDir", $workflowDataDir);
     $self->logErr("Parsing resource file: $ENV{GUS_HOME}/lib/xml/datasetLoaders/$dataSourcesXmlFile\n");
     $self->{dataSources} =
       ReFlow::DatasetLoader::DatasetLoaders->new($dataSourcesXmlFile, $globalProperties);  }
@@ -208,12 +281,17 @@ sub runSqlFetchOneRow {
 
     my $className = ref($self);
     if ($test != 1 && $test != 0) {
-	$self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
+	    $self->error("Illegal 'test' arg '$test' passed to runSqlFetchOneRow() in step class '$className'");
     }
     my @output = ("just", "testing");
     my $testmode = $test? " (in test mode, so only pretending) " : "";
     $self->log("Running SQL$testmode:  $sql\n\n");
-    @output = $self->{workflow}->_runSqlQuery_single_array($sql) unless $test;
+
+    unless ($test){
+      my $stmt = $self->getDbh()->prepare($sql);
+      $stmt->execute() or $self->error(DBI::errstr);
+      @output = $stmt->fetchrow_array();
+    }
     return @output;
 }
 
@@ -295,7 +373,6 @@ sub logErr {
   close(F);
 }
 
-# 
 sub getComputeClusterHomeDir {
     my ($self) = @_;
 
@@ -325,7 +402,6 @@ sub getClusterWorkflowDataDir {
     my $home = $self->getComputeClusterHomeDir();
     return "$home/data";
 }
-
 
 sub getClusterServer {
   my ($self) = @_;
@@ -408,6 +484,35 @@ sub copyFromCluster {
     $self->getClusterFileTransferServer()->copyFrom($fromDir, $fromFile, $toDir, $deleteAfterCopy, $gzipFlag);
 }
 
+sub uniqueNameForNextflowWorkingDirectory {
+  my ($self, $relativeDataDirPath) = @_;
+  my $workflowName = $self->getWorkflowConfig('name');
+  my $workflowVersion = $self->getWorkflowConfig('version');
+  my $digest = md5_hex("$workflowName $workflowVersion $relativeDataDirPath");
+  $self->log("Digest for $relativeDataDirPath is $digest");
+  return $digest;
+}
+
+# replace the relativeDataDirPath part of a cluster path with the unique name for that part of the path.
+# also, prepend the cluster data dir
+sub relativePathToNextflowClusterPath {
+  my ($self, $relativeDataDirPath, $fileOrDirRelativePath) = @_;
+
+  return $self->getClusterWorkflowDataDir() . "/" . $self->substituteInCompressedClusterPath($relativeDataDirPath, $fileOrDirRelativePath);
+}
+
+sub substituteInCompressedClusterPath {
+  my ($self, $relativeDataDirPath, $targetPath ) = @_;
+
+  my $compressed = $self->uniqueNameForNextflowWorkingDirectory($relativeDataDirPath);
+
+  $relativeDataDirPath =~ s/\/$//;
+  my $pathToSubstitute = dirname $relativeDataDirPath;
+
+  $targetPath =~ s/$pathToSubstitute/$compressed/;
+
+  return $targetPath;
+}
 
 ########## Distrib Job subroutines.  Should be factored to a pluggable
 ########## class (to enable alternatives like Map/Reduce on the cloud)
@@ -792,7 +897,7 @@ SET
   ${undoStr}state = '$state',
   process_id = NULL,
   skipped = $skipped,
-  end_time = SYSDATE, $undoStr2
+  end_time = LOCALTIMESTAMP, $undoStr2
   ${undoStr}state_handled = 0
 WHERE workflow_step_id = $self->{id}
 AND ${undoStr}state in ($allowedCurrentStates)
@@ -816,7 +921,7 @@ SET
   process_id = $process_id,
   skipped = 0,
   host_machine = '$hostname',
-  start_time = SYSDATE,
+  start_time = LOCALTIMESTAMP,
   end_time = NULL
 WHERE workflow_step_id = $self->{id}
 ";

@@ -69,7 +69,6 @@ sub new {
 # construct step subclass that has a run() method (ie, a step class)
 sub getRunnableStep {
   my ($self, $stepClassName, $stepName, $stepId, $paramStrings) = @_;
-
   eval "require $stepClassName";
   $self->error($@) if $@;
 
@@ -94,8 +93,7 @@ sub getDbh {
     my $password = ($self->{password} eq '') ? $self->getGusConfig('databasePassword') : $self->{password};
 
     if (!$self->{dbh}) {
-	$self->{dbh} = DBI->connect($dbName, $login, $password)
-	  or $self->error(DBI::errstr);
+	    $self->{dbh} = DBI->connect($dbName, $login, $password) or $self->error(DBI::errstr);
     }
     return $self->{dbh};
 }
@@ -135,22 +133,22 @@ sub getStepId {
 }
 
 sub getGusConfig {
-    my ($self, $key) = @_;
+  my ($self, $key) = @_;
 
-    my @properties = 
-	(
-	 # [name, default, description]
-	 ['dbiDsn', "", ""],
-	 ['databaseLogin', "", ""],
-	 ['databasePassword', "", ""],
-	);
+  my @properties =
+    (
+      # [name, default, description]
+      ['dbiDsn', "", ""],
+      ['databaseLogin', "", ""],
+      ['databasePassword', "", ""],
+    );
 
-    if (!$self->{gusConfig}) {
+  if (!$self->{gusConfig}) {
       my $gusConfigFile = "$self->{gusHome}/config/gus.config";
-      $self->{gusConfig} =
+    $self->{gusConfig} =
 	FgpUtil::Util::PropertySet->new($gusConfigFile, \@properties, 1);
-    }
-    return $self->{gusConfig}->getProp($key);
+  }
+  return $self->{gusConfig}->getProp($key);
 }
 
 sub getWorkflowConfig {
@@ -171,18 +169,17 @@ sub getWorkflowConfig {
 	);
 
     if (!$self->{workflowConfig}) {
-	my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
-	$self->{workflowConfig} =
-	    FgpUtil::Util::PropertySet->new($workflowConfigFile, \@properties);
-	my @path = split(/\/+/, $self->{homeDir});
-	my $wfPathVersion = pop(@path);
-	my $wfPathProject = pop(@path);
-	my $wfName = $self->getWorkflowConfig('name');
-	my $wfVersion = $self->getWorkflowConfig('version');
+      my $workflowConfigFile = "$self->{homeDir}/config/workflow.prop";
+      $self->{workflowConfig} =
+          FgpUtil::Util::PropertySet->new($workflowConfigFile, \@properties);
+      my @path = split(/\/+/, $self->{homeDir});
+      my $wfPathVersion = pop(@path);
+      my $wfPathProject = pop(@path);
+      my $wfName = $self->getWorkflowConfig('name');
+      my $wfVersion = $self->getWorkflowConfig('version');
 
-	$self->error("Error: in workflow.prop name=$wfName but in the workflow home dir path the project is '$wfPathProject'. These two must be equal.") unless $wfName eq $wfPathProject;
-	$self->error("Error: in workflow.prop version=$wfVersion but in the workflow home dir path the version is '$wfPathVersion'. These two must be equal.") unless $wfVersion eq $wfPathVersion;
-
+      $self->error("Error: in workflow.prop name='$wfName' but in the workflow home dir path the project is '$wfPathProject'. These two must be equal.") unless $wfName eq $wfPathProject;
+      $self->error("Error: in workflow.prop version='$wfVersion' but in the workflow home dir path the version is '$wfPathVersion'. These two must be equal.") unless $wfVersion eq $wfPathVersion;
     }
     return $self->{workflowConfig}->getProp($key);
 }
@@ -194,7 +191,6 @@ sub error {
     my $t = localtime();
     die "$t $msg\n\n";
 }
-
 
 sub getDbState {
   my ($self) = @_;
@@ -287,7 +283,6 @@ sub runCmd {
     $self->error("Failed with status $status running: \n$cmd") if ($status);
     return $output;
 }
-
 
 sub getInitOfflineSteps {
     my ($self) = @_;

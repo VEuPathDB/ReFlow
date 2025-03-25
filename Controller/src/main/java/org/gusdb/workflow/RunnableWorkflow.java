@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.gusdb.fgputil.db.platform.DBPlatform;
 import org.gusdb.workflow.xml.WorkflowClassFactory;
 
 /*
@@ -71,8 +72,8 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
   }
 
-    public RunnableWorkflow(String homeDir, Connection conn) throws FileNotFoundException, IOException {
-        super(homeDir, conn);
+    public RunnableWorkflow(String homeDir, Connection conn, DBPlatform platform) throws FileNotFoundException, IOException {
+        super(homeDir, conn, platform);
         initHomeDir(); // initialize workflow home directory, if needed
     }
 
@@ -175,10 +176,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         return uninitialized;
     }
 
-    // This is Oracle specific. Need to break out into vendor specific
-    // class
     private String getNewWorkflowIdSql() {
-        return "select " + workflowTable + "_sq.nextval from dual";
+        return "SELECT " + getDbPlatform().getNextValExpression(null,workflowTable, "_sq")
+                + " " + getDbPlatform().getDummyTable();
     }
 
     private void setInitializingStepTableFlag(boolean initializing) throws SQLException {
@@ -395,9 +395,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         if (type.indexOf(WorkflowGraph.FLAG_DIVIDER) >= 0)
           continue;
 
-        if (typeCounts.get(type) != null && typeCounts.get(type) >= getThrottleConfig(type, config, configFile)) {
-          okToRun = false;
-          break;
+        if (typeCounts.get(type) != null && getThrottleConfig(type, config, configFile) != null && typeCounts.get(type) >= getThrottleConfig(type, config, configFile)) {
+            okToRun = false;
+            break;
         }
       }
     }

@@ -13,6 +13,7 @@ sub run {
   my $clusterServer = $self->getSharedConfig('clusterServer');
   my $clusterTransferServer = $self->getSharedConfig('clusterFileTransferServer');
 
+  my $workingDirRelativePath = $self->getParamValue("workingDirRelativePath");
   my $workingDir = $self->getParamValue("workingDir");
   my $resultsDir = $self->getParamValue("resultsDir");
 
@@ -33,8 +34,8 @@ sub run {
 
   my $userName = $self->getSharedConfig("$clusterServer.clusterLogin");
 
-  my $clusterWorkingDir = "$clusterDataDir/$workingDir";
-  my $clusterResultsDir = "$clusterDataDir/$resultsDir";
+  my $clusterWorkingDir = $self->relativePathToNextflowClusterPath($workingDir, $workingDirRelativePath) ;
+  my $clusterResultsDir = $self->relativePathToNextflowClusterPath($resultsDir, $workingDirRelativePath) ;
   my $clusterNextflowConfigFile = "$clusterDataDir/$nextflowConfigFile";
 
   my $jobInfoFile = "$clusterWorkingDir/clusterJobInfo.txt";
@@ -166,8 +167,14 @@ sub tailLooksOk {
 
     # Does it look like nothing failed?
     my ($failedCount) = $tail =~ /failedCount=(\d+);/; 
+    my ($abortedCount) = $tail =~ /abortedCount=(\d+);/; 
+    my ($runningCount) = $tail =~ /runningCount=(\d+);/; 
+    my ($pendingCount) = $tail =~ /pendingCount=(\d+);/; 
     return unless defined $failedCount;
-    return 1 if $failedCount == 0;
+    return unless defined $abortedCount;
+    return unless defined $runningCount;
+    return unless defined $pendingCount;
+    return 1 if ($failedCount == 0 && $abortedCount == 0 && $runningCount == 0 && $pendingCount);
 
     # Sometimes failures happen on the way. That's ok.
     # We might still be done, as long as we kept trying

@@ -21,6 +21,9 @@ import java.util.Set;
 import javax.script.ScriptException;
 
 import org.gusdb.fgputil.EncryptionUtil;
+import org.gusdb.fgputil.db.platform.DBPlatform;
+import org.gusdb.fgputil.db.platform.Oracle;
+import org.gusdb.fgputil.db.platform.PostgreSQL;
 import org.gusdb.fgputil.script.JavaScript;
 import org.gusdb.fgputil.xml.Name;
 import org.gusdb.fgputil.xml.NamedValue;
@@ -572,10 +575,21 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     static PreparedStatement getPreparedInsertStmt(Connection dbConnection,
             int workflowId, String workflowStepTable) throws SQLException {
+        DBPlatform platform;
+        if (dbConnection.getMetaData().getDatabaseProductName().toLowerCase().startsWith("oracle")){
+            platform = new Oracle();
+        }else {
+            platform = new PostgreSQL();
+        }
+        return getPreparedInsertStmt(platform, dbConnection, workflowId, workflowStepTable);
+    }
+
+    static PreparedStatement getPreparedInsertStmt(DBPlatform platform, Connection dbConnection,
+                                                   int workflowId, String workflowStepTable) throws SQLException {
         String sql = "INSERT INTO "
                 + workflowStepTable
                 + " (workflow_step_id, workflow_id, name, state, state_handled, undo_state, undo_state_handled, off_line, stop_after, depends_string, step_class, params_digest, depth_first_order)"
-                + " VALUES (" + workflowStepTable + "_sq.nextval, "
+                + " VALUES (" + platform.getNextValExpression(null, workflowStepTable, "_sq") + ", "
                 + workflowId + ", ?, ?, 1, null, 1, 0, 0, ?, ?, ?, ?)";
         return dbConnection.prepareStatement(sql);
     }
@@ -599,10 +613,21 @@ public class WorkflowStep implements Comparable<WorkflowStep>, WorkflowNode {
 
     static PreparedStatement getPreparedParamValInsertStmt(Connection dbConnection,
 							String workflowStepParamValTable) throws SQLException {
+        DBPlatform platform;
+        if (dbConnection.getMetaData().getDatabaseProductName().toLowerCase().startsWith("oracle")){
+            platform = new Oracle();
+        }else {
+            platform = new PostgreSQL();
+        }
+        return getPreparedParamValInsertStmt(platform, dbConnection, workflowStepParamValTable);
+    }
+
+    static PreparedStatement getPreparedParamValInsertStmt(DBPlatform platform, Connection dbConnection,
+                                                           String workflowStepParamValTable) throws SQLException {
         String sql = "INSERT INTO "
-	    + workflowStepParamValTable
-	    + " (workflow_step_param_value_id, workflow_step_id, param_name, param_value)"
-	    + " VALUES (" + workflowStepParamValTable + "_sq.nextval, ?, ?, ?)";
+                + workflowStepParamValTable
+                + " (workflow_step_param_value_id, workflow_step_id, param_name, param_value)"
+                + " VALUES (" + platform.getNextValExpression(null, workflowStepParamValTable, "_sq") + ", ?, ?, ?)";
         return dbConnection.prepareStatement(sql);
     }
 

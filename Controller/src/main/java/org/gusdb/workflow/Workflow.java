@@ -25,6 +25,8 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.gusdb.fgputil.CliUtil;
 import org.gusdb.fgputil.IoUtil;
+import org.gusdb.fgputil.db.platform.DBPlatform;
+import org.gusdb.fgputil.db.platform.PostgreSQL;
 import org.gusdb.fgputil.db.platform.SupportedPlatform;
 import org.gusdb.fgputil.db.pool.DatabaseInstance;
 import org.gusdb.fgputil.db.pool.SimpleDbConfig;
@@ -71,6 +73,7 @@ public class Workflow<T extends WorkflowStep> {
     // configuration
     private final String homeDir;
     private final Connection connection;
+    private final DBPlatform platform;
     private Properties workflowProps; // from workflow config file
     protected Properties loadThrottleConfig = new Properties();
     protected Properties failThrottleConfig = new Properties();
@@ -105,9 +108,10 @@ public class Workflow<T extends WorkflowStep> {
     // list of processes to clean
     private List<Process> bgdProcesses = new ArrayList<Process>();
 
-    public Workflow(String homeDir, Connection connection) throws FileNotFoundException, IOException {
+    public Workflow(String homeDir, Connection connection, DBPlatform platform) throws FileNotFoundException, IOException {
         this.homeDir = homeDir.replaceAll("/$", "");
         this.connection = connection;
+        this.platform = platform;
         name = getWorkflowConfig("name");
         version = getWorkflowConfig("version");
         workflowTable = getWorkflowConfig("workflowTable");
@@ -115,7 +119,7 @@ public class Workflow<T extends WorkflowStep> {
         workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
         workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
         maxRunningPerStepClass = Integer.parseInt(getWorkflowConfig("maxRunningPerStepClass")); 
-        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass")); 
+        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass"));
     }
 
     // ///////////////////////////////////////////////////////////////////////
@@ -337,16 +341,29 @@ public class Workflow<T extends WorkflowStep> {
     static DatabaseInstance getDb() throws IOException {
       String dsn = Utilities.getGusConfig("jdbcDsn");
       String login = Utilities.getGusConfig("databaseLogin");
+
+      SupportedPlatform platform;
+      if (Utilities.getGusConfig("dbVendor").trim().equals("Postgres")){
+          platform = SupportedPlatform.POSTGRESQL;
+      } else {
+        platform = SupportedPlatform.ORACLE;
+      }
+
       System.err.println("Connecting to " + dsn + " (" + login + ")");
       DatabaseInstance db = new DatabaseInstance(
-          SimpleDbConfig.create(SupportedPlatform.ORACLE, dsn, login,
+          SimpleDbConfig.create(platform, dsn, login,
               Utilities.getGusConfig("databasePassword")));
       System.err.println("Connected");
+
       return db;
     }
 
     Connection getDbConnection() {
       return connection;
+    }
+
+    DBPlatform getDbPlatform() {
+        return platform;
     }
 
     void executeSqlUpdate(String sql) throws SQLException {
@@ -454,14 +471,29 @@ public class Workflow<T extends WorkflowStep> {
         for (String ds : desiredStates)
             buf.append("'" + ds + "',");
 
+
+        String sql;
         String state_str = undo_step_id == null ? "state" : "undo_state";
-        String sql = "select name, workflow_step_id," + state_str
-                + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
-                + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
-                + "  END AS hours " + " from " + workflowStepTable
-                + " where workflow_id = '" + workflow_id + "'" + " and "
-                + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
-                + " order by end_time ASC, start_time ASC";
+
+        if (getDbPlatform().getClass().equals(PostgreSQL.class)){
+            sql = "SELECT name, workflow_step_id," + state_str
+                    + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
+                    + "  ELSE EXTRACT(EPOCH FROM (COALESCE(end_time, LOCALTIMESTAMP) - start_time))/3600 "
+                    + "  END AS hours " + " FROM " + workflowStepTable
+                    + " WHERE workflow_id = '" + workflow_id + "'" + " AND "
+                    + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
+                    + " ORDER BY end_time ASC, start_time ASC"
+            ;
+        } else {
+            sql = "SELECT name, workflow_step_id," + state_str
+                    + ", end_time, CASE WHEN start_time IS NULL THEN -1 "
+                    + "  ELSE (nvl(end_time, SYSDATE) - start_time) * 24 "
+                    + "  END AS hours " + " from " + workflowStepTable
+                    + " WHERE workflow_id = '" + workflow_id + "'" + " AND "
+                    + state_str + " in(" + buf.substring(0, buf.length() - 1) + ")"
+                    + " ORDER BY end_time ASC, start_time ASC"
+            ;
+        }
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -549,25 +581,25 @@ public class Workflow<T extends WorkflowStep> {
     void reset() throws SQLException, FileNotFoundException, IOException {
         getDbState();
 
-	if (!test_mode)
-	  error("Cannot reset a workflow unless it was run in test mode (-t)");
+        if (!test_mode)
+            error("Cannot reset a workflow unless it was run in test mode (-t)");
 
         for (String dirName : homeDirSubDirs) {
             File dir = new File(getHomeDir() + "/" + dirName);
-	    if (dir.exists()) {
-	      IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
-	      System.out.println("rm -rf " + dir);
-	    }
+            if (dir.exists()) {
+                IoUtil.deleteDirectoryTree(Paths.get(dir.getAbsolutePath()));
+                System.out.println("rm -rf " + dir);
+            }
         }
 
         String sql = "update " + workflowTable
-	    + " set undo_step_id = null where workflow_id = " + workflow_id;
+                + " set undo_step_id = null where workflow_id = " + workflow_id;
         executeSqlUpdate(sql);
 
         sql = "delete from " + workflowStepParamValTable
-	    + " where workflow_step_id in (select workflow_step_id from "
-	    + workflowStepTable + " where workflow_id = " + workflow_id
-	    + ")";
+                + " where workflow_step_id in (select workflow_step_id from "
+                + workflowStepTable + " where workflow_id = " + workflow_id
+                + ")";
         executeSqlUpdate(sql);
         System.out.println(sql);
 
@@ -632,7 +664,7 @@ public class Workflow<T extends WorkflowStep> {
         // runnable workflow, either test or run mode
         if (cmdLine.hasOption("r") || cmdLine.hasOption("t") || (cmdLine.hasOption("u") && cmdLine.hasOption("c"))) {
             System.err.println("Initializing...");
-            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn);
+            RunnableWorkflow runnableWorkflow = new RunnableWorkflow(homeDirName, conn, db.getPlatform());
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                 new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
@@ -652,21 +684,21 @@ public class Workflow<T extends WorkflowStep> {
         // quick workflow report
         else if (cmdLine.hasOption("q")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             workflow.quickReportWorkflow();
         }
 
         // change machine
         else if (cmdLine.hasOption("m")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             workflow.resetMachine();
         }
 
         // quick step report (three column output)
         else if (cmdLine.hasOption("s")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             String[] desiredStates = getDesiredStates(cmdLine, "s");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, false);
@@ -675,7 +707,7 @@ public class Workflow<T extends WorkflowStep> {
         // quick step report (one column output)
         else if (cmdLine.hasOption("s1")) {
             Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(
-                    homeDirName, conn);
+                    homeDirName, conn, db.getPlatform());
             String[] desiredStates = getDesiredStates(cmdLine, "s1");
             oops = desiredStates.length < 1;
             if (!oops) workflow.quickReportSteps(desiredStates, true);
@@ -683,7 +715,7 @@ public class Workflow<T extends WorkflowStep> {
 
         // compile check or detailed step report
         else if (cmdLine.hasOption("c") || cmdLine.hasOption("d")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn, db.getPlatform());
             WorkflowGraph<WorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                     new WorkflowGraphClassFactory(), workflow);
             workflow.setWorkflowGraph(rootGraph);
@@ -695,7 +727,7 @@ public class Workflow<T extends WorkflowStep> {
         }
 
         else if (cmdLine.hasOption("reset")) {
-            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn);
+            Workflow<WorkflowStep> workflow = new Workflow<WorkflowStep>(homeDirName, conn, db.getPlatform());
             workflow.reset();
         }
 
