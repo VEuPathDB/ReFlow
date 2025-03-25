@@ -36,9 +36,11 @@ sub run {
       if ($currentDbName eq $dbName){
         $self->log("We are already connected to $dbName so we must be in a production environment. Skipping database creation");
       }
-      $self->log("creating database with script $sql");
-      $self->{workflow}->_runSql($roleSql);
-      $self->{workflow}->_runSql($sql);
+      else {
+        $self->log("creating database with script $sql");
+        $self->{workflow}->_runSql($roleSql);
+        $self->{workflow}->_runSql($sql);
+      }
     }
   }
 }
