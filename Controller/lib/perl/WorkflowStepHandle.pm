@@ -146,6 +146,13 @@ sub getDbh {
   return $self->{dbh};
 }
 
+sub disconnectDbh {
+  my ($self) = @_;
+  return if !$self->{dbh};
+  $self->{dbh}->disconnect();
+  $self->{dbh} = undef;
+}
+
 sub getConfig {
   my ($self, $prop, $isOptional) = @_;
 
@@ -862,6 +869,7 @@ sub runInWrapper {
 
     $self->log("Running$undoStr Step Class $stepClassName");
     my $skipped = 0;
+    $self->disconnectDbh();    # disconnect while doing the real work
     exec {
         my $testOnly = $mode eq 'test';
 	$self->log("only testing...") if $testOnly;
