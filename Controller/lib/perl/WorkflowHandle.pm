@@ -99,6 +99,13 @@ sub getDbh {
     return $self->{dbh};
 }
 
+sub disconnectDbh {
+  my ($self) = @_;
+  return if !$self->{dbh};
+  $self->{dbh}->disconnect();
+  $self->{dbh} = undef;
+}
+
 # only to be used to run queries against workflow tables
 sub _runSql {
     my ($self,$sql) = @_;
