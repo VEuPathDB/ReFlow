@@ -141,6 +141,7 @@ sub getDbh {
       $self->getGusDbiDsn()
       , $self->getGusDatabaseLogin()
       , $self->getGusDatabasePassword()
+      , { RaiseError => 1 }
     ) or $self->error(DBI::errstr);
   }
   return $self->{dbh};
