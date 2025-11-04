@@ -16,6 +16,8 @@ sub run {
   # which is useful for global dbs etc.
   $dbName .= "_" . $self->getParamValue('dbName') if $self->getParamValue('dbName');
 
+  # Convert dbName to lowercase.
+  $dbName = lc ($dbName);
 
   my $dataDir = $self->getParamValue("dataDir") ? $self->getParamValue('dataDir') : ".";
   my $gusConfigFilename = $self->getParamValue('gusConfigFilename');

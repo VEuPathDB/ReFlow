@@ -19,15 +19,18 @@ sub run {
   # which is useful for global dbs etc.s
   $dbName .= "_" . $self->getParamValue('dbName') if $self->getParamValue('dbName');
 
+  # Convert dbName to lowercase.
+  $dbName = lc ($dbName);
+
   my $roleSql = "SET ROLE gus_w";
   my $currentDbSql = "SELECT current_database()";
 
   if($undo){
-    my $sql = "DROP DATABASE \"$dbName\"";
+    my $sql = "DROP DATABASE $dbName";
     $self->{workflow}->_runSql($roleSql);
     $self->{workflow}->_runSql($sql);
   }else{
-      my $sql = "CREATE DATABASE \"$dbName\" WITH TEMPLATE template_gus_apidb";
+      my $sql = "CREATE DATABASE $dbName WITH TEMPLATE template_gus_apidb";
     if($test) {
       $self->log("will create database with script $sql");
     }
