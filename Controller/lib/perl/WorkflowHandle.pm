@@ -93,9 +93,17 @@ sub getDbh {
     my $password = ($self->{password} eq '') ? $self->getGusConfig('databasePassword') : $self->{password};
 
     if (!$self->{dbh}) {
-	    $self->{dbh} = DBI->connect($dbName, $login, $password) or $self->error(DBI::errstr);
+	$self->{dbh} = DBI->connect($dbName, $login, $password,
+				    {AutoCommit => 1, RaiseError=>1}) or $self->error(DBI::errstr);
     }
     return $self->{dbh};
+}
+
+sub disconnectDbh {
+  my ($self) = @_;
+  return if !$self->{dbh};
+  $self->{dbh}->disconnect();
+  $self->{dbh} = undef;
 }
 
 # only to be used to run queries against workflow tables

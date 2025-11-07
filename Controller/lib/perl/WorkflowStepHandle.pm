@@ -141,6 +141,7 @@ sub getDbh {
       $self->getGusDbiDsn()
       , $self->getGusDatabaseLogin()
       , $self->getGusDatabasePassword()
+      , { RaiseError => 1 }
     ) or $self->error(DBI::errstr);
   }
   return $self->{dbh};
@@ -862,6 +863,7 @@ sub runInWrapper {
 
     $self->log("Running$undoStr Step Class $stepClassName");
     my $skipped = 0;
+    $self->{workflow}->disconnectDbh();  # disconnect while doing the real work
     exec {
         my $testOnly = $mode eq 'test';
 	$self->log("only testing...") if $testOnly;
