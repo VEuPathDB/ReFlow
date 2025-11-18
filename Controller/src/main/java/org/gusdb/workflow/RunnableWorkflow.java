@@ -347,7 +347,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                         && !step.getFullName().equals(undoStepName))
                     error("Step '" + undoStepName + "' does not match '"
                             + step.getFullName()
-                            + "' which is currently the step being undone");
+                            + "' which is currently the step being undone.  (undo_step_id=" + undo_step_id +")");
             }
         }
 
