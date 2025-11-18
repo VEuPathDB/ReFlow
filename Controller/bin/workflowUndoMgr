@@ -2,7 +2,7 @@
 
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
-use Data::Dumper;
+use File::Temp qw(tempfile);
 
 usage() unless scalar(@ARGV) == 3 && $ARGV[0] eq '-h'
 	 && ($ARGV[2] eq '-r' || $ARGV[2] eq '-t');
@@ -10,6 +10,7 @@ usage() unless scalar(@ARGV) == 3 && $ARGV[0] eq '-h'
 my $home_dir = $ARGV[1];
 my $runOrTest = $ARGV[2];
 
+# Read steps from STDIN
 my @steps;
 while(<STDIN>) {
   chomp;
@@ -27,23 +28,32 @@ print STDERR "\nYou have 10 seconds to hit ctrl-C if that is not ok!\n\n";
 sleep(10);
 
 print STDERR "OK, here we go...\n\n";
+
+# Create a temporary file with the step names
+my ($fh, $filename) = tempfile(UNLINK => 1);
 foreach my $step (@steps) {
-  my $cmd = "workflow -h $home_dir $runOrTest -u $step";
-  print STDERR "$cmd\n";
-  system ($cmd);
-  my $status = $? >>8;
-  if ($status) {
-    print STDERR "Error.  Failed with status '$status': $!\n\n";
-  }
-  else {
-    print STDERR "Done\n\n";
-  }
+  print $fh "$step\n";
+}
+close($fh);
+
+# Make a single call to workflow with the temp file
+my $cmd = "workflow -h $home_dir $runOrTest -u $filename";
+print STDERR "$cmd\n";
+system($cmd);
+my $status = $? >> 8;
+
+if ($status) {
+  print STDERR "Error.  Failed with status '$status': $!\n\n";
+  exit($status);
+} else {
+  print STDERR "Done\n\n";
+  exit(0);
 }
 
 sub usage {
   print "
 Run a series of undos.  Takes names of steps on STDIN.  Each provided
-step name will be undone.
+step name will be undone in a single workflow invocation.
 
 Use the workflow command's -s1 option to find all DONE steps, and pipe
 those to egrep to find the ones you want to undo.  Pipe those to

@@ -103,7 +103,7 @@ public class Workflow<T extends WorkflowStep> {
 
     // input
     protected WorkflowGraph<T> workflowGraph; // the graph
-    protected String undoStepName; // iff we are running undo
+    protected List<String> undoStepNames; // iff we are running undo
 
     // list of processes to clean
     private List<Process> bgdProcesses = new ArrayList<Process>();
@@ -645,7 +645,7 @@ public class Workflow<T extends WorkflowStep> {
         // parse command line
         Options options = declareOptions();
         String cmdlineSyntax = cmdName
-                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name> <-db [login[/pass]@]instance>";
+                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u undo_file> <-db [login[/pass]@]instance>";
         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
                 getUsageNotes(), options, args);
@@ -668,7 +668,14 @@ public class Workflow<T extends WorkflowStep> {
             WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
                 new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
-            runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u") : null;
+
+            // read undo steps from file if -u option provided
+            if (cmdLine.hasOption("u")) {
+                runnableWorkflow.undoStepNames = readUndoStepsFromFile(cmdLine.getOptionValue("u"));
+            } else {
+                runnableWorkflow.undoStepNames = null;
+            }
+
             boolean testOnly = cmdLine.hasOption("t");
             if (cmdLine.hasOption("c")) {
                 runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
@@ -758,6 +765,32 @@ public class Workflow<T extends WorkflowStep> {
         }
         String[] none = {};
         return oops ? none : desiredStates;
+    }
+
+    private static List<String> readUndoStepsFromFile(String filePath) throws IOException {
+        List<String> stepNames = new ArrayList<>();
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            throw new FileNotFoundException("Undo steps file not found: " + filePath);
+        }
+
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                // skip empty lines and comments
+                if (!line.isEmpty() && !line.startsWith("#")) {
+                    stepNames.add(line);
+                }
+            }
+        }
+
+        if (stepNames.isEmpty()) {
+            throw new IllegalArgumentException("No steps found in undo file: " + filePath);
+        }
+
+        return stepNames;
     }
 
     private static String getUsageNotes() {
@@ -895,7 +928,7 @@ public class Workflow<T extends WorkflowStep> {
 
         options.addOptionGroup(actions);
 
-        CliUtil.addOption(options, "u", "Undo the specified step", false);
+        CliUtil.addOption(options, "u", "Undo steps listed in file (one step name per line)", false);
 
         CliUtil.addOption(options, "db", "Use alternative database "
                 + "(and login, password, optional). "

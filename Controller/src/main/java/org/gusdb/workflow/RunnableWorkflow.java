@@ -72,6 +72,9 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     }
   }
 
+    // track current undo step name for logging purposes
+    private String currentUndoStepName = null;
+
     public RunnableWorkflow(String homeDir, Connection conn, DBPlatform platform) throws FileNotFoundException, IOException {
         super(homeDir, conn, platform);
         initHomeDir(); // initialize workflow home directory, if needed
@@ -92,18 +95,24 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         setRunningState(testOnly); // set db state. fail if already running
 
-        initializeUndo(testOnly); // unless undoStepName is null
+        // if running batch undo, iterate through all steps
+        if (undoStepNames != null && !undoStepNames.isEmpty()) {
+            runBatchUndo(testOnly);
+        } else {
+            // standard run or single undo (legacy - should not happen)
+            initializeUndo(testOnly);
 
-        // start polling
-        while (true) {
-            getDbSnapshot();
-            if (handleStepChanges(testOnly)) break; // returns true if all steps done
-            findOndeckSteps();
-            fillOpenSlots(testOnly);
-	    System.gc();
-            Thread.sleep(2000);
-            cleanProcesses();
-            checkForKillSignal(); // if a kill file exists in wf home.
+            // start polling
+            while (true) {
+                getDbSnapshot();
+                if (handleStepChanges(testOnly)) break; // returns true if all steps done
+                findOndeckSteps();
+                fillOpenSlots(testOnly);
+                System.gc();
+                Thread.sleep(2000);
+                cleanProcesses();
+                checkForKillSignal(); // if a kill file exists in wf home.
+            }
         }
     }
 
@@ -202,7 +211,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         else {
             if (stepTableEmpty) {
-                if (undoStepName != null) 
+                if (undoStepNames != null && !undoStepNames.isEmpty())
                     error("Workflow has never run.  Undo not allowed.");
             } else {
                 if (checkForRunningOrFailedSteps())
@@ -261,11 +270,13 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
     private void initializeUndo(boolean testOnly) throws SQLException,
             IOException, InterruptedException {
 
-        if (undo_step_id == null && undoStepName == null) return;
+        // This method is now only used for legacy single-step undos (shouldn't be called)
+        if (undo_step_id == null && (undoStepNames == null || undoStepNames.isEmpty())) return;
 
-        if (undoStepName == null)
+        if (undoStepNames == null || undoStepNames.isEmpty())
             error("An undo is in progress.  Cannot run the workflow in regular mode.");
 
+        String undoStepName = undoStepNames.get(0); // use first step for legacy mode
         log("Running UNDO of step " + undoStepName);
 
         // if not already running undo
@@ -342,6 +353,134 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         log("Steps in the Undo Graph:");
         log(workflowGraph.getStepsAsString());
         log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    }
+
+    // run batch undo - process multiple undo steps in sequence
+    private void runBatchUndo(boolean testOnly) throws Exception {
+        log("Running BATCH UNDO of " + undoStepNames.size() + " steps");
+
+        int successCount = 0;
+        int failCount = 0;
+
+        for (String stepName : undoStepNames) {
+            try {
+                log("======================================================");
+                log("UNDO " + (successCount + failCount + 1) + " of " + undoStepNames.size() + ": " + stepName);
+                log("======================================================");
+
+                // reinitialize for this undo step
+                getDbSnapshot();
+
+                // set current step name for logging
+                currentUndoStepName = stepName;
+                undo_step_id = null; // reset to force initialization
+
+                // validate and setup this undo
+                handleStepChanges(testOnly);
+                WorkflowStep undoRootStep = workflowGraph.getStepsByName().get(stepName);
+                if (undoRootStep == null) {
+                    log("ERROR: Step '" + stepName + "' not found. Skipping.");
+                    failCount++;
+                    continue;
+                }
+
+                log("Finding descendants of " + stepName);
+                Set<WorkflowStep> undoDescendants = new HashSet<WorkflowStep>();
+                undoDescendants.add(undoRootStep);
+                undoRootStep.getDescendants(undoDescendants);
+
+                // check for running/failed steps
+                String runningStr = "";
+                String failedStr = "";
+                boolean foundRunningOrFailed = false;
+
+                log("Confirming that no descendants are running or failed");
+                for (WorkflowStep step : undoDescendants) {
+                    if (step.getState() != null && step.getState().equals(RUNNING)) {
+                        runningStr += "  " + step.getFullName() + NL;
+                        foundRunningOrFailed = true;
+                    }
+                    if (step.getState() != null && step.getState().equals(FAILED)) {
+                        failedStr += "  " + step.getFullName() + NL;
+                        foundRunningOrFailed = true;
+                    }
+                }
+                if (foundRunningOrFailed) {
+                    log("ERROR: Cannot undo '" + stepName + "' - steps in undo graph are RUNNING or FAILED:" + NL
+                        + "RUNNING:" + NL + runningStr + NL
+                        + "FAILED:" + NL + failedStr);
+                    failCount++;
+                    continue;
+                }
+
+                // find the step ID
+                Integer currentUndoStepId = null;
+                for (RunnableWorkflowStep step : workflowGraph.getSteps()) {
+                    if (step.getFullName().equals(stepName)) {
+                        currentUndoStepId = step.getId();
+                        if (step.getUndoRoot() != null) {
+                            log("ERROR: Step '" + stepName + "' may not be root of undo. Use " + step.getUndoRoot());
+                            failCount++;
+                            break;
+                        }
+                        break;
+                    }
+                }
+                if (currentUndoStepId == null) {
+                    log("ERROR: Step '" + stepName + "' not found in workflow graph");
+                    failCount++;
+                    continue;
+                }
+
+                // set undo_step_id in workflow table
+                undo_step_id = currentUndoStepId;
+                String sql = "UPDATE " + workflowTable + NL
+                        + "SET undo_step_id = '" + undo_step_id + "'" + NL
+                        + "WHERE workflow_id = " + workflow_id;
+                executeSqlUpdate(sql);
+
+                // reload and convert graph for this undo
+                WorkflowGraph<RunnableWorkflowStep> rootGraph = WorkflowGraphUtil.constructFullGraph(
+                    new RunnableWorkflowGraphClassFactory(), this);
+                setWorkflowGraph(rootGraph);
+                getDbSnapshot();
+                workflowGraph.convertToUndo();
+
+                log("Steps in the Undo Graph:");
+                log(workflowGraph.getStepsAsString());
+
+                // run the undo polling loop
+                while (true) {
+                    getDbSnapshot();
+                    if (handleStepChanges(testOnly)) break;
+                    findOndeckSteps();
+                    fillOpenSlots(testOnly);
+                    System.gc();
+                    Thread.sleep(2000);
+                    cleanProcesses();
+                    checkForKillSignal();
+                }
+
+                log("Undo of '" + stepName + "' completed successfully");
+                successCount++;
+
+            } catch (Exception e) {
+                log("ERROR undoing step '" + stepName + "': " + e.getMessage());
+                e.printStackTrace();
+                failCount++;
+            }
+        }
+
+        log("======================================================");
+        log("BATCH UNDO COMPLETE");
+        log("  Successful: " + successCount);
+        log("  Failed: " + failCount);
+        log("  Total: " + undoStepNames.size());
+        log("======================================================");
+
+        if (failCount > 0) {
+            error("Batch undo completed with " + failCount + " failures");
+        }
     }
 
     // iterate through steps, checking on changes since last snapshot
@@ -510,7 +649,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         executeSqlUpdate(sql);
 
         String what = "Workflow";
-        if (undo_step_id != null) what = "Undo of " + undoStepName;
+        if (undo_step_id != null) what = "Undo of " + (currentUndoStepName != null ? currentUndoStepName : "step");
         log(what + " " + (testOnly ? "TEST " : "") + DONE);
     }
 
