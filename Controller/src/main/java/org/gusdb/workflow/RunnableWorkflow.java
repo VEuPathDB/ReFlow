@@ -92,19 +92,39 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         setRunningState(testOnly); // set db state. fail if already running
 
-        initializeUndo(testOnly); // unless undoStepName is null
-
-        // start polling
-        while (true) {
-            getDbSnapshot();
-            if (handleStepChanges(testOnly)) break; // returns true if all steps done
-            findOndeckSteps();
-            fillOpenSlots(testOnly);
-	    System.gc();
-            Thread.sleep(2000);
-            cleanProcesses();
-            checkForKillSignal(); // if a kill file exists in wf home.
+        if (multipleUndoStepNames == null ) {
+          runSub(testOnly);
+        } else {
+          WorkflowGraph origGraph = workflowGraph;
+          for(String undoStepNm : multipleUndoStepNames) {
+            setWorkflowGraph(origGraph.copy());
+            undoStepName = undoStepNm;
+            runSub(testOnly);
+          }
         }
+
+        // make copy of graph.
+        // for each undo step
+        // make new graph
+        // set workflow graph = new graph
+        // do the stuff below
+    }
+
+    void runSub(boolean testOnly) throws Exception {
+      initializeUndo(testOnly); // unless undoStepName is null
+
+      // start polling
+      while (true) {
+        getDbSnapshot();
+        if (handleStepChanges(testOnly)) break; // returns true if all steps done
+        findOndeckSteps();
+        fillOpenSlots(testOnly);
+        System.gc();
+        Thread.sleep(2000);
+        cleanProcesses();
+        checkForKillSignal(); // if a kill file exists in wf home.
+      }
+
     }
 
     // backup the config/ dir and $GUS_HOME/lib/xml/workflow
