@@ -147,7 +147,7 @@ public class Workflow<T extends WorkflowStep> {
     this.multipleUndoStepNames = multipleUndoStepNames;
   }
 
-    List<String> getMultipleUndoStepNames() {
+  List<String> getMultipleUndoStepNames() {
     return multipleUndoStepNames;
   }
 
@@ -682,6 +682,7 @@ public class Workflow<T extends WorkflowStep> {
 
             // Read undo steps from file if provided
             if (cmdLine.hasOption("undoStepFile")) {
+              if (runnableWorkflow.undoStepName != null) throw new IllegalArgumentException("-u and -undoFileName are not both allowed");
               runnableWorkflow.setMultipleUndoStepNames(readMultiUndoFile( cmdLine));
             }
 

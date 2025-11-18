@@ -102,12 +102,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             runSub(testOnly);
           }
         }
-
-        // make copy of graph.
-        // for each undo step
-        // make new graph
-        // set workflow graph = new graph
-        // do the stuff below
     }
 
     void runSub(boolean testOnly) throws Exception {
@@ -611,9 +605,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             if (stmt != null) stmt.close();
         }
     }
-
-
-
 
     private boolean checkNewWorkflowHomeDir() {
         File stepDir = new File(getHomeDir() + "/steps");
