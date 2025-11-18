@@ -100,6 +100,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             setWorkflowGraph(origGraph.copy());
             undoStepName = undoStepNm;
             runSub(testOnly);
+            getDbSnapshot();
           }
         }
     }
@@ -584,8 +585,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             if (stmt != null) stmt.close();
         }
     }
-
-
 
     private boolean checkForLockedWorkflows() throws SQLException {
         Statement stmt = null;
