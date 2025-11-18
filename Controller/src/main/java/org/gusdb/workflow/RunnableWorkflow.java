@@ -528,6 +528,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         String what = "Workflow";
         if (undo_step_id != null) what = "Undo of " + undoStepName;
         log(what + " " + (testOnly ? "TEST " : "") + DONE);
+        undo_step_id = null;  // for case lf multi undos
     }
 
     /*
