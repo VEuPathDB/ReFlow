@@ -100,8 +100,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             setWorkflowGraph(origGraph.copy());
             undoStepName = undoStepNm;
             runSub(testOnly);
-            executeSqlUpdate("UPDATE " + workflowTable + NL + "SET undo_step_id = null WHERE workflow_id = " + workflow_id);
-            getDbSnapshot();
           }
         }
     }
