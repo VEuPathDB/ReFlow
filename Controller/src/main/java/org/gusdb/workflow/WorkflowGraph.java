@@ -875,4 +875,173 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
             leafStep.addChild(childStep);
         }
     }
+
+    /**
+     * Creates a deep copy of this WorkflowGraph, including all steps and their relationships.
+     * The copy includes the full recursive graph structure with all parent/child dependencies.
+     *
+     * Note: References to _workflow, _globalConstants, and _globalStepsByName are shared
+     * (not deep copied) as they typically reference parent/global context.
+     *
+     * @return A new WorkflowGraph instance that is a deep copy of this graph
+     */
+    @SuppressWarnings("unchecked")
+    public WorkflowGraph<T> copy() {
+        WorkflowGraph<T> copiedGraph = new WorkflowGraph<T>();
+
+        // Copy simple fields
+        copiedGraph._xmlFileName = this._xmlFileName;
+        copiedGraph._isGlobal = this._isGlobal;
+
+        // Copy references (shared, not deep copied)
+        copiedGraph._workflow = this._workflow;
+        copiedGraph._globalConstants = this._globalConstants;
+        copiedGraph._globalStepsByName = this._globalStepsByName;
+
+        // Deep copy parameter declarations
+        copiedGraph._paramDeclarations = new ArrayList<ParamDeclaration>();
+        for (ParamDeclaration decl : this._paramDeclarations) {
+            copiedGraph._paramDeclarations.add(decl);
+        }
+
+        // Deep copy constant maps
+        copiedGraph._constants = new LinkedHashMap<String, String>(this._constants);
+        copiedGraph._tmpGlobalConstants = new LinkedHashMap<String, String>(this._tmpGlobalConstants);
+
+        // Create a mapping from original steps to copied steps
+        Map<WorkflowStep, T> stepCopyMap = new LinkedHashMap<WorkflowStep, T>();
+
+        // First pass: create copies of all steps
+        for (Map.Entry<String, T> entry : this._stepsByName.entrySet()) {
+            T originalStep = entry.getValue();
+            T copiedStep = copyStep(originalStep);
+            stepCopyMap.put(originalStep, copiedStep);
+            copiedGraph._stepsByName.put(entry.getKey(), copiedStep);
+            copiedStep.setWorkflowGraph(copiedGraph);
+        }
+
+        // Second pass: recreate parent/child relationships
+        for (Map.Entry<WorkflowStep, T> entry : stepCopyMap.entrySet()) {
+            WorkflowStep originalStep = entry.getKey();
+            T copiedStep = entry.getValue();
+
+            // Copy parent relationships
+            for (WorkflowStep originalParent : originalStep.getParents()) {
+                T copiedParent = stepCopyMap.get(originalParent);
+                if (copiedParent != null) {
+                    copiedStep.addParent(copiedParent);
+                }
+            }
+
+            // Copy child relationships
+            for (WorkflowStep originalChild : originalStep.getChildren()) {
+                T copiedChild = stepCopyMap.get(originalChild);
+                if (copiedChild != null) {
+                    copiedStep.addChild(copiedChild);
+                }
+            }
+
+            // Handle subgraph return step
+            if (originalStep.getSubgraphReturnStep() != null) {
+                T copiedReturnStep = stepCopyMap.get(originalStep.getSubgraphReturnStep());
+                if (copiedReturnStep != null) {
+                    copiedStep.subgraphReturnStep = copiedReturnStep;
+                }
+            }
+        }
+
+        // Rebuild root, leaf, and subgraph caller lists
+        for (T copiedStep : copiedGraph._stepsByName.values()) {
+            if (copiedStep.getParents().isEmpty()) {
+                copiedGraph._rootSteps.add(copiedStep);
+            }
+            if (copiedStep.getChildren().isEmpty()) {
+                copiedGraph._leafSteps.add(copiedStep);
+            }
+            if (copiedStep.getSubgraphXmlFileName() != null) {
+                copiedGraph._subgraphCallerSteps.add(copiedStep);
+            }
+        }
+
+        // sortedSteps will be null and rebuilt lazily when needed
+        copiedGraph._sortedSteps = null;
+
+        return copiedGraph;
+    }
+
+    /**
+     * Helper method to create a copy of an individual step.
+     * This method creates a new instance and copies all fields except parent/child relationships,
+     * which are handled separately in the copy() method.
+     *
+     * @param originalStep The step to copy
+     * @return A new step instance with copied fields
+     */
+    @SuppressWarnings("unchecked")
+    protected T copyStep(T originalStep) {
+        T copiedStep;
+        try {
+            // Create a new instance of the same class
+            copiedStep = (T) originalStep.getClass().getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create copy of step: " + originalStep.getBaseName(), e);
+        }
+
+        // Copy all fields from original to copied step
+        copiedStep.setName(originalStep.getBaseName());
+        copiedStep.setPath(originalStep.getPath());
+        copiedStep.setStepClass(originalStep.getStepClassName());
+        copiedStep.subgraphXmlFileName = originalStep.subgraphXmlFileName;
+        copiedStep.sourceXmlFileName = originalStep.sourceXmlFileName;
+        copiedStep.setExternalName(originalStep.getExternalName());
+        copiedStep.setIsGlobal(originalStep.getIsGlobal());
+        copiedStep.setUndoRoot(originalStep.getUndoRoot());
+
+        // Copy load and fail types
+        String[] loadTypes = originalStep.getLoadTypes();
+        if (loadTypes != null && loadTypes.length > 0) {
+            copiedStep.setStepLoadTypes(String.join(", ", loadTypes));
+        }
+        String[] failTypes = originalStep.getFailTypes();
+        if (failTypes != null && failTypes.length > 0) {
+            copiedStep.setStepFailTypes(String.join(", ", failTypes));
+        }
+
+        // Copy excludeIfNoXml condition (includeIf and excludeIf are package-private)
+        String excludeIfNoXml = originalStep.getExcludeIfNoXmlString();
+        if (excludeIfNoXml != null) {
+            copiedStep.setExcludeIfXmlFileDoesNotExist(excludeIfNoXml);
+        }
+
+        // Copy parameter values
+        for (Map.Entry<String, String> param : originalStep.getParamValues().entrySet()) {
+            copiedStep.addParamValue(new NamedValue(param.getKey(), param.getValue()));
+        }
+
+        // Copy depends names (but not the actual parent/child references)
+        for (Name dependsName : originalStep.getDependsNames()) {
+            copiedStep.addDependsName(dependsName);
+        }
+        for (Name dependsGlobalName : originalStep.getDependsGlobalNames()) {
+            copiedStep.addDependsGlobalName(dependsGlobalName);
+        }
+        for (Name dependsExternalName : originalStep.getDependsExternalNames()) {
+            copiedStep.addDependsExternalName(dependsExternalName);
+        }
+
+        // Copy state information
+        copiedStep.workflow_step_id = originalStep.workflow_step_id;
+        copiedStep.state = originalStep.state;
+        copiedStep.state_handled = originalStep.state_handled;
+        copiedStep.undo_state = originalStep.undo_state;
+        copiedStep.undo_state_handled = originalStep.undo_state_handled;
+        copiedStep.skipped = originalStep.skipped;
+        copiedStep.off_line = originalStep.off_line;
+        copiedStep.stop_after = originalStep.stop_after;
+        copiedStep.process_id = originalStep.process_id;
+        copiedStep.start_time = originalStep.start_time;
+        copiedStep.end_time = originalStep.end_time;
+
+        return copiedStep;
+    }
 }

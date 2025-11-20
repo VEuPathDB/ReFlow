@@ -92,19 +92,33 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
 
         setRunningState(testOnly); // set db state. fail if already running
 
-        initializeUndo(testOnly); // unless undoStepName is null
-
-        // start polling
-        while (true) {
-            getDbSnapshot();
-            if (handleStepChanges(testOnly)) break; // returns true if all steps done
-            findOndeckSteps();
-            fillOpenSlots(testOnly);
-	    System.gc();
-            Thread.sleep(2000);
-            cleanProcesses();
-            checkForKillSignal(); // if a kill file exists in wf home.
+        if (multipleUndoStepNames == null ) {
+          runSub(testOnly);
+        } else {
+          WorkflowGraph origGraph = workflowGraph;
+          for(String undoStepNm : multipleUndoStepNames) {
+            setWorkflowGraph(origGraph.copy());
+            undoStepName = undoStepNm;
+            runSub(testOnly);
+          }
         }
+    }
+
+    void runSub(boolean testOnly) throws Exception {
+      initializeUndo(testOnly); // unless undoStepName is null
+
+      // start polling
+      while (true) {
+        getDbSnapshot();
+        if (handleStepChanges(testOnly)) break; // returns true if all steps done
+        findOndeckSteps();
+        fillOpenSlots(testOnly);
+        System.gc();
+        Thread.sleep(2000);
+        cleanProcesses();
+        checkForKillSignal(); // if a kill file exists in wf home.
+      }
+
     }
 
     // backup the config/ dir and $GUS_HOME/lib/xml/workflow
@@ -332,7 +346,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
                         && !step.getFullName().equals(undoStepName))
                     error("Step '" + undoStepName + "' does not match '"
                             + step.getFullName()
-                            + "' which is currently the step being undone");
+                            + "' which is currently the step being undone.  (undo_step_id=" + undo_step_id +")");
             }
         }
 
@@ -512,6 +526,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         String what = "Workflow";
         if (undo_step_id != null) what = "Undo of " + undoStepName;
         log(what + " " + (testOnly ? "TEST " : "") + DONE);
+        undo_step_id = null;  // for case of multi undos
     }
 
     /*
@@ -571,8 +586,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         }
     }
 
-
-
     private boolean checkForLockedWorkflows() throws SQLException {
         Statement stmt = null;
         ResultSet rs = null;
@@ -591,9 +604,6 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
             if (stmt != null) stmt.close();
         }
     }
-
-
-
 
     private boolean checkNewWorkflowHomeDir() {
         File stepDir = new File(getHomeDir() + "/steps");

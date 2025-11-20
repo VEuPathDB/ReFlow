@@ -45,101 +45,111 @@ import org.gusdb.workflow.RunnableWorkflow.RunnableWorkflowGraphClassFactory;
  */
 public class Workflow<T extends WorkflowStep> {
 
-    public static class WorkflowGraphClassFactory implements WorkflowClassFactory<WorkflowStep, WorkflowGraph<WorkflowStep>> {
-      @SuppressWarnings("unchecked")
-      @Override
-      public Class<WorkflowGraph<WorkflowStep>> getContainerClass() {
-        return (Class<WorkflowGraph<WorkflowStep>>)(Class<?>)WorkflowGraph.class;
-      }
-      @Override
-      public Class<WorkflowStep> getStepClass() {
-        return WorkflowStep.class;
-      }
+  public static class WorkflowGraphClassFactory implements WorkflowClassFactory<WorkflowStep, WorkflowGraph<WorkflowStep>> {
+    @SuppressWarnings("unchecked")
+    @Override
+    public Class<WorkflowGraph<WorkflowStep>> getContainerClass() {
+      return (Class<WorkflowGraph<WorkflowStep>>) (Class<?>) WorkflowGraph.class;
     }
 
-    // static
-    // my parents are not done yet -- default state
-    public static final String READY = "READY";
-    // my parents are done, but there is no slot for me
-    public static final String ON_DECK = "ON_DECK";
-    public static final String FAILED = "FAILED";
-    public static final String DONE = "DONE";
-    public static final String RUNNING = "RUNNING";
-    public static final String ALL = "ALL";
-
-    public static final String LOAD_THROTTLE_FILE = "loadThrottle.prop";
-    public static final String FAIL_THROTTLE_FILE = "failThrottle.prop";
-
-    // configuration
-    private final String homeDir;
-    private final Connection connection;
-    private final DBPlatform platform;
-    private Properties workflowProps; // from workflow config file
-    protected Properties loadThrottleConfig = new Properties();
-    protected Properties failThrottleConfig = new Properties();
-    private String[] homeDirSubDirs = { "logs", "steps", "data", "backups" };
-    protected String name;
-    protected String version;
-    protected String workflowTable;
-    protected String workflowStepTable;
-    protected String workflowStepParamValTable;
-    protected String workflowStepTrackingTable;
-    protected int maxRunningPerStepClass;
-    protected int maxFailedPerStepClass;
-
-    // persistent state
-    protected Integer workflow_id;
-    protected String state;
-    protected Integer undo_step_id;
-    protected String process_id;
-    protected String host_machine;
-    protected Boolean test_mode;
-
-    // derived from persistent state
-    protected Map<String, Integer> runningLoadTypeCounts; // running steps, by type tag
-    protected Map<String, Integer> runningStepClassCounts; // running steps, by step class
-    protected Map<String, Integer> failedFailTypeCounts; // failed steps, by type tag
-    protected Map<String, Integer> failedStepClassCounts; // failed steps, by step class
-
-    // input
-    protected WorkflowGraph<T> workflowGraph; // the graph
-    protected String undoStepName; // iff we are running undo
-
-    // list of processes to clean
-    private List<Process> bgdProcesses = new ArrayList<Process>();
-
-    public Workflow(String homeDir, Connection connection, DBPlatform platform) throws FileNotFoundException, IOException {
-        this.homeDir = homeDir.replaceAll("/$", "");
-        this.connection = connection;
-        this.platform = platform;
-        name = getWorkflowConfig("name");
-        version = getWorkflowConfig("version");
-        workflowTable = getWorkflowConfig("workflowTable");
-        workflowStepTable = getWorkflowConfig("workflowStepTable");
-        workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
-        workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
-        maxRunningPerStepClass = Integer.parseInt(getWorkflowConfig("maxRunningPerStepClass")); 
-        maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass"));
+    @Override
+    public Class<WorkflowStep> getStepClass() {
+      return WorkflowStep.class;
     }
+  }
 
-    // ///////////////////////////////////////////////////////////////////////
-    // Properties
-    // ///////////////////////////////////////////////////////////////////////
-    public void setWorkflowGraph(WorkflowGraph<T> workflowGraph) {
-        this.workflowGraph = workflowGraph;
-    }
+  // static
+  // my parents are not done yet -- default state
+  public static final String READY = "READY";
+  // my parents are done, but there is no slot for me
+  public static final String ON_DECK = "ON_DECK";
+  public static final String FAILED = "FAILED";
+  public static final String DONE = "DONE";
+  public static final String RUNNING = "RUNNING";
+  public static final String ALL = "ALL";
 
-    String getHomeDir() {
-        return homeDir;
-    }
+  public static final String LOAD_THROTTLE_FILE = "loadThrottle.prop";
+  public static final String FAIL_THROTTLE_FILE = "failThrottle.prop";
 
-    Integer getUndoStepId() {
-        return undo_step_id;
-    }
+  // configuration
+  private final String homeDir;
+  private final Connection connection;
+  private final DBPlatform platform;
+  private Properties workflowProps; // from workflow config file
+  protected Properties loadThrottleConfig = new Properties();
+  protected Properties failThrottleConfig = new Properties();
+  private String[] homeDirSubDirs = {"logs", "steps", "data", "backups"};
+  protected String name;
+  protected String version;
+  protected String workflowTable;
+  protected String workflowStepTable;
+  protected String workflowStepParamValTable;
+  protected String workflowStepTrackingTable;
+  protected int maxRunningPerStepClass;
+  protected int maxFailedPerStepClass;
 
-    String getUndoStepName() {
-        return undoStepName;
-    }
+  // persistent state
+  protected Integer workflow_id;
+  protected String state;
+  protected Integer undo_step_id;
+  protected String process_id;
+  protected String host_machine;
+  protected Boolean test_mode;
+
+  // derived from persistent state
+  protected Map<String, Integer> runningLoadTypeCounts; // running steps, by type tag
+  protected Map<String, Integer> runningStepClassCounts; // running steps, by step class
+  protected Map<String, Integer> failedFailTypeCounts; // failed steps, by type tag
+  protected Map<String, Integer> failedStepClassCounts; // failed steps, by step class
+
+  // input
+  protected WorkflowGraph<T> workflowGraph; // the graph
+  protected String undoStepName; // iff we are running undo
+  protected List<String> multipleUndoStepNames = null;
+
+  // list of processes to clean
+  private List<Process> bgdProcesses = new ArrayList<Process>();
+
+  public Workflow(String homeDir, Connection connection, DBPlatform platform) throws FileNotFoundException, IOException {
+    this.homeDir = homeDir.replaceAll("/$", "");
+    this.connection = connection;
+    this.platform = platform;
+    name = getWorkflowConfig("name");
+    version = getWorkflowConfig("version");
+    workflowTable = getWorkflowConfig("workflowTable");
+    workflowStepTable = getWorkflowConfig("workflowStepTable");
+    workflowStepParamValTable = getWorkflowConfig("workflowStepParamValueTable");
+    workflowStepTrackingTable = getWorkflowConfig("workflowStepTrackingTable");
+    maxRunningPerStepClass = Integer.parseInt(getWorkflowConfig("maxRunningPerStepClass"));
+    maxFailedPerStepClass = Integer.parseInt(getWorkflowConfig("maxFailedPerStepClass"));
+  }
+
+  // ///////////////////////////////////////////////////////////////////////
+  // Properties
+  // ///////////////////////////////////////////////////////////////////////
+  public void setWorkflowGraph(WorkflowGraph<T> workflowGraph) {
+    this.workflowGraph = workflowGraph;
+  }
+
+  String getHomeDir() {
+    return homeDir;
+  }
+
+  Integer getUndoStepId() {
+    return undo_step_id;
+  }
+
+  String getUndoStepName() {
+    return undoStepName;
+  }
+
+  void setMultipleUndoStepNames(List<String> multipleUndoStepNames){
+    this.multipleUndoStepNames = multipleUndoStepNames;
+  }
+
+  List<String> getMultipleUndoStepNames() {
+    return multipleUndoStepNames;
+  }
 
     String getWorkflowTable() {
         return workflowTable;
@@ -645,7 +655,7 @@ public class Workflow<T extends WorkflowStep> {
         // parse command line
         Options options = declareOptions();
         String cmdlineSyntax = cmdName
-                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name> <-db [login[/pass]@]instance>";
+                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name | -undoStepsFile file> <-db [login[/pass]@]instance>";
         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
                 getUsageNotes(), options, args);
@@ -669,8 +679,20 @@ public class Workflow<T extends WorkflowStep> {
                 new RunnableWorkflowGraphClassFactory(), runnableWorkflow);
             runnableWorkflow.setWorkflowGraph(rootGraph);
             runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u") : null;
+
+            // Read undo steps from file if provided
+            if (cmdLine.hasOption("undoStepsFile")) {
+              if (runnableWorkflow.undoStepName != null) throw new IllegalArgumentException("-u and -undoStepsFile are not both allowed");
+              runnableWorkflow.setMultipleUndoStepNames(readMultiUndoFile( cmdLine));
+            }
+
             boolean testOnly = cmdLine.hasOption("t");
             if (cmdLine.hasOption("c")) {
+                if (cmdLine.hasOption("undoStepsFile")) {
+                    throw new IllegalArgumentException(
+                        "The -c option (compile check) is not allowed when using -undoStepsFile. " +
+                        "The -c option can only be used with the -u option to report steps that would be undone for a single step.");
+                }
                 runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
                 rootGraph.convertToUndo();
                 System.out.println("Steps in the Undo Graph:");
@@ -744,6 +766,28 @@ public class Workflow<T extends WorkflowStep> {
         } else {
             System.exit(0);
         }
+    }
+
+    private static List<String> readMultiUndoFile(CommandLine cmdLine) {
+      String undoStepFileName = cmdLine.getOptionValue("undoStepsFile");
+      List<String> multipleUndoStepNames = new ArrayList<>();
+      try (java.io.BufferedReader reader = new java.io.BufferedReader(
+          new java.io.FileReader(undoStepFileName))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          String trimmedLine = line.trim();
+          // Skip empty lines and comments
+          if (!trimmedLine.isEmpty() && !trimmedLine.startsWith("#")) {
+            multipleUndoStepNames.add(trimmedLine);
+          }
+        }
+        if (multipleUndoStepNames.isEmpty()) {
+          throw new IllegalArgumentException("Undo step file '" + undoStepFileName + "' contains no valid step names");
+        }
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to read undo step file: " + undoStepFileName, e);
+      }
+      return multipleUndoStepNames;
     }
 
     private static String[] getDesiredStates(CommandLine cmdLine,
@@ -896,6 +940,8 @@ public class Workflow<T extends WorkflowStep> {
         options.addOptionGroup(actions);
 
         CliUtil.addOption(options, "u", "Undo the specified step", false);
+
+        CliUtil.addOption(options, "undoStepsFile", "Undo steps listed in file (one per line)", false);
 
         CliUtil.addOption(options, "db", "Use alternative database "
                 + "(and login, password, optional). "
