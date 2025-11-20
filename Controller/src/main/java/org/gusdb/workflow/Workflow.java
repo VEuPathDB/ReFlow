@@ -655,7 +655,7 @@ public class Workflow<T extends WorkflowStep> {
         // parse command line
         Options options = declareOptions();
         String cmdlineSyntax = cmdName
-                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name | -undoStepFile file> <-db [login[/pass]@]instance>";
+                + " -h workflow_home_dir <-r | -t | -m | -q | -c | -s <states>| -d <states>> <-u step_name | -undoStepsFile file> <-db [login[/pass]@]instance>";
         String cmdDescrip = "Test or really run a workflow (regular or undo), or, print a report about a workflow.";
         CommandLine cmdLine = CliUtil.parseOptions(cmdlineSyntax, cmdDescrip,
                 getUsageNotes(), options, args);
@@ -681,16 +681,16 @@ public class Workflow<T extends WorkflowStep> {
             runnableWorkflow.undoStepName = cmdLine.hasOption("u") ? cmdLine.getOptionValue("u") : null;
 
             // Read undo steps from file if provided
-            if (cmdLine.hasOption("undoStepFile")) {
-              if (runnableWorkflow.undoStepName != null) throw new IllegalArgumentException("-u and -undoFileName are not both allowed");
+            if (cmdLine.hasOption("undoStepsFile")) {
+              if (runnableWorkflow.undoStepName != null) throw new IllegalArgumentException("-u and -undoStepsFile are not both allowed");
               runnableWorkflow.setMultipleUndoStepNames(readMultiUndoFile( cmdLine));
             }
 
             boolean testOnly = cmdLine.hasOption("t");
             if (cmdLine.hasOption("c")) {
-                if (cmdLine.hasOption("undoStepFile")) {
+                if (cmdLine.hasOption("undoStepsFile")) {
                     throw new IllegalArgumentException(
-                        "The -c option (compile check) is not allowed when using -undoStepFile. " +
+                        "The -c option (compile check) is not allowed when using -undoStepsFile. " +
                         "The -c option can only be used with the -u option to report steps that would be undone for a single step.");
                 }
                 runnableWorkflow.getDbSnapshot(); // read state of Workflow and WorkflowSteps
@@ -769,7 +769,7 @@ public class Workflow<T extends WorkflowStep> {
     }
 
     private static List<String> readMultiUndoFile(CommandLine cmdLine) {
-      String undoStepFileName = cmdLine.getOptionValue("undoStepFile");
+      String undoStepFileName = cmdLine.getOptionValue("undoStepsFile");
       List<String> multipleUndoStepNames = new ArrayList<>();
       try (java.io.BufferedReader reader = new java.io.BufferedReader(
           new java.io.FileReader(undoStepFileName))) {
@@ -941,7 +941,7 @@ public class Workflow<T extends WorkflowStep> {
 
         CliUtil.addOption(options, "u", "Undo the specified step", false);
 
-        CliUtil.addOption(options, "undoStepFile", "Undo steps listed in file (one per line)", false);
+        CliUtil.addOption(options, "undoStepsFile", "Undo steps listed in file (one per line)", false);
 
         CliUtil.addOption(options, "db", "Use alternative database "
                 + "(and login, password, optional). "
