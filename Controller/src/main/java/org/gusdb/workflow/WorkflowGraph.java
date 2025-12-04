@@ -885,7 +885,6 @@ public class WorkflowGraph<T extends WorkflowStep> implements WorkflowXmlContain
      *
      * @return A new WorkflowGraph instance that is a deep copy of this graph
      */
-    @SuppressWarnings("unchecked")
     public WorkflowGraph<T> copy() {
         WorkflowGraph<T> copiedGraph = new WorkflowGraph<T>();
 

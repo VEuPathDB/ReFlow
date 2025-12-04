@@ -95,7 +95,7 @@ public class RunnableWorkflow extends Workflow<RunnableWorkflowStep> {
         if (multipleUndoStepNames == null ) {
           runSub(testOnly);
         } else {
-          WorkflowGraph origGraph = workflowGraph;
+          WorkflowGraph<RunnableWorkflowStep> origGraph = workflowGraph;
           for(String undoStepNm : multipleUndoStepNames) {
             setWorkflowGraph(origGraph.copy());
             undoStepName = undoStepNm;
