@@ -22,7 +22,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
         if (getOperativeStateHandled()) {
             if (getOperativeState().equals(Workflow.RUNNING)) {
                 String cmd = "ps -p " + process_id;
-                Process process = Runtime.getRuntime().exec(cmd);
+                Process process = new ProcessBuilder().command(cmd).start();
                 process.waitFor();
                 if (process.exitValue() != 0) handleMissingProcess();
                 process.destroy();

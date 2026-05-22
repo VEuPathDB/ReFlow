@@ -69,7 +69,7 @@ public class WorkflowXmlParser<S extends WorkflowNode, T extends WorkflowXmlCont
 
     System.err.println("Parsing " + xmlFileName);
     // currently there is no property substitution in ReFlow; leaving here in case we want to add later
-    Map<String,String> substitutionProperties = Collections.EMPTY_MAP;
+    Map<String,String> substitutionProperties = Collections.emptyMap();
     T workflowGraph = parseXml(doc, substitutionProperties);
 
     workflowGraph.setXmlFileName(xmlFileName);

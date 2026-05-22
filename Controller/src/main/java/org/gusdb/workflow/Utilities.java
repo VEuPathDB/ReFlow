@@ -14,7 +14,7 @@ public class Utilities {
     private static Properties gusProps; // from gus.config (db stuff)
 
     static void runCmd(String cmd) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec(cmd);
+        Process process = new ProcessBuilder().command(cmd).start();
         process.waitFor();
         if (process.exitValue() != 0)
             error("Failed with status $status running: " + NL + cmd);
