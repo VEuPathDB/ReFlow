@@ -21,7 +21,7 @@ public class RunnableWorkflowStep extends WorkflowStep {
                     + " is not found in the database");
         if (getOperativeStateHandled()) {
             if (getOperativeState().equals(Workflow.RUNNING)) {
-                String cmd = "ps -p " + process_id;
+                String[] cmd = new String[]{ "ps", "-p", String.valueOf(process_id) };
                 Process process = new ProcessBuilder().command(cmd).start();
                 process.waitFor();
                 if (process.exitValue() != 0) handleMissingProcess();

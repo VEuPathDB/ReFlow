@@ -9,15 +9,15 @@ import java.util.regex.Matcher;
 
 public class Utilities {
 
-    private final static String NL = System.getProperty("line.separator");
+    private final static String NL = System.lineSeparator();
 
     private static Properties gusProps; // from gus.config (db stuff)
 
-    static void runCmd(String cmd) throws IOException, InterruptedException {
+    static void runCmd(String[] cmd) throws IOException, InterruptedException {
         Process process = new ProcessBuilder().command(cmd).start();
         process.waitFor();
         if (process.exitValue() != 0)
-            error("Failed with status $status running: " + NL + cmd);
+          error("Failed with status $status running: " + NL + cmd);
         process.destroy();
     }
 
@@ -27,7 +27,7 @@ public class Utilities {
     }
 
     public static String substituteVariablesIntoString(String string, Map<String, String> variables,
-						       String where, boolean check, String type, String name) {
+        String where, boolean check, String type, String name) {
         if (string.indexOf("$$") == -1) return string;
         String newString = string;
         for (String variableName : variables.keySet()) {
@@ -36,14 +36,12 @@ public class Utilities {
                     "\\$\\$" + variableName + "\\$\\$",
                     Matcher.quoteReplacement(variableValue));
         }
-	if (check) {
-	    String nm = name != null? (" '" + name + "'") : "";
-	    if (newString.indexOf("$$") != -1)
-		Utilities.error(type + nm 
-				+ " in " + where
-				+ " includes an unresolvable variable reference: '"
-				+ newString + "'");
-	}
+        if (check) {
+          String nm = name != null ? (" '" + name + "'") : "";
+          if (newString.indexOf("$$") != -1) {
+            Utilities.error(type + nm + " in " + where + " includes an unresolvable variable reference: '" + newString + "'");
+          }
+        }
 
         return newString;
     }
