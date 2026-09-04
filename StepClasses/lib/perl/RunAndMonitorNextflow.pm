@@ -28,8 +28,6 @@ sub run {
   my $entry = $self->getParamValue("entry");
 
   # TODO:  why do we have the boolean param for "isGitRepo?"
-  $nextflowWorkflow = "https://github.com/".$nextflowWorkflow;
-
   my $isGitRepo = $self->getBooleanParamValue("isGitRepo");
 
   # get global properties
@@ -115,16 +113,18 @@ sub runAndMonitor {
 
     # default to main branch but take from step shared if defined
     # the workflow branch is gotten via lowercase nextflow workflow param + ".branch"
-    my $nextflowWorkflowBranchKey = $self->getParamValue("nextflowWorkflow") . ".branch";
+    my $nextflowWorkflowBranchKey = $nextflowWorkflow . ".branch";
     my $workflowBranch = $self->getSharedConfigRelaxed($nextflowWorkflowBranchKey) ? $self->getSharedConfigRelaxed($nextflowWorkflowBranchKey) : "main";
+
+    my $nextflowWorkflowUrl = "https://github.com/" . $nextflowWorkflow;
 
     #my $nextflowCmd = "nextflow run $nextflowWorkflow -with-trace -c $clusterNextflowConfigFile -resume >$nextflowStdoutFile 2>&1";
     #use "-C" instead of "-c" to avoid taking from anything besides the specified config
 
-    my $nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflow -r $workflowBranch -resume ";
+    my $nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflowUrl -r $workflowBranch -resume ";
 
     if ($entry) {
-	$nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflow -entry $entry -r $workflowBranch -resume";
+	$nextflowCmd = "nextflow -log $logFile -C $clusterNextflowConfigFile run $nextflowWorkflowUrl -entry $entry -r $workflowBranch -resume";
     }
 
     my $submitCmd = $self->getNodeClass()->getQueueSubmitCommand($queue, $nextflowCmd, undef, undef, $nextflowStdoutFile);
